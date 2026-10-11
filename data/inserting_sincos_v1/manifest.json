@@ -1,0 +1,4863 @@
+{
+  "obs_dim": 16,
+  "action_dim": 2,
+  "obs_fields": [
+    "robot.des_c_pos.x",
+    "robot.des_c_pos.y",
+    "robot.c_pos.x",
+    "robot.c_pos.y",
+    "box-1.x",
+    "box-1.y",
+    "box-1.sin_yaw",
+    "box-1.cos_yaw",
+    "box-2.x",
+    "box-2.y",
+    "box-2.sin_yaw",
+    "box-2.cos_yaw",
+    "box-3.x",
+    "box-3.y",
+    "box-3.sin_yaw",
+    "box-3.cos_yaw"
+  ],
+  "action_fields": [
+    "delta_des_c_pos.x",
+    "delta_des_c_pos.y"
+  ],
+  "normalized": false,
+  "recording_interval_seconds": 0.035,
+  "fixed_command_z": 0.12235930599088184,
+  "fixed_command_quaternion_wxyz": [
+    0.0,
+    1.0,
+    0.0,
+    0.0
+  ],
+  "fixed_target_positions": [
+    [
+      0.3575,
+      0.276,
+      0.0
+    ],
+    [
+      0.525,
+      0.4535,
+      0.0
+    ],
+    [
+      0.6925,
+      0.276,
+      0.0
+    ]
+  ],
+  "action_definition": "des_c_pos[t+1, :2] - des_c_pos[t, :2]",
+  "split_method": "custom context-group split, rounded to 6 decimals",
+  "split_seed": 42,
+  "validation_group_fraction": 0.1,
+  "source_root": "/root/d3il-work/raw/inserting/data_3",
+  "splits": {
+    "train": [
+      {
+        "file": "train/env_080_06.npz",
+        "source": "env_080_06.pkl",
+        "context_group": "0084588c253440d2e2672806ed70b49013b20c6385f158ad9cfcf0a9c9c25736",
+        "transitions": 700
+      },
+      {
+        "file": "train/env_120_02.npz",
+        "source": "env_120_02.pkl",
+        "context_group": "00b838c3b0c51c02c1fc3db6988f826bd8fad2c6038b0498e23842f87b74ef99",
+        "transitions": 1169
+      },
+      {
+        "file": "train/env_149_02.npz",
+        "source": "env_149_02.pkl",
+        "context_group": "01a8a0a8a8b73e55d22c1a4f56ef34ff1b2a6868a12c8eec30e4d8840c88f2fe",
+        "transitions": 699
+      },
+      {
+        "file": "train/env_039_04.npz",
+        "source": "env_039_04.pkl",
+        "context_group": "02c508268f069f9e63f7c1661c7d5267d24302153f90c4b7cdde8f91f14a6010",
+        "transitions": 816
+      },
+      {
+        "file": "train/env_048_06.npz",
+        "source": "env_048_06.pkl",
+        "context_group": "02e989b6802bf6d30c4e39bb10c3951edcb438ec600b1093a1ce67a936181f32",
+        "transitions": 1192
+      },
+      {
+        "file": "train/env_002_01.npz",
+        "source": "env_002_01.pkl",
+        "context_group": "02f41c6a225c9cc24652bdabcd1b2ce8e32fea76370c5c2fd6afbb8ce6f90647",
+        "transitions": 1326
+      },
+      {
+        "file": "train/env_091_01.npz",
+        "source": "env_091_01.pkl",
+        "context_group": "03584494aca07853eb3809fc5b8506943ac0b457c05af8736efd54f03ca1e5f7",
+        "transitions": 1336
+      },
+      {
+        "file": "train/env_106_02.npz",
+        "source": "env_106_02.pkl",
+        "context_group": "03d863517c8f9877c93330c4fb76689749353c1186677e1ee6041abaa7393903",
+        "transitions": 962
+      },
+      {
+        "file": "train/env_003_01.npz",
+        "source": "env_003_01.pkl",
+        "context_group": "03db919e7663876693c51f70b9c83bc9e8f8cef12e48d75bd9c40c1e7b0e5850",
+        "transitions": 1141
+      },
+      {
+        "file": "train/env_007_06.npz",
+        "source": "env_007_06.pkl",
+        "context_group": "0424e6d7a67ee2e7ac3511985ba8b32875ad6b92546a482ae034a4d15a55761b",
+        "transitions": 1044
+      },
+      {
+        "file": "train/env_042_01.npz",
+        "source": "env_042_01.pkl",
+        "context_group": "04f366a91ba65e84d6f1141ffd5d8c731e4ea6f074da56f9f85f3a9485d5a81a",
+        "transitions": 730
+      },
+      {
+        "file": "train/env_010_05.npz",
+        "source": "env_010_05.pkl",
+        "context_group": "0667e5bd6f6efad101c8eff4c7379334830dd5180b6e2452dd511e0a4ba03047",
+        "transitions": 1027
+      },
+      {
+        "file": "train/env_125_01.npz",
+        "source": "env_125_01.pkl",
+        "context_group": "0668c0b459bb95fbe2bf98a862e7ec6258db118db990550c3cd8b673a37d965b",
+        "transitions": 1065
+      },
+      {
+        "file": "train/env_121_02.npz",
+        "source": "env_121_02.pkl",
+        "context_group": "06769f1dadcb36cbface9897e543d6d8f973bb03c82a81589164371db14a433c",
+        "transitions": 831
+      },
+      {
+        "file": "train/env_101_04.npz",
+        "source": "env_101_04.pkl",
+        "context_group": "072924df5fe800f0f263928b7ec1baf959169d4e9e323f916c357b51f893108d",
+        "transitions": 1194
+      },
+      {
+        "file": "train/env_006_01.npz",
+        "source": "env_006_01.pkl",
+        "context_group": "0730a6ada064be73adb92d8d71e4a8a27102d977c7e62325458dabac528023c7",
+        "transitions": 1485
+      },
+      {
+        "file": "train/env_045_01.npz",
+        "source": "env_045_01.pkl",
+        "context_group": "07430aa99831e773409718e7748636ac4929eff5cfa31e625c6cd8f50817f7e1",
+        "transitions": 885
+      },
+      {
+        "file": "train/env_140_03.npz",
+        "source": "env_140_03.pkl",
+        "context_group": "083b237025bca7a36ea08b9b95e1b38c486940c4305fec2c100b7a6aad77f4be",
+        "transitions": 805
+      },
+      {
+        "file": "train/env_042_05.npz",
+        "source": "env_042_05.pkl",
+        "context_group": "08a4b3a4a77769cd4f899a7f4a52f38e01a7dbd1ef6a42775628c9ea8da64519",
+        "transitions": 1109
+      },
+      {
+        "file": "train/env_013_03.npz",
+        "source": "env_013_03.pkl",
+        "context_group": "08c97851df8d382dd8f527b438ac0fb0b783c04a2b1ac290944d3ea69f0d4546",
+        "transitions": 1183
+      },
+      {
+        "file": "train/env_003_02.npz",
+        "source": "env_003_02.pkl",
+        "context_group": "08d90b453137fe0fb084c1ae1765dd865be3ff6ec5da05c5919dbc27990a0418",
+        "transitions": 1085
+      },
+      {
+        "file": "train/env_052_05.npz",
+        "source": "env_052_05.pkl",
+        "context_group": "08f408aa6cdaee39a7fff2a85aab34b47441b839fc481087a164501c989f1874",
+        "transitions": 829
+      },
+      {
+        "file": "train/env_045_06.npz",
+        "source": "env_045_06.pkl",
+        "context_group": "09facd27d769b3792f82f9bdd5db66becac7f2d229025ff21b7fa560a01f19ff",
+        "transitions": 1045
+      },
+      {
+        "file": "train/env_046_06.npz",
+        "source": "env_046_06.pkl",
+        "context_group": "0a2a33a38a8e0616da47d2ebf2b6f402f801cbe7322dd571c7b01d2420d354e8",
+        "transitions": 1286
+      },
+      {
+        "file": "train/env_117_02.npz",
+        "source": "env_117_02.pkl",
+        "context_group": "0a7052ef338fd9972c926b5fce6c81f074b2c85e244602f4446a3ce20e152c18",
+        "transitions": 1055
+      },
+      {
+        "file": "train/env_070_06.npz",
+        "source": "env_070_06.pkl",
+        "context_group": "0c4b2d054bc9f7d16df43155cd95cec4672068fd3d26daa53936ab3ae8202840",
+        "transitions": 1003
+      },
+      {
+        "file": "train/env_094_05.npz",
+        "source": "env_094_05.pkl",
+        "context_group": "0c7744b74b3914439d4d7d78be0f6474f74dae4b6adbbf323fb3274d51ec818a",
+        "transitions": 1312
+      },
+      {
+        "file": "train/env_046_04.npz",
+        "source": "env_046_04.pkl",
+        "context_group": "0c9bf7a93fdeef0838e2d72b2ae4c02714135150ed0e2e36dd03fb24c6228e77",
+        "transitions": 836
+      },
+      {
+        "file": "train/env_021_05.npz",
+        "source": "env_021_05.pkl",
+        "context_group": "0cb2b39d06d51dcf59500fc3026a720fd811704eb29cb0aed57d8ef057547bbc",
+        "transitions": 809
+      },
+      {
+        "file": "train/env_087_02.npz",
+        "source": "env_087_02.pkl",
+        "context_group": "0d3690a8085a0f45f2bc29d9702c292ae777823b53f3ddcd68e3b27e60612de7",
+        "transitions": 899
+      },
+      {
+        "file": "train/env_128_01.npz",
+        "source": "env_128_01.pkl",
+        "context_group": "0d9973c6d37c00533064e3722cfce80a9cc5ad3622cfc48efd444adcd9bee4b3",
+        "transitions": 887
+      },
+      {
+        "file": "train/env_084_03.npz",
+        "source": "env_084_03.pkl",
+        "context_group": "0dae34997de4c3104eab54f0837e89f3bf91b2f43ba4a54b387d1f0fd3a262c2",
+        "transitions": 844
+      },
+      {
+        "file": "train/env_070_05.npz",
+        "source": "env_070_05.pkl",
+        "context_group": "0dbf7e513706d0e4f7b280635324f18f5f8b1cbcfc228bdb23840961f4f7ddda",
+        "transitions": 926
+      },
+      {
+        "file": "train/env_110_03.npz",
+        "source": "env_110_03.pkl",
+        "context_group": "0dd33ca95772267e53d05d98603eb6774fff346e94ea0442aceaed8ea7578a2c",
+        "transitions": 813
+      },
+      {
+        "file": "train/env_013_05.npz",
+        "source": "env_013_05.pkl",
+        "context_group": "0e9529490085b2a8418a48ddd948654af3788fea4eeda238d4609b7ab8f9ea2d",
+        "transitions": 859
+      },
+      {
+        "file": "train/env_143_04.npz",
+        "source": "env_143_04.pkl",
+        "context_group": "0eff1bc0af07cb72034c9cb07cf476017f73fbd6d3303e14b205b7919ddb6f2d",
+        "transitions": 739
+      },
+      {
+        "file": "train/env_034_05.npz",
+        "source": "env_034_05.pkl",
+        "context_group": "0f248f4f46b17b9c5890ed75af16e2a917688f14de7b7d8698e64aca72ff7999",
+        "transitions": 865
+      },
+      {
+        "file": "train/env_104_01.npz",
+        "source": "env_104_01.pkl",
+        "context_group": "0f6041e966ae59eef1cd8b2475ecc81be5c7281d2cec4f8e0928a861696b5776",
+        "transitions": 1005
+      },
+      {
+        "file": "train/env_022_03.npz",
+        "source": "env_022_03.pkl",
+        "context_group": "0fd2812314c2330eb6446a2f51a0f1680f4883a306033c9ddb575a0cbbcbadec",
+        "transitions": 1344
+      },
+      {
+        "file": "train/env_023_04.npz",
+        "source": "env_023_04.pkl",
+        "context_group": "10ddcdffb44300bb894fcce544e4d39961648ddffd4355ef6c4e83e2b85baba9",
+        "transitions": 910
+      },
+      {
+        "file": "train/env_123_04.npz",
+        "source": "env_123_04.pkl",
+        "context_group": "10efadc4f69431ac0795c28698f77201af5bdbd2ee45c70e8f522e830b1d2802",
+        "transitions": 1043
+      },
+      {
+        "file": "train/env_134_01.npz",
+        "source": "env_134_01.pkl",
+        "context_group": "110b33425798e7621ec15ab6038728dadcc8cade9ebc0adccdff236273ffa6fa",
+        "transitions": 754
+      },
+      {
+        "file": "train/env_150_01.npz",
+        "source": "env_150_01.pkl",
+        "context_group": "1167d6362d5b7eb1fa89dce7c4e9d5ac10024e451711077628194ab36fc9b96a",
+        "transitions": 967
+      },
+      {
+        "file": "train/env_032_04.npz",
+        "source": "env_032_04.pkl",
+        "context_group": "1297e608afb6108dc29df107ccd9d30f1c85c488951bf0b054d1a092694601a0",
+        "transitions": 727
+      },
+      {
+        "file": "train/env_045_04.npz",
+        "source": "env_045_04.pkl",
+        "context_group": "131a294b3749a9396f995c01c7783316052229fb5b15c5ccfae6c80306ced04c",
+        "transitions": 723
+      },
+      {
+        "file": "train/env_040_06.npz",
+        "source": "env_040_06.pkl",
+        "context_group": "132e17a0b6fa8b5f356a8088db0db8afe502fbef67208f9b76efad1e6f93d3e6",
+        "transitions": 1227
+      },
+      {
+        "file": "train/env_148_03.npz",
+        "source": "env_148_03.pkl",
+        "context_group": "134d3684b2bbaac4dda00667451e4f13aa94f7cae6a8ea72d19cc744fa2a96ed",
+        "transitions": 696
+      },
+      {
+        "file": "train/env_119_03.npz",
+        "source": "env_119_03.pkl",
+        "context_group": "1356df481fc0d7d6be833eca351bb9d48ceba71cda348bb2f3eb58ae624e0f19",
+        "transitions": 950
+      },
+      {
+        "file": "train/env_069_01.npz",
+        "source": "env_069_01.pkl",
+        "context_group": "139a55a23774f9cd0541549bb0c98401b9ad370523fe2c0633d198a4c74d91b1",
+        "transitions": 1330
+      },
+      {
+        "file": "train/env_064_03.npz",
+        "source": "env_064_03.pkl",
+        "context_group": "139d3314afc3268cf52f96d816f8deebfc2b2d46bb889abb7e328f564f25a901",
+        "transitions": 717
+      },
+      {
+        "file": "train/env_113_03.npz",
+        "source": "env_113_03.pkl",
+        "context_group": "147ee8c9e47a51a644820049dbe7c428b7ffa09f8717141970c6f94509df8b96",
+        "transitions": 638
+      },
+      {
+        "file": "train/env_142_04.npz",
+        "source": "env_142_04.pkl",
+        "context_group": "14a54f8c8d618e66d9262c502c8fba684fb198abefa04d74b90faf7c1666c56f",
+        "transitions": 615
+      },
+      {
+        "file": "train/env_109_03.npz",
+        "source": "env_109_03.pkl",
+        "context_group": "152199617a040480cdaa457797f8e37585e49516cc153c765ac9a3cf453505f7",
+        "transitions": 867
+      },
+      {
+        "file": "train/env_013_04.npz",
+        "source": "env_013_04.pkl",
+        "context_group": "15535637384654b748c62471ba37d0077f0748313fa4b3a1a6783f612bb7cd7d",
+        "transitions": 888
+      },
+      {
+        "file": "train/env_045_03.npz",
+        "source": "env_045_03.pkl",
+        "context_group": "15752ce6002cd8d6b97218bce363f355e6def7bf782b22cd1eae9f7cfa48edfe",
+        "transitions": 985
+      },
+      {
+        "file": "train/env_054_01.npz",
+        "source": "env_054_01.pkl",
+        "context_group": "1578801a66560f543de1577775fdc8a487ceda6a550c332c879a3faec8f268fe",
+        "transitions": 1856
+      },
+      {
+        "file": "train/env_088_03.npz",
+        "source": "env_088_03.pkl",
+        "context_group": "15cdd0c31cd51ef5ce5ab7c4db47d6fb5b786576012aa3a6bc60ec6c39a9f94a",
+        "transitions": 944
+      },
+      {
+        "file": "train/env_008_03.npz",
+        "source": "env_008_03.pkl",
+        "context_group": "15e8f5ab8d192b65e5efe6262abd844d5e15b5d6cbf2225db8834becb10ed325",
+        "transitions": 847
+      },
+      {
+        "file": "train/env_139_03.npz",
+        "source": "env_139_03.pkl",
+        "context_group": "15fde4a1a7116e3407e78bf4b93eb5e7cb7b5618f39f0487018faf6511d38fee",
+        "transitions": 1241
+      },
+      {
+        "file": "train/env_139_04.npz",
+        "source": "env_139_04.pkl",
+        "context_group": "165b6ad7cc49cc6aed4aa428ef130897fbb2756320cb13f3c864ca1ae61a86a2",
+        "transitions": 631
+      },
+      {
+        "file": "train/env_123_02.npz",
+        "source": "env_123_02.pkl",
+        "context_group": "16a6c4f1038214384d889f713fc53f263edac5a74260a278a7a21cd4bc02f768",
+        "transitions": 989
+      },
+      {
+        "file": "train/env_082_03.npz",
+        "source": "env_082_03.pkl",
+        "context_group": "17000568ac7b475ed589aefdab96e2f213c01d076ab09bfba7c2b8e9feb892cd",
+        "transitions": 857
+      },
+      {
+        "file": "train/env_037_02.npz",
+        "source": "env_037_02.pkl",
+        "context_group": "179f0e7078655e24e2832db1c02746bad421ee4fd771174c61760fe47cb296d2",
+        "transitions": 1502
+      },
+      {
+        "file": "train/env_032_02.npz",
+        "source": "env_032_02.pkl",
+        "context_group": "186d0ef6ab65dacd696d2f3fd754f2b6f6dde67806c3d633fc1ccdd68e9eca14",
+        "transitions": 1237
+      },
+      {
+        "file": "train/env_086_03.npz",
+        "source": "env_086_03.pkl",
+        "context_group": "187cd958fcefd3b65972166e97e3dd70b88e5423b414a399c0f9ebebb80316f5",
+        "transitions": 965
+      },
+      {
+        "file": "train/env_002_03.npz",
+        "source": "env_002_03.pkl",
+        "context_group": "1912de451259d37ef1004cdf58ec53ba618c497dd9af86bdcb8d83ee9edacfed",
+        "transitions": 920
+      },
+      {
+        "file": "train/env_012_02.npz",
+        "source": "env_012_02.pkl",
+        "context_group": "1961cd207dfa23a8126cf028ea24197112e1db42371ad6baecfe729fbdfc970c",
+        "transitions": 1046
+      },
+      {
+        "file": "train/env_029_01.npz",
+        "source": "env_029_01.pkl",
+        "context_group": "197def0ed6ec6db047022ec1f6ba385bb26daf8ef910114b02b2119e269dda14",
+        "transitions": 755
+      },
+      {
+        "file": "train/env_004_02.npz",
+        "source": "env_004_02.pkl",
+        "context_group": "19ad4930120046c7da64527a9789611dcbabd0a7ca834dfe43c342b331bd0421",
+        "transitions": 1021
+      },
+      {
+        "file": "train/env_108_03.npz",
+        "source": "env_108_03.pkl",
+        "context_group": "1a9d0ad20a3f53be735579f4d105d1a6d4b1328ef333d18cf85503d6ad16753b",
+        "transitions": 911
+      },
+      {
+        "file": "train/env_017_04.npz",
+        "source": "env_017_04.pkl",
+        "context_group": "1aa7fa3d8ead540965133022bbca10a94b65f71471844a390500de0f7bf591e6",
+        "transitions": 1396
+      },
+      {
+        "file": "train/env_023_02.npz",
+        "source": "env_023_02.pkl",
+        "context_group": "1abcc37b7267bf17e3ae47ecbbc68583faf0d3abe377dba825f41f54c1fe374e",
+        "transitions": 1069
+      },
+      {
+        "file": "train/env_093_01.npz",
+        "source": "env_093_01.pkl",
+        "context_group": "1ad66f275ce3729beea8cb96d97c4e851ceca141d88b18c800754d515e6883da",
+        "transitions": 1316
+      },
+      {
+        "file": "train/env_014_04.npz",
+        "source": "env_014_04.pkl",
+        "context_group": "1af6d6604791e29be3f5e4c3cf23bfe095e4794092ed075e9b4588e1f28fef56",
+        "transitions": 1114
+      },
+      {
+        "file": "train/env_063_05.npz",
+        "source": "env_063_05.pkl",
+        "context_group": "1b226b74690a6f6aae8d171d913dc28bd203568829f33b5926548bef15c7ba53",
+        "transitions": 945
+      },
+      {
+        "file": "train/env_097_01.npz",
+        "source": "env_097_01.pkl",
+        "context_group": "1b36934dc99028fa244fdadf211ba5f458450f6ce14c09aea5d184e1e4313436",
+        "transitions": 1100
+      },
+      {
+        "file": "train/env_069_03.npz",
+        "source": "env_069_03.pkl",
+        "context_group": "1baf19fd899767378a56d57efd82de9570cd7d209fc926832cb485c5e35d953f",
+        "transitions": 1082
+      },
+      {
+        "file": "train/env_085_04.npz",
+        "source": "env_085_04.pkl",
+        "context_group": "1bdbf61184b8bdc9790434b255fad9d6a40af7c2649f939a0541c1eafc9cce4b",
+        "transitions": 857
+      },
+      {
+        "file": "train/env_123_01.npz",
+        "source": "env_123_01.pkl",
+        "context_group": "1c229f72831164da8bf72e4001232b7e05c8b52c44db16424ef90c4d518ba4ba",
+        "transitions": 968
+      },
+      {
+        "file": "train/env_040_01.npz",
+        "source": "env_040_01.pkl",
+        "context_group": "1c4e6cca077c9737e13da1219fb30a9db2c860115f5f1eb60f99fbd483b6712c",
+        "transitions": 950
+      },
+      {
+        "file": "train/env_053_01.npz",
+        "source": "env_053_01.pkl",
+        "context_group": "1c4e6cca077c9737e13da1219fb30a9db2c860115f5f1eb60f99fbd483b6712c",
+        "transitions": 950
+      },
+      {
+        "file": "train/env_029_03.npz",
+        "source": "env_029_03.pkl",
+        "context_group": "1c6d226e6360be686458d4af72deb2ca7aa4cc71759edd650d69e82ef7e10426",
+        "transitions": 1318
+      },
+      {
+        "file": "train/env_010_01.npz",
+        "source": "env_010_01.pkl",
+        "context_group": "1cec8918f039ab52cdabbcc237eae4199eaf3d214252bb432e5d2597781f4ace",
+        "transitions": 1354
+      },
+      {
+        "file": "train/env_084_01.npz",
+        "source": "env_084_01.pkl",
+        "context_group": "1d12c236beb5a767d5d6f3124e6fda4bf351fd9271784e4ad8557f8a514ccffa",
+        "transitions": 1038
+      },
+      {
+        "file": "train/env_131_02.npz",
+        "source": "env_131_02.pkl",
+        "context_group": "1d3964ef8536e4dbce694c50678dcfad50f7ccaaf1d6de0c416b932ec0fd80f0",
+        "transitions": 889
+      },
+      {
+        "file": "train/env_027_06.npz",
+        "source": "env_027_06.pkl",
+        "context_group": "1d5d9f5c95cdaf7001ad841bab4fbd9584859b0e9399965c915fe0fc7dee7597",
+        "transitions": 1022
+      },
+      {
+        "file": "train/env_102_04.npz",
+        "source": "env_102_04.pkl",
+        "context_group": "1d99492bd11f30beceee2bef93e238d9b751179cf68994b431b8a6abcd671320",
+        "transitions": 856
+      },
+      {
+        "file": "train/env_075_03.npz",
+        "source": "env_075_03.pkl",
+        "context_group": "1deed3da356078dc4187f8387fd1fb1fed5fb4168b1bad01e3b72a1657ba3398",
+        "transitions": 747
+      },
+      {
+        "file": "train/env_055_02.npz",
+        "source": "env_055_02.pkl",
+        "context_group": "1e4acb15c7bde886c2192d03ec54a4c71eadb52df6004ed57833beff6c7b9b29",
+        "transitions": 1255
+      },
+      {
+        "file": "train/env_107_02.npz",
+        "source": "env_107_02.pkl",
+        "context_group": "1e53ccfb2052ac01a2215a0ab858db059669162785909a60b79313a6e141f951",
+        "transitions": 731
+      },
+      {
+        "file": "train/env_100_03.npz",
+        "source": "env_100_03.pkl",
+        "context_group": "1f47267c5274437dc376cc07204febc2ae150375ffec0313a67be1a39cd7290f",
+        "transitions": 842
+      },
+      {
+        "file": "train/env_131_04.npz",
+        "source": "env_131_04.pkl",
+        "context_group": "1f48b69702cd4ea7fc50499946d416f4ebb16803aab56951a4a3b7dddb2d8423",
+        "transitions": 968
+      },
+      {
+        "file": "train/env_116_01.npz",
+        "source": "env_116_01.pkl",
+        "context_group": "203915c3e35bb0f14970bd24ae131636fcd9257f007c3a653ca1986f7a460a27",
+        "transitions": 777
+      },
+      {
+        "file": "train/env_052_04.npz",
+        "source": "env_052_04.pkl",
+        "context_group": "206f00f3f836127cc840da55730764ca4e767a484e91087233c44f62de7cfb54",
+        "transitions": 947
+      },
+      {
+        "file": "train/env_087_01.npz",
+        "source": "env_087_01.pkl",
+        "context_group": "2104f6f90a414cf3ea0c02d27d8cbf54e48d3e86bccd94dfe2c4959dda7319ef",
+        "transitions": 1252
+      },
+      {
+        "file": "train/env_089_01.npz",
+        "source": "env_089_01.pkl",
+        "context_group": "21b3d43699169de84acee56b3ef3dec8bd340b1f4966a15b6012f5c7509fd706",
+        "transitions": 1265
+      },
+      {
+        "file": "train/env_075_05.npz",
+        "source": "env_075_05.pkl",
+        "context_group": "22e927a293c4f29e9972d29fa9deebe05b0208c2292e4857446ab6da50d60a69",
+        "transitions": 782
+      },
+      {
+        "file": "train/env_130_03.npz",
+        "source": "env_130_03.pkl",
+        "context_group": "23113ddd7908341521b7129d4954ada7bb77f745bf18ff9f3cee9bd9e10ff818",
+        "transitions": 908
+      },
+      {
+        "file": "train/env_093_04.npz",
+        "source": "env_093_04.pkl",
+        "context_group": "2316e1129db281ad013ecf9472f810439514e8efd088e00be6f1984d0b4c5ba7",
+        "transitions": 863
+      },
+      {
+        "file": "train/env_142_01.npz",
+        "source": "env_142_01.pkl",
+        "context_group": "232ef5414a3a0c05a957529c40c5235aa11070eddb215681de4856366dd4244e",
+        "transitions": 860
+      },
+      {
+        "file": "train/env_105_01.npz",
+        "source": "env_105_01.pkl",
+        "context_group": "234a41f4791b0c04fd67cf03f0f7f1e2779e9cc62132a18cc30e4813906953e4",
+        "transitions": 988
+      },
+      {
+        "file": "train/env_005_05.npz",
+        "source": "env_005_05.pkl",
+        "context_group": "2403f593bf47f505f450bd970ff8bfc1febd3ab2e799333cda90522f22b7f6f5",
+        "transitions": 980
+      },
+      {
+        "file": "train/env_069_05.npz",
+        "source": "env_069_05.pkl",
+        "context_group": "24dec3d05e7afc984e41d4a997ca5487ac41f71652a613fc15902144589bbbca",
+        "transitions": 1052
+      },
+      {
+        "file": "train/env_012_03.npz",
+        "source": "env_012_03.pkl",
+        "context_group": "24e3b5ed688b3533e91aed5797e8865d45610a9fc548882eb384e279a27e74cb",
+        "transitions": 1208
+      },
+      {
+        "file": "train/env_073_06.npz",
+        "source": "env_073_06.pkl",
+        "context_group": "24f0baf56d198d0c73273be64645ad131810d4694241b3a1bf3fb081cd0b8af4",
+        "transitions": 748
+      },
+      {
+        "file": "train/env_054_02.npz",
+        "source": "env_054_02.pkl",
+        "context_group": "24fefa8e6808e85607918b6b5949b2d072d0441bccf0524e2b3af44c6ba6f39a",
+        "transitions": 1196
+      },
+      {
+        "file": "train/env_057_05.npz",
+        "source": "env_057_05.pkl",
+        "context_group": "258e52b2c27991347c41ec0abb6e19a37f125411f0a9aafe3e8d5659405a139f",
+        "transitions": 1271
+      },
+      {
+        "file": "train/env_001_05.npz",
+        "source": "env_001_05.pkl",
+        "context_group": "259f6fc006f2b74a6c823447d36c467c5920cc57d07d7e49b5f2dfac289e564b",
+        "transitions": 846
+      },
+      {
+        "file": "train/env_075_04.npz",
+        "source": "env_075_04.pkl",
+        "context_group": "25ba14cd64efdb560020989d33f5824be07289cb084dbef4623728e758b9d340",
+        "transitions": 1159
+      },
+      {
+        "file": "train/env_061_02.npz",
+        "source": "env_061_02.pkl",
+        "context_group": "25e81e751a2896af5732022b7ed10169e96eaf382eae783a344d71371d2a6771",
+        "transitions": 1184
+      },
+      {
+        "file": "train/env_003_04.npz",
+        "source": "env_003_04.pkl",
+        "context_group": "260dbacd131a2a16499890376dc97b8a84d91e184250d3da84d1186eb0845f06",
+        "transitions": 1042
+      },
+      {
+        "file": "train/env_016_04.npz",
+        "source": "env_016_04.pkl",
+        "context_group": "262549bba457b839fa734296278e9ab940125fb0ed2924c09616b9d3aadfb852",
+        "transitions": 1067
+      },
+      {
+        "file": "train/env_059_04.npz",
+        "source": "env_059_04.pkl",
+        "context_group": "268655b8d111765bffefcaa639c3f1191eac9c070b6df93b475984349156885a",
+        "transitions": 884
+      },
+      {
+        "file": "train/env_032_05.npz",
+        "source": "env_032_05.pkl",
+        "context_group": "26d0d0c8ad9cf0f4c78d63df00c28126270e4ccfa4130accc05b0a1ffbbb6e9e",
+        "transitions": 800
+      },
+      {
+        "file": "train/env_044_04.npz",
+        "source": "env_044_04.pkl",
+        "context_group": "26d8be161b786d27f292f3815ad19b493d76dd3c4cc44848c64d3974de3c06a8",
+        "transitions": 729
+      },
+      {
+        "file": "train/env_087_06.npz",
+        "source": "env_087_06.pkl",
+        "context_group": "26e3943471575e92e7b411172d29f6438598928dbd25aefa58cb625129f44ec2",
+        "transitions": 650
+      },
+      {
+        "file": "train/env_010_06.npz",
+        "source": "env_010_06.pkl",
+        "context_group": "2742c2fdbb59433675e65c16828ecbe49f6ba23f0000d435f9455463699cf37e",
+        "transitions": 789
+      },
+      {
+        "file": "train/env_071_03.npz",
+        "source": "env_071_03.pkl",
+        "context_group": "278e02fea55e766274c1946ea5edd4b1dd6deccec4d9d0aa7a74f1277ddfd919",
+        "transitions": 963
+      },
+      {
+        "file": "train/env_073_02.npz",
+        "source": "env_073_02.pkl",
+        "context_group": "2802c51fc5db86da476e02580b4fd0406f5cf9115f314b3daf83c58e4d0ae5c3",
+        "transitions": 1323
+      },
+      {
+        "file": "train/env_064_02.npz",
+        "source": "env_064_02.pkl",
+        "context_group": "28365f71ec71d1e97aa58b42aff14bb1627d8203ccfb4bec0044ec8218946d20",
+        "transitions": 817
+      },
+      {
+        "file": "train/env_079_04.npz",
+        "source": "env_079_04.pkl",
+        "context_group": "286aeedaaf485d4c5f0bf21effd9dc22021da160f5e82aa8d6513b3c43db4ca3",
+        "transitions": 921
+      },
+      {
+        "file": "train/env_001_03.npz",
+        "source": "env_001_03.pkl",
+        "context_group": "28707370f1083694111e4a460e2791420fb1ca91080bae890f1b9f72c267e64c",
+        "transitions": 1286
+      },
+      {
+        "file": "train/env_023_06.npz",
+        "source": "env_023_06.pkl",
+        "context_group": "28810cfabc7a16c9be5fe75d7bbebe1dbb4adcf43beaa9df79c51c40690d3468",
+        "transitions": 921
+      },
+      {
+        "file": "train/env_046_01.npz",
+        "source": "env_046_01.pkl",
+        "context_group": "2955b32a766dd039201285ce5bdc7c33cfc135cad909df5c11b685177f12c5ec",
+        "transitions": 1320
+      },
+      {
+        "file": "train/env_077_02.npz",
+        "source": "env_077_02.pkl",
+        "context_group": "295c1ae2513392418ebc66fddd80d12e25c204a2865a44cba86619fd63774adf",
+        "transitions": 1156
+      },
+      {
+        "file": "train/env_021_01.npz",
+        "source": "env_021_01.pkl",
+        "context_group": "297ed6522a6131ed6903e41246633341e0e29d1e7467b1e4dd22034f842eb4f2",
+        "transitions": 870
+      },
+      {
+        "file": "train/env_050_04.npz",
+        "source": "env_050_04.pkl",
+        "context_group": "29b78e2ab8fce20627eb0b51fc0554a1283e0a858d49a23e2ccc12af6e84b6d9",
+        "transitions": 1081
+      },
+      {
+        "file": "train/env_081_06.npz",
+        "source": "env_081_06.pkl",
+        "context_group": "2a116866d5f58b6091207213afe3991bbd3b0406ffc57854c14b63550b5525a5",
+        "transitions": 1076
+      },
+      {
+        "file": "train/env_114_03.npz",
+        "source": "env_114_03.pkl",
+        "context_group": "2a70d4dcb709a7a7e5fae84d40cecb256e8aa2c8f7c38d178c9404eb5c5d4e47",
+        "transitions": 860
+      },
+      {
+        "file": "train/env_065_06.npz",
+        "source": "env_065_06.pkl",
+        "context_group": "2b1a15e742f94e74a5d194de60224bc58ffc3eb5a170da1c3defd2ee0d4f090c",
+        "transitions": 659
+      },
+      {
+        "file": "train/env_087_03.npz",
+        "source": "env_087_03.pkl",
+        "context_group": "2ce2bea0b656e6a0b3081b2d23ec7089b2b74adf0f960e3a145700681fc8fd13",
+        "transitions": 1222
+      },
+      {
+        "file": "train/env_118_02.npz",
+        "source": "env_118_02.pkl",
+        "context_group": "2d0b724bb39395086e5638e762d248c0b1ec458e490decf7d23e687b845d3d4e",
+        "transitions": 814
+      },
+      {
+        "file": "train/env_110_02.npz",
+        "source": "env_110_02.pkl",
+        "context_group": "2d3f7c98f6173a70a4524827f0fd0f27790da667131333512faafed2202b7a5c",
+        "transitions": 759
+      },
+      {
+        "file": "train/env_030_02.npz",
+        "source": "env_030_02.pkl",
+        "context_group": "2ddacc4758f795177e805081acc99bd4a08b0200d27210515855586ecaa30303",
+        "transitions": 1065
+      },
+      {
+        "file": "train/env_035_03.npz",
+        "source": "env_035_03.pkl",
+        "context_group": "2e8b9d2dbc432ca43aa3faedf4ccc27924fe3e41c275ffd9d44377a6d20c367e",
+        "transitions": 924
+      },
+      {
+        "file": "train/env_031_03.npz",
+        "source": "env_031_03.pkl",
+        "context_group": "2ebb8180244ed8acf723d57c803f4b5c1d4a5a4e3b3f2b7b98475296aacf54d5",
+        "transitions": 1013
+      },
+      {
+        "file": "train/env_005_03.npz",
+        "source": "env_005_03.pkl",
+        "context_group": "2efdb369ee95ea63aeaf66a83813e86ecb803ccd1b96ed1c5dc2070cc886e1f3",
+        "transitions": 1107
+      },
+      {
+        "file": "train/env_077_01.npz",
+        "source": "env_077_01.pkl",
+        "context_group": "2f31ff3864e31a1b4cbd67a58b8a29ec657676413a8e0522f08ccae35cafc0f4",
+        "transitions": 1077
+      },
+      {
+        "file": "train/env_113_04.npz",
+        "source": "env_113_04.pkl",
+        "context_group": "2fc1c702ba7cb3514fce2468e86b3e99677968e71a19a5f40db6864a47010fe3",
+        "transitions": 850
+      },
+      {
+        "file": "train/env_084_05.npz",
+        "source": "env_084_05.pkl",
+        "context_group": "2fef514ccd1ef97924f418950095553c371fbe11de8c2be589127daf5a4a4c76",
+        "transitions": 1044
+      },
+      {
+        "file": "train/env_141_03.npz",
+        "source": "env_141_03.pkl",
+        "context_group": "303a2c176f6d620bf431f425107b8b36fe2d174b9d58c5a410506a4ca5d9d276",
+        "transitions": 878
+      },
+      {
+        "file": "train/env_007_04.npz",
+        "source": "env_007_04.pkl",
+        "context_group": "30421a44659f721a991f14972288f0aaa020d0bdd1efed1837f46641035f2106",
+        "transitions": 887
+      },
+      {
+        "file": "train/env_066_03.npz",
+        "source": "env_066_03.pkl",
+        "context_group": "30d239f2938bfa6319b39f1f20d94d299b30850a34b014584e620ebf34ba9a4e",
+        "transitions": 1094
+      },
+      {
+        "file": "train/env_016_01.npz",
+        "source": "env_016_01.pkl",
+        "context_group": "30f7dacb5dea62278880956fca464a363e70da1132ca2ec5ef08f432ac87ccf4",
+        "transitions": 1281
+      },
+      {
+        "file": "train/env_039_06.npz",
+        "source": "env_039_06.pkl",
+        "context_group": "316b6a1a96f212f1742bd6ffca30b2ab5a0453ead1d94ef8d15662a8da0488bb",
+        "transitions": 867
+      },
+      {
+        "file": "train/env_083_04.npz",
+        "source": "env_083_04.pkl",
+        "context_group": "3245c76949ae1f09a351221cce8644406fb69c4bbcb7059330aa0eaf336acd52",
+        "transitions": 1263
+      },
+      {
+        "file": "train/env_086_05.npz",
+        "source": "env_086_05.pkl",
+        "context_group": "32e4c2ca7a597c7e24bb0785b23ef97768bf282b04f0c0a73d27e7eb9f4368d7",
+        "transitions": 828
+      },
+      {
+        "file": "train/env_027_05.npz",
+        "source": "env_027_05.pkl",
+        "context_group": "32f7095eefb589e7b4229a344c3155fc296d83564686667a0f869f38b6d42966",
+        "transitions": 712
+      },
+      {
+        "file": "train/env_058_05.npz",
+        "source": "env_058_05.pkl",
+        "context_group": "331563f96c59e78a578487cd088964309959bec355f12f42fd04556112bf2d71",
+        "transitions": 953
+      },
+      {
+        "file": "train/env_065_05.npz",
+        "source": "env_065_05.pkl",
+        "context_group": "334f56d62562406fcb0f4af6d4e34913a79686bed937773409a8f9b4cab18789",
+        "transitions": 810
+      },
+      {
+        "file": "train/env_124_01.npz",
+        "source": "env_124_01.pkl",
+        "context_group": "33db8f8d31e78bcf8823238419c03cbc8d33c221ddc61febe8bdc8b3d3e97766",
+        "transitions": 979
+      },
+      {
+        "file": "train/env_049_03.npz",
+        "source": "env_049_03.pkl",
+        "context_group": "340087df46dfc8f0f7e29348a1baa81b738e161c7caed657e1feea33cb3829fa",
+        "transitions": 1053
+      },
+      {
+        "file": "train/env_056_04.npz",
+        "source": "env_056_04.pkl",
+        "context_group": "342e9c4916374b64a6b8381a17e5768aa98f9b6943adb555acc4b2ad3e395203",
+        "transitions": 908
+      },
+      {
+        "file": "train/env_097_02.npz",
+        "source": "env_097_02.pkl",
+        "context_group": "343ab95003f5dc664afbee5c7531561a57fc7007d5ba81d27732b22c631cc7d4",
+        "transitions": 1247
+      },
+      {
+        "file": "train/env_099_04.npz",
+        "source": "env_099_04.pkl",
+        "context_group": "34e8acd263fffc60f2301ed4e1c2230a634cd51ac67a234136238a0961398207",
+        "transitions": 845
+      },
+      {
+        "file": "train/env_008_01.npz",
+        "source": "env_008_01.pkl",
+        "context_group": "34f709943e78f990884b1aa3a47ff74eb8534bbed08f3fc5ab1203d2f66a6182",
+        "transitions": 1312
+      },
+      {
+        "file": "train/env_043_06.npz",
+        "source": "env_043_06.pkl",
+        "context_group": "359a35558861e0f7b64e2ade16157886a03eb86fd5b81fdae35cfda00ea9e8ba",
+        "transitions": 959
+      },
+      {
+        "file": "train/env_094_04.npz",
+        "source": "env_094_04.pkl",
+        "context_group": "36513008edaf7dbd924f0cbdd286b6a8f1435aad20e01ff9d499b7190a7964c6",
+        "transitions": 895
+      },
+      {
+        "file": "train/env_086_04.npz",
+        "source": "env_086_04.pkl",
+        "context_group": "367a05cd82fdf109571f7717a3b3bf866c29ce91fd687a08d5482d57dbeb366e",
+        "transitions": 920
+      },
+      {
+        "file": "train/env_095_03.npz",
+        "source": "env_095_03.pkl",
+        "context_group": "371972ed5faf5b829341a6c14541253987f36531a1a88ca956e6a190c6e40da3",
+        "transitions": 1029
+      },
+      {
+        "file": "train/env_033_05.npz",
+        "source": "env_033_05.pkl",
+        "context_group": "37bea68578347fddb898e708882efba66ed0897fd7d8ecb61d4a4add6906bded",
+        "transitions": 969
+      },
+      {
+        "file": "train/env_093_03.npz",
+        "source": "env_093_03.pkl",
+        "context_group": "37c9c4a0b65b46df3ea2c8210449e5a1c30df64032108f3e48362a32e74420ba",
+        "transitions": 801
+      },
+      {
+        "file": "train/env_083_06.npz",
+        "source": "env_083_06.pkl",
+        "context_group": "384f58104da30b46867a39cdcd93f6fe893940547e66ceb94be44eb2267050d3",
+        "transitions": 1038
+      },
+      {
+        "file": "train/env_058_06.npz",
+        "source": "env_058_06.pkl",
+        "context_group": "38958c48c7a9fecfb5500398a284395b6a9c4d6932d217c3fb1440b0e107f052",
+        "transitions": 817
+      },
+      {
+        "file": "train/env_129_02.npz",
+        "source": "env_129_02.pkl",
+        "context_group": "38ae72c34142fcf7835d97e70b13bd56129df5e0bde996c981a9adce7b72db2b",
+        "transitions": 884
+      },
+      {
+        "file": "train/env_149_01.npz",
+        "source": "env_149_01.pkl",
+        "context_group": "38b5c7ee07041b86d3b7df7d59feb34bf293551136f6665111cd690617b9e68d",
+        "transitions": 995
+      },
+      {
+        "file": "train/env_035_06.npz",
+        "source": "env_035_06.pkl",
+        "context_group": "38bbc3166aadf223e73101488842ae4c292ae8bdcb7f6772476a701c88b2ce4a",
+        "transitions": 1028
+      },
+      {
+        "file": "train/env_148_02.npz",
+        "source": "env_148_02.pkl",
+        "context_group": "38ca6ae7a74d9e4c1bcde061e7f7e6689969e413eb102006613caf6a62ca6ddf",
+        "transitions": 732
+      },
+      {
+        "file": "train/env_077_06.npz",
+        "source": "env_077_06.pkl",
+        "context_group": "394d7eb15058c3207b2058e160b3a4a5d9c696e4327eac580401bff1c4a27f8b",
+        "transitions": 1112
+      },
+      {
+        "file": "train/env_061_05.npz",
+        "source": "env_061_05.pkl",
+        "context_group": "3976efb4aa6d0b5e62a0b27cdc3df32db672692dc58ccd864e48511b36abcd22",
+        "transitions": 1198
+      },
+      {
+        "file": "train/env_060_01.npz",
+        "source": "env_060_01.pkl",
+        "context_group": "39c51e3e0d33b472beb562b68c62bd40b3d79142da27836c66ab9e4d93ab0924",
+        "transitions": 1766
+      },
+      {
+        "file": "train/env_081_04.npz",
+        "source": "env_081_04.pkl",
+        "context_group": "39c994a92271d7bc3ac6915370b200c490adc6ede3a84f9e39f07e62325f4a02",
+        "transitions": 1212
+      },
+      {
+        "file": "train/env_103_02.npz",
+        "source": "env_103_02.pkl",
+        "context_group": "3a30b1d16bb41c664cea092ac6db4476901eb3a541b52736f34876e91a762bda",
+        "transitions": 739
+      },
+      {
+        "file": "train/env_117_03.npz",
+        "source": "env_117_03.pkl",
+        "context_group": "3a3c025611761be36875e8a0f589638ae479f193880935d22e9e671d497f54c4",
+        "transitions": 844
+      },
+      {
+        "file": "train/env_092_05.npz",
+        "source": "env_092_05.pkl",
+        "context_group": "3abb14057b85f23beff80a3ce4025097b85e78726ee4fab134a4d4dd984f94b6",
+        "transitions": 946
+      },
+      {
+        "file": "train/env_058_02.npz",
+        "source": "env_058_02.pkl",
+        "context_group": "3ac9c147878ef3e305a1b906a98984f44fd9a6ca06f07cb90cd4b477bebe1971",
+        "transitions": 1579
+      },
+      {
+        "file": "train/env_087_05.npz",
+        "source": "env_087_05.pkl",
+        "context_group": "3b3a4025c20c81d9d5d09be351867aadd1d24cca424e81e4eeb2f5bef71da509",
+        "transitions": 963
+      },
+      {
+        "file": "train/env_111_04.npz",
+        "source": "env_111_04.pkl",
+        "context_group": "3b6a388f7e065c49d8c0b3e48845aaf6cf9bebad9cd29680764b1e5505137a24",
+        "transitions": 810
+      },
+      {
+        "file": "train/env_031_02.npz",
+        "source": "env_031_02.pkl",
+        "context_group": "3b8e25fb09e6a39070091c4e8f28c26f24986007ae05f0ef41064ff773f34c8a",
+        "transitions": 1410
+      },
+      {
+        "file": "train/env_054_03.npz",
+        "source": "env_054_03.pkl",
+        "context_group": "3bb616f5b1af01b6b413d9559ec188c09524d1a9c487d7a782cb7ec505ef5b74",
+        "transitions": 1053
+      },
+      {
+        "file": "train/env_074_04.npz",
+        "source": "env_074_04.pkl",
+        "context_group": "3bc96934140697455ee50528114eae6d344087a94c2ddecbb73ca84b0f7866b1",
+        "transitions": 840
+      },
+      {
+        "file": "train/env_066_02.npz",
+        "source": "env_066_02.pkl",
+        "context_group": "3be9bba282f5624900b0aa33667fcc8695d584baaa8197e07be75868f209280d",
+        "transitions": 1024
+      },
+      {
+        "file": "train/env_069_02.npz",
+        "source": "env_069_02.pkl",
+        "context_group": "3c94c2438bd4c0358d744f01fdec8082af1dd60994892eeebc763c7f25cc106d",
+        "transitions": 845
+      },
+      {
+        "file": "train/env_132_04.npz",
+        "source": "env_132_04.pkl",
+        "context_group": "3d4735b962a44dacd5c5e16984b1d3a57997d35f8581dcfffb40da2ce373d4d2",
+        "transitions": 706
+      },
+      {
+        "file": "train/env_096_02.npz",
+        "source": "env_096_02.pkl",
+        "context_group": "3d8aeb52da5ea0b238544f212d571978b350e10b0c0eed5c378a9bff1991e6f0",
+        "transitions": 917
+      },
+      {
+        "file": "train/env_009_04.npz",
+        "source": "env_009_04.pkl",
+        "context_group": "3df9921f31a975c43e163d6268293d438be91bb2fa7baa38c5aaaf2ee3d01418",
+        "transitions": 938
+      },
+      {
+        "file": "train/env_083_03.npz",
+        "source": "env_083_03.pkl",
+        "context_group": "3e8d19dcfbde10c18aa5786a6382aa8eda1b3bbb790dfbb97d331ff8fa9dab6b",
+        "transitions": 803
+      },
+      {
+        "file": "train/env_090_04.npz",
+        "source": "env_090_04.pkl",
+        "context_group": "3eea99f7a6c58f6a989a546c59428cb7d77c30c3fb95aa221b1821de36dcaa46",
+        "transitions": 1229
+      },
+      {
+        "file": "train/env_102_01.npz",
+        "source": "env_102_01.pkl",
+        "context_group": "3f2a89a0040cbfdb9fee234b9442fa7365968f55f8d72271c781c206d39cbf0b",
+        "transitions": 1152
+      },
+      {
+        "file": "train/env_081_05.npz",
+        "source": "env_081_05.pkl",
+        "context_group": "3f3a3928e60d39df4581a9799136a7721586caa6082b706a0cefa05a97e57b22",
+        "transitions": 834
+      },
+      {
+        "file": "train/env_003_03.npz",
+        "source": "env_003_03.pkl",
+        "context_group": "3f8db23afd154a30336769dea3466600e7aec262243fba87d0d1b417d97502eb",
+        "transitions": 1059
+      },
+      {
+        "file": "train/env_134_02.npz",
+        "source": "env_134_02.pkl",
+        "context_group": "3fa150213f99ac2962fbf397b2ac7bf6bed74a71682a57b2b2e104511736424f",
+        "transitions": 1045
+      },
+      {
+        "file": "train/env_139_02.npz",
+        "source": "env_139_02.pkl",
+        "context_group": "4012167634affb302ecbe9c02d3775f1d57dc34d108bad57425323ad1e603c57",
+        "transitions": 988
+      },
+      {
+        "file": "train/env_054_05.npz",
+        "source": "env_054_05.pkl",
+        "context_group": "40ded8abff34a7e4d5812be65b6c41b9859725f5811b43be22b39e709151b670",
+        "transitions": 855
+      },
+      {
+        "file": "train/env_013_02.npz",
+        "source": "env_013_02.pkl",
+        "context_group": "41bf68a262c9878f47481e2a32846b2bba58fbccac7115c797590aaa13a5b40e",
+        "transitions": 1114
+      },
+      {
+        "file": "train/env_126_04.npz",
+        "source": "env_126_04.pkl",
+        "context_group": "41cb26e69a6191e9fea6006dd74d0392be813e7001ce2bd0bab5c1cf0d4c4b1f",
+        "transitions": 788
+      },
+      {
+        "file": "train/env_010_04.npz",
+        "source": "env_010_04.pkl",
+        "context_group": "440d7d15c9165fa6c85f2d14f837900336b230c5501756c3df7db70f5466f36f",
+        "transitions": 1034
+      },
+      {
+        "file": "train/env_010_03.npz",
+        "source": "env_010_03.pkl",
+        "context_group": "442c2bb229e5054a073921894277c80b1161bf72fb29a4be46a7e21036f38529",
+        "transitions": 1106
+      },
+      {
+        "file": "train/env_063_06.npz",
+        "source": "env_063_06.pkl",
+        "context_group": "4438aec27444122b228175bd82f3fce39649b0d0f80e7f7dd452f3aaf6dc4fc7",
+        "transitions": 906
+      },
+      {
+        "file": "train/env_025_03.npz",
+        "source": "env_025_03.pkl",
+        "context_group": "445929cc24c0641f6f0ffbcf2491e0d2a183094a208df2e56386a33583fd391b",
+        "transitions": 1054
+      },
+      {
+        "file": "train/env_019_01.npz",
+        "source": "env_019_01.pkl",
+        "context_group": "449974c0750d509b3f7af2878ef84af65d3682ad31af1ef44958876750e58e39",
+        "transitions": 1015
+      },
+      {
+        "file": "train/env_098_04.npz",
+        "source": "env_098_04.pkl",
+        "context_group": "44cfd361e5e98f341c21edcdae54da535c6d61e47ba67540382bbcae45c8429a",
+        "transitions": 1072
+      },
+      {
+        "file": "train/env_030_04.npz",
+        "source": "env_030_04.pkl",
+        "context_group": "44da53f030df62401e47b916f7f3d613961e14654daf73e32abb9d4c1c0525c8",
+        "transitions": 979
+      },
+      {
+        "file": "train/env_007_05.npz",
+        "source": "env_007_05.pkl",
+        "context_group": "45585cd07089a3578c5eed2f99fe395a0d48fe122b3746661cba84a37d8e9c1e",
+        "transitions": 928
+      },
+      {
+        "file": "train/env_068_06.npz",
+        "source": "env_068_06.pkl",
+        "context_group": "455af90d2bd47ffaced157c6d4498259f6599f42e06c539ade7fb3950dccbade",
+        "transitions": 782
+      },
+      {
+        "file": "train/env_070_01.npz",
+        "source": "env_070_01.pkl",
+        "context_group": "457ea0a8345bd8ad7f552da7ea5c58e27b167bb6dd40510fbf22c6d9efe70b45",
+        "transitions": 1534
+      },
+      {
+        "file": "train/env_097_05.npz",
+        "source": "env_097_05.pkl",
+        "context_group": "4799d9ec6f67b24422e0c4f039b7c2be3449437c6aef1f809284e133a5580bfe",
+        "transitions": 922
+      },
+      {
+        "file": "train/env_062_02.npz",
+        "source": "env_062_02.pkl",
+        "context_group": "47a0fa0445362952675efd7dc5adc74f855ff24de753580e43bc0a57f38e2ac2",
+        "transitions": 1202
+      },
+      {
+        "file": "train/env_013_01.npz",
+        "source": "env_013_01.pkl",
+        "context_group": "47ab1ee57633287083ec16d0728b9048439386eadca0fab6af6e2c0562d6fc76",
+        "transitions": 1192
+      },
+      {
+        "file": "train/env_039_03.npz",
+        "source": "env_039_03.pkl",
+        "context_group": "48a5b28595dafb55841f5c0f725efc9b1c5c514223de06a46138cdfac8605295",
+        "transitions": 1052
+      },
+      {
+        "file": "train/env_042_06.npz",
+        "source": "env_042_06.pkl",
+        "context_group": "4954b32435e2cce1e2d7c10d8194fc0a99181ef29ad173aff5af2e64261c0554",
+        "transitions": 892
+      },
+      {
+        "file": "train/env_020_05.npz",
+        "source": "env_020_05.pkl",
+        "context_group": "49d388aa73953bec084694935f045f16ee334d3ad6b76646cb29d30d889ef423",
+        "transitions": 975
+      },
+      {
+        "file": "train/env_057_04.npz",
+        "source": "env_057_04.pkl",
+        "context_group": "4a425e4b45f0d58f2c287128d8dd9ab838a137390e64e27a9e42563b18c6b433",
+        "transitions": 1037
+      },
+      {
+        "file": "train/env_045_05.npz",
+        "source": "env_045_05.pkl",
+        "context_group": "4a61c520906d82892a426ee07b1dbc1fc3afcc76d94a290fb6856545c78d21bc",
+        "transitions": 905
+      },
+      {
+        "file": "train/env_006_06.npz",
+        "source": "env_006_06.pkl",
+        "context_group": "4a92dec55aee546ed9fdfeafab3294fd1c578f60bfa0074cb5a6ee8de9cff8b4",
+        "transitions": 750
+      },
+      {
+        "file": "train/env_074_01.npz",
+        "source": "env_074_01.pkl",
+        "context_group": "4b3047e90af7fe62bb4fb809837661253f31d883682c6a824f261dd84215bf53",
+        "transitions": 1407
+      },
+      {
+        "file": "train/env_110_04.npz",
+        "source": "env_110_04.pkl",
+        "context_group": "4b3a6e0787a57ad644ccdb2e05c610c3bb4d004c145b9125809482ca827d8c89",
+        "transitions": 1069
+      },
+      {
+        "file": "train/env_088_06.npz",
+        "source": "env_088_06.pkl",
+        "context_group": "4b8428c16b49412ef6d2b87967687355d519c47dc1194749bd0e4000cef12106",
+        "transitions": 768
+      },
+      {
+        "file": "train/env_072_02.npz",
+        "source": "env_072_02.pkl",
+        "context_group": "4b9e0dc5868c137f8a557a1576687581b436a781f15333438270c27743b95900",
+        "transitions": 1647
+      },
+      {
+        "file": "train/env_083_01.npz",
+        "source": "env_083_01.pkl",
+        "context_group": "4c6c9dc288d575d0d15bf518afcea354f468147e6a647da6dfaadaa7ea83129a",
+        "transitions": 1797
+      },
+      {
+        "file": "train/env_094_03.npz",
+        "source": "env_094_03.pkl",
+        "context_group": "4c7ae6ef60d7e980d34be5699f228cbbbf8bb1e58c751ef91e906a5ceccec91b",
+        "transitions": 783
+      },
+      {
+        "file": "train/env_008_02.npz",
+        "source": "env_008_02.pkl",
+        "context_group": "4d214a392f70e5077713a57311e9aabe04fd9b708f9de8a57f82917169cb5304",
+        "transitions": 1054
+      },
+      {
+        "file": "train/env_118_03.npz",
+        "source": "env_118_03.pkl",
+        "context_group": "4d33005958e5c4f3ab61b65261ea30d301f3c08154d04c0a8dbae34480181310",
+        "transitions": 942
+      },
+      {
+        "file": "train/env_028_02.npz",
+        "source": "env_028_02.pkl",
+        "context_group": "4d7f32573063078af689e677a3d1bbcf8133c1e187204ece4f262676b8e68709",
+        "transitions": 1353
+      },
+      {
+        "file": "train/env_004_04.npz",
+        "source": "env_004_04.pkl",
+        "context_group": "4dada18e11bc5673f8d49700da949c2951f94953753730a871c7e5e61a9be525",
+        "transitions": 1123
+      },
+      {
+        "file": "train/env_006_04.npz",
+        "source": "env_006_04.pkl",
+        "context_group": "4e3ca6bd2515dbed25d66d638f6c4bc09850364f45d18de2dd6ff0de0e5414fd",
+        "transitions": 902
+      },
+      {
+        "file": "train/env_072_06.npz",
+        "source": "env_072_06.pkl",
+        "context_group": "4e8fc8eac3d7949a7352749e41193ca80d2ce2ab102128805d6527623e5e9486",
+        "transitions": 960
+      },
+      {
+        "file": "train/env_098_03.npz",
+        "source": "env_098_03.pkl",
+        "context_group": "4ed255c43b3a9644bfaad9b1e3b2ce1d4f89a5e52f0e224e5733f0aebfc6ae2d",
+        "transitions": 817
+      },
+      {
+        "file": "train/env_066_01.npz",
+        "source": "env_066_01.pkl",
+        "context_group": "4f27f36044421dbf6c821729f8665466ec28d7d3d94ee4fb1533419b9da611ef",
+        "transitions": 1354
+      },
+      {
+        "file": "train/env_034_04.npz",
+        "source": "env_034_04.pkl",
+        "context_group": "4f900b205279e8c091cfdc894873f4916db7a0ebe0bcbe245bdd8d92e586e6a7",
+        "transitions": 1119
+      },
+      {
+        "file": "train/env_037_04.npz",
+        "source": "env_037_04.pkl",
+        "context_group": "4f984927126b315f5adb99c1ca09aefc400242c4ad04505e9b53b15b2d2104e1",
+        "transitions": 1059
+      },
+      {
+        "file": "train/env_105_02.npz",
+        "source": "env_105_02.pkl",
+        "context_group": "4fd7692fc83ce4067988d7b22c9f60e0163955a48c0e9ea54a2e524c344486f3",
+        "transitions": 1150
+      },
+      {
+        "file": "train/env_131_03.npz",
+        "source": "env_131_03.pkl",
+        "context_group": "5010d1d1f33def34036d51a0e45ca65e73ae25e6fcea4b5c9aa95edfffffd83d",
+        "transitions": 949
+      },
+      {
+        "file": "train/env_086_01.npz",
+        "source": "env_086_01.pkl",
+        "context_group": "5071d1f9b9198d9f1235a337e26a4bf8f9e6f0d13400f0ff6bccc20ce1721ce8",
+        "transitions": 2354
+      },
+      {
+        "file": "train/env_048_04.npz",
+        "source": "env_048_04.pkl",
+        "context_group": "509beb5e9c7a5e78da73848180177e0c805438ed277eaa6e891556448f2796af",
+        "transitions": 863
+      },
+      {
+        "file": "train/env_138_02.npz",
+        "source": "env_138_02.pkl",
+        "context_group": "52c2c298d04c6161594d0b38ea047baadac881ec82e7ee50edb03aa147374a05",
+        "transitions": 1044
+      },
+      {
+        "file": "train/env_126_03.npz",
+        "source": "env_126_03.pkl",
+        "context_group": "53b5c4ac4e09928f33ecb676418b6b38310cab3d68172399d38c179b8fb4e515",
+        "transitions": 1205
+      },
+      {
+        "file": "train/env_060_04.npz",
+        "source": "env_060_04.pkl",
+        "context_group": "54d6bb79c1469acc4dc33a7d0a2ea6711fda7e8027fd316a68a77d096d1a409e",
+        "transitions": 835
+      },
+      {
+        "file": "train/env_132_03.npz",
+        "source": "env_132_03.pkl",
+        "context_group": "5503c25589d0f06ed422c37e2ce59472b881449fb10e6c5b1c6e43b4b4a6c6b7",
+        "transitions": 944
+      },
+      {
+        "file": "train/env_073_05.npz",
+        "source": "env_073_05.pkl",
+        "context_group": "5522f1803c6b2fe8c7b8579b8c1cfc7c7ad3bee27f80358ed2df3f7a1d9800ea",
+        "transitions": 819
+      },
+      {
+        "file": "train/env_069_04.npz",
+        "source": "env_069_04.pkl",
+        "context_group": "552d74a3b5a17f25e117e4da520750102b2171b023964201c09b3e5e1aa3020c",
+        "transitions": 795
+      },
+      {
+        "file": "train/env_048_03.npz",
+        "source": "env_048_03.pkl",
+        "context_group": "55ee7b1c36c0e6dc68801243fbe7f46256901227e358642350b75864052aa89c",
+        "transitions": 1556
+      },
+      {
+        "file": "train/env_123_03.npz",
+        "source": "env_123_03.pkl",
+        "context_group": "564c9b66f51507a487e41293fae5ce6c7202580cbef60b25855837805d3cdd08",
+        "transitions": 976
+      },
+      {
+        "file": "train/env_032_03.npz",
+        "source": "env_032_03.pkl",
+        "context_group": "56657422034c892d903a383be902af00d52eed6f66673dd0139d385f0c9bd33e",
+        "transitions": 851
+      },
+      {
+        "file": "train/env_133_04.npz",
+        "source": "env_133_04.pkl",
+        "context_group": "5682472ae3384a98cdcd730b5dcaebb795d7d32ed0da0ce5c386bbd5c7c7de24",
+        "transitions": 782
+      },
+      {
+        "file": "train/env_061_04.npz",
+        "source": "env_061_04.pkl",
+        "context_group": "575958a9410bfe71d78863f0ce2b7e58978e574a14e5682b4d279cff9b455241",
+        "transitions": 981
+      },
+      {
+        "file": "train/env_028_04.npz",
+        "source": "env_028_04.pkl",
+        "context_group": "5762470fc7e1c85318a6f56c25d9738be2b26e8d3af773ed6689ae96296eb597",
+        "transitions": 860
+      },
+      {
+        "file": "train/env_020_01.npz",
+        "source": "env_020_01.pkl",
+        "context_group": "5849257f95d3d1b72745ddcdfd9ea2b6184a593305660ae521cce026d4cf4dc7",
+        "transitions": 759
+      },
+      {
+        "file": "train/env_063_04.npz",
+        "source": "env_063_04.pkl",
+        "context_group": "58e82b4f329e6354c46d31b9420d553a05d0c95f2f840e6fed0e42bc0e0d33b6",
+        "transitions": 891
+      },
+      {
+        "file": "train/env_033_03.npz",
+        "source": "env_033_03.pkl",
+        "context_group": "5907f57c5fc8b4915515c9e332dd6355f777dc6a191beaf3e89a64e70eb29b27",
+        "transitions": 930
+      },
+      {
+        "file": "train/env_087_04.npz",
+        "source": "env_087_04.pkl",
+        "context_group": "594afb2226214cd443f5c47aa737ad4c6c36a5de22cd1b4b68f1b2d3fa58d8ca",
+        "transitions": 845
+      },
+      {
+        "file": "train/env_009_05.npz",
+        "source": "env_009_05.pkl",
+        "context_group": "59ba74b45d5674ee2b48887e8ea839178d89f5ae96705bfb8713649df26b26dd",
+        "transitions": 1285
+      },
+      {
+        "file": "train/env_038_06.npz",
+        "source": "env_038_06.pkl",
+        "context_group": "59d675e2c724fd905f4d0ab331355d36c0466689e5bf8dc1f60205549174d539",
+        "transitions": 733
+      },
+      {
+        "file": "train/env_127_04.npz",
+        "source": "env_127_04.pkl",
+        "context_group": "5bd0ded6ea8c313be32a3c16f80c3abe172e002a936f8ff33536419364d8fb43",
+        "transitions": 923
+      },
+      {
+        "file": "train/env_133_03.npz",
+        "source": "env_133_03.pkl",
+        "context_group": "5bf773144e1c988955c33df9f925457b2262ffca11bdc0bcb7a5a3e335eb915a",
+        "transitions": 793
+      },
+      {
+        "file": "train/env_012_01.npz",
+        "source": "env_012_01.pkl",
+        "context_group": "5c39ebd81ee61c76ef03f978fbd89cdf4d57330de786f28db77e583a7c7fe95f",
+        "transitions": 879
+      },
+      {
+        "file": "train/env_040_03.npz",
+        "source": "env_040_03.pkl",
+        "context_group": "5c41ef7d2e3636e64812abf484e772045b2f3013c58a0b621260d59fa9027144",
+        "transitions": 1089
+      },
+      {
+        "file": "train/env_033_04.npz",
+        "source": "env_033_04.pkl",
+        "context_group": "5c6d9a64d4df765184d4e72985c599e9f4e8417182eb301a51d47fe93d1c8b2c",
+        "transitions": 933
+      },
+      {
+        "file": "train/env_138_01.npz",
+        "source": "env_138_01.pkl",
+        "context_group": "5d4b5e45120cac7f0f0d6cedcbef7f9886d337e152e7910bb2232518e54274ea",
+        "transitions": 828
+      },
+      {
+        "file": "train/env_019_04.npz",
+        "source": "env_019_04.pkl",
+        "context_group": "5de0f8ae58bfb7cde5cdcfbeea726c5f889e5d1d18fc7a9f8ecb94869f703054",
+        "transitions": 1213
+      },
+      {
+        "file": "train/env_024_05.npz",
+        "source": "env_024_05.pkl",
+        "context_group": "5e6add5e9aa06350d153bdad26a520f951672b6c0a28dc915aa39cd20375bb67",
+        "transitions": 849
+      },
+      {
+        "file": "train/env_073_04.npz",
+        "source": "env_073_04.pkl",
+        "context_group": "5e70c3bdbcf28dce92079d092e8361f01d0b7522d7f88b861831f6095712a599",
+        "transitions": 812
+      },
+      {
+        "file": "train/env_100_05.npz",
+        "source": "env_100_05.pkl",
+        "context_group": "5e783e532ed5a44b48c97a0f0bb6b83e9f6f98eeb788fbe11114063e36eb666a",
+        "transitions": 791
+      },
+      {
+        "file": "train/env_028_06.npz",
+        "source": "env_028_06.pkl",
+        "context_group": "5e89e86d77f109a935fe9730742411325a60a49a2877eab3a6cebcd6edba6d0e",
+        "transitions": 865
+      },
+      {
+        "file": "train/env_016_05.npz",
+        "source": "env_016_05.pkl",
+        "context_group": "5e95114f8d4d29ca475d0ed5d4e838aa64b37ba5d71dfb866335953cedcaea86",
+        "transitions": 976
+      },
+      {
+        "file": "train/env_063_03.npz",
+        "source": "env_063_03.pkl",
+        "context_group": "5f09e56b83f8f72020d178cf112c7c02322c3495a831e3c9fae5c153cd454063",
+        "transitions": 875
+      },
+      {
+        "file": "train/env_148_04.npz",
+        "source": "env_148_04.pkl",
+        "context_group": "5f813e70998d7c06d7b2c05ab1d06297a1c70f03e212cb23ded26f767a6557c1",
+        "transitions": 685
+      },
+      {
+        "file": "train/env_095_06.npz",
+        "source": "env_095_06.pkl",
+        "context_group": "5fce8b0817aa7370ae761ac1b9d0cd5a22189c6da6ad1261cb33043edc552d79",
+        "transitions": 885
+      },
+      {
+        "file": "train/env_019_06.npz",
+        "source": "env_019_06.pkl",
+        "context_group": "5fecc56fb23d015d913bdf5c3be6dc5342b0ea045ad3fcf644ef0943498f5254",
+        "transitions": 819
+      },
+      {
+        "file": "train/env_096_06.npz",
+        "source": "env_096_06.pkl",
+        "context_group": "6024f0554ec28d3d0a091c6c333b83cdde98263b559348b848b06833e53a8085",
+        "transitions": 836
+      },
+      {
+        "file": "train/env_055_04.npz",
+        "source": "env_055_04.pkl",
+        "context_group": "6049b66621969dde47579c7153c941e304614950bd82703b9ad69807b5a19bc6",
+        "transitions": 1020
+      },
+      {
+        "file": "train/env_037_05.npz",
+        "source": "env_037_05.pkl",
+        "context_group": "604cd7bc1532854adb0e23a0c9b298fd4eb455f879312ccbf10d79da221ad9b7",
+        "transitions": 1704
+      },
+      {
+        "file": "train/env_088_05.npz",
+        "source": "env_088_05.pkl",
+        "context_group": "6157ab49a9c6d7e2b168416291868b1f56b54af33106cda3dd30e6f202e11310",
+        "transitions": 763
+      },
+      {
+        "file": "train/env_130_04.npz",
+        "source": "env_130_04.pkl",
+        "context_group": "617f946aadda1c53e6bcc4bb6b908b6d84d0597f147100d2a119cf47583a0f1c",
+        "transitions": 738
+      },
+      {
+        "file": "train/env_104_03.npz",
+        "source": "env_104_03.pkl",
+        "context_group": "61a5c95fe263a2ad9e264d542fa77232f686689b99972834bd8207e5bd400391",
+        "transitions": 874
+      },
+      {
+        "file": "train/env_055_01.npz",
+        "source": "env_055_01.pkl",
+        "context_group": "623440545ae00fe178b249a12454c30a14e5ed160d32c4b9014c0d0be288318a",
+        "transitions": 1516
+      },
+      {
+        "file": "train/env_098_05.npz",
+        "source": "env_098_05.pkl",
+        "context_group": "62b1785d0507db8f597790404cd0217d6cde2601b1a7ef75c584f5d88e0a93a0",
+        "transitions": 937
+      },
+      {
+        "file": "train/env_135_01.npz",
+        "source": "env_135_01.pkl",
+        "context_group": "62b4b22ad289056671feb82c81693ad32d6dd8267d4880ff4fd09a774eea99c0",
+        "transitions": 1046
+      },
+      {
+        "file": "train/env_101_03.npz",
+        "source": "env_101_03.pkl",
+        "context_group": "635ebf556df6afaa8cd8dff2ac11a5a54e3de9a7512522b0bbc11455470ad4ed",
+        "transitions": 829
+      },
+      {
+        "file": "train/env_018_02.npz",
+        "source": "env_018_02.pkl",
+        "context_group": "636ff7ba94bcf07f5fa181c18d0d1eae158c3672b4aaab71197006d9079bcba1",
+        "transitions": 1078
+      },
+      {
+        "file": "train/env_067_03.npz",
+        "source": "env_067_03.pkl",
+        "context_group": "63b215f1f06f7d9c1f020cd11ed3d73ae23b5bd5bf8f1872939983e5b68ac1ce",
+        "transitions": 1091
+      },
+      {
+        "file": "train/env_005_04.npz",
+        "source": "env_005_04.pkl",
+        "context_group": "63ee14f41ae4ada7e6bdbef5a7ef91c61d9fa2535bccc0e52af614f41668ed98",
+        "transitions": 1020
+      },
+      {
+        "file": "train/env_078_03.npz",
+        "source": "env_078_03.pkl",
+        "context_group": "6435e021b0b9a769ad2bc7bdc3ee2b6360407c6b8490db08bc02892c76eccceb",
+        "transitions": 1231
+      },
+      {
+        "file": "train/env_104_02.npz",
+        "source": "env_104_02.pkl",
+        "context_group": "645015c98fe808e7436edcbfc5da7f80f2cb470c48edf567c60c79c2e1ea588b",
+        "transitions": 921
+      },
+      {
+        "file": "train/env_001_06.npz",
+        "source": "env_001_06.pkl",
+        "context_group": "64ed447d921f0cdaf4de641024ef6b04c1edbad709b993d2caff7e8bf6ce45c8",
+        "transitions": 1077
+      },
+      {
+        "file": "train/env_046_03.npz",
+        "source": "env_046_03.pkl",
+        "context_group": "6503728528c714b825180238f44e6bdb9c02814a2c265bb70415751c94bc641e",
+        "transitions": 1016
+      },
+      {
+        "file": "train/env_106_04.npz",
+        "source": "env_106_04.pkl",
+        "context_group": "65885a6e3259a9ce444a0ad6fdb2c98c4b2eb547bc194de3d99989082be8b948",
+        "transitions": 703
+      },
+      {
+        "file": "train/env_149_04.npz",
+        "source": "env_149_04.pkl",
+        "context_group": "663eba3fa7e2dffcb5e16011338e210b297e65f7ddf73eaed81e414126eeacb6",
+        "transitions": 594
+      },
+      {
+        "file": "train/env_025_06.npz",
+        "source": "env_025_06.pkl",
+        "context_group": "672662ac019af530db0e021095317ccae432e1954ff4b1762d04fd31cb75a35c",
+        "transitions": 1215
+      },
+      {
+        "file": "train/env_053_03.npz",
+        "source": "env_053_03.pkl",
+        "context_group": "6793c98d53b3485db4643ed09654a572aaf477844d3c0e0a13676853e009aa71",
+        "transitions": 1278
+      },
+      {
+        "file": "train/env_066_05.npz",
+        "source": "env_066_05.pkl",
+        "context_group": "67e95a2621f7327b7c33a2a3e7b3f1592ecbcfb45049ea2507dbe8918327795f",
+        "transitions": 1068
+      },
+      {
+        "file": "train/env_016_02.npz",
+        "source": "env_016_02.pkl",
+        "context_group": "685758d931c0a6ad2cc9e3de569e3c84a8aa2690ff51b341201aa89482c022be",
+        "transitions": 1341
+      },
+      {
+        "file": "train/env_049_02.npz",
+        "source": "env_049_02.pkl",
+        "context_group": "685ca84ed4ac861bfddf4d5967cb22cbe15a8993a9c08e60de585f08d0755673",
+        "transitions": 869
+      },
+      {
+        "file": "train/env_002_05.npz",
+        "source": "env_002_05.pkl",
+        "context_group": "6885b6d0deebf408ef30623faeb30be49fa8393f3c6d489c5d073cd10b9f9fe3",
+        "transitions": 906
+      },
+      {
+        "file": "train/env_018_04.npz",
+        "source": "env_018_04.pkl",
+        "context_group": "68ef1cefaf779c9af9d6b5d39fd66575450c66f55b8de86047efb9c40d9e5b1b",
+        "transitions": 797
+      },
+      {
+        "file": "train/env_081_02.npz",
+        "source": "env_081_02.pkl",
+        "context_group": "694fa951ce46c20929a24667561e6586d7fdbcaa3d0b0ac79a0ecb5b5f645460",
+        "transitions": 982
+      },
+      {
+        "file": "train/env_150_03.npz",
+        "source": "env_150_03.pkl",
+        "context_group": "699e54d8e35a78b29be121eb03faa84fa9e7524ef487ea7bb1561e768681317d",
+        "transitions": 813
+      },
+      {
+        "file": "train/env_082_06.npz",
+        "source": "env_082_06.pkl",
+        "context_group": "69aa4ed02ea66e7137bea88a823fc949d0eb6cffe43c8795fa18c89419dfd0de",
+        "transitions": 810
+      },
+      {
+        "file": "train/env_137_04.npz",
+        "source": "env_137_04.pkl",
+        "context_group": "69d55b2cb91499b22b779fa1d38a4aabee6563df23644c78ea198206e1e201ea",
+        "transitions": 673
+      },
+      {
+        "file": "train/env_102_03.npz",
+        "source": "env_102_03.pkl",
+        "context_group": "69f60710ce4ffe34c32c173c6e8bce83d70e17ed2f09e72b196dbed44cbcadc6",
+        "transitions": 987
+      },
+      {
+        "file": "train/env_141_02.npz",
+        "source": "env_141_02.pkl",
+        "context_group": "6b21b429749ba889bfa6ffd912446292050ecb7a139936378f07a11e5430e94f",
+        "transitions": 851
+      },
+      {
+        "file": "train/env_061_01.npz",
+        "source": "env_061_01.pkl",
+        "context_group": "6b4aa71ad6d165cc64e1f2d28490e56fdd968c20ac378f03918a434f1c000edc",
+        "transitions": 1498
+      },
+      {
+        "file": "train/env_086_02.npz",
+        "source": "env_086_02.pkl",
+        "context_group": "6b684b801103da298af20846b0dc47c8216bc2e2080523065d5a43225087e2ce",
+        "transitions": 1007
+      },
+      {
+        "file": "train/env_121_01.npz",
+        "source": "env_121_01.pkl",
+        "context_group": "6bb1f5e9113bac9ae360edb1f23157e060e575b87afe20114c5f94df34195ef4",
+        "transitions": 1032
+      },
+      {
+        "file": "train/env_035_04.npz",
+        "source": "env_035_04.pkl",
+        "context_group": "6c46b76cc8b4f450d19f4e4ea05b07ff0e68b928702d11ec914e80418eb188a0",
+        "transitions": 1005
+      },
+      {
+        "file": "train/env_097_06.npz",
+        "source": "env_097_06.pkl",
+        "context_group": "6ccf220bfb933258e979f83b5f3f63a80ca205c9eb63390557b7d7c6741e60bf",
+        "transitions": 716
+      },
+      {
+        "file": "train/env_018_05.npz",
+        "source": "env_018_05.pkl",
+        "context_group": "6cfa24c4f65acdd7eb2cb14291271e581871eba9a5c649174bedaeaaf5ad4eee",
+        "transitions": 860
+      },
+      {
+        "file": "train/env_044_01.npz",
+        "source": "env_044_01.pkl",
+        "context_group": "6d3885779940855022f6e988c6b4addb49263570096fd433c7355218ed523f1f",
+        "transitions": 814
+      },
+      {
+        "file": "train/env_109_04.npz",
+        "source": "env_109_04.pkl",
+        "context_group": "6d6e547140887d58ff24b67b8879f09cb293c0e4ff534a8550dff0f5a4034714",
+        "transitions": 801
+      },
+      {
+        "file": "train/env_096_01.npz",
+        "source": "env_096_01.pkl",
+        "context_group": "6d8e0db8cdaec771c09531eabad59a92dbde0a872ee211fb6c7ccffae11e3aa4",
+        "transitions": 1309
+      },
+      {
+        "file": "train/env_089_05.npz",
+        "source": "env_089_05.pkl",
+        "context_group": "6db00b91c269108578188de255032ba15b30503c274f4771997f40f26cf10db6",
+        "transitions": 1114
+      },
+      {
+        "file": "train/env_053_05.npz",
+        "source": "env_053_05.pkl",
+        "context_group": "6e428d781212d0f22285172325ceae22336a58bd151e7a88183cf824d1dab872",
+        "transitions": 963
+      },
+      {
+        "file": "train/env_015_01.npz",
+        "source": "env_015_01.pkl",
+        "context_group": "6e66a8cf66a073482b5d8e6a044980c2a10073cdb5c02e204b9d4964c3a76f29",
+        "transitions": 819
+      },
+      {
+        "file": "train/env_094_06.npz",
+        "source": "env_094_06.pkl",
+        "context_group": "6e8bbcc97faf9f5902b3359bb96ac49779204f0a2c63f96eaef9e6ff7a9785ad",
+        "transitions": 665
+      },
+      {
+        "file": "train/env_143_01.npz",
+        "source": "env_143_01.pkl",
+        "context_group": "6ec0b873fb517562a2929ca17ce4c3eb0c78b9feb9250be2358de02337d56e30",
+        "transitions": 1262
+      },
+      {
+        "file": "train/env_096_04.npz",
+        "source": "env_096_04.pkl",
+        "context_group": "6f68182fdcf3f489ca43df8ed8dc66d7f18ffec743773e8fae895f94c59d0c34",
+        "transitions": 811
+      },
+      {
+        "file": "train/env_064_04.npz",
+        "source": "env_064_04.pkl",
+        "context_group": "6fa6a887975a387f174cea822acff7d543e8f8427fbfdd48cf214f4a05f3edd1",
+        "transitions": 798
+      },
+      {
+        "file": "train/env_037_03.npz",
+        "source": "env_037_03.pkl",
+        "context_group": "70584d64ebe481126e1880955d01ace1af76dd12c4440da4ad6b4b844b7f204e",
+        "transitions": 984
+      },
+      {
+        "file": "train/env_063_02.npz",
+        "source": "env_063_02.pkl",
+        "context_group": "708b5e81c183c55a21110ddc96c238e3f326ad6ba7c2c7cfa21a54f17b4a5237",
+        "transitions": 1068
+      },
+      {
+        "file": "train/env_021_03.npz",
+        "source": "env_021_03.pkl",
+        "context_group": "709ace383cdad9586b22bad081498cdcee88ebe2e2a42a3ba63c55cb2345d487",
+        "transitions": 939
+      },
+      {
+        "file": "train/env_034_01.npz",
+        "source": "env_034_01.pkl",
+        "context_group": "70c52e06d30aa365aa13618ac7bae873e69d59109ffebf662c154454a0868509",
+        "transitions": 736
+      },
+      {
+        "file": "train/env_018_03.npz",
+        "source": "env_018_03.pkl",
+        "context_group": "7110940bba5a8b32745d5f73302f86cd3de8b53eef43b587fe30bf384014fdca",
+        "transitions": 1355
+      },
+      {
+        "file": "train/env_103_04.npz",
+        "source": "env_103_04.pkl",
+        "context_group": "711cc97947844146c47855bd566ef9c59ba4d58548e52a8c79ab6d34a0a4a7c4",
+        "transitions": 913
+      },
+      {
+        "file": "train/env_004_03.npz",
+        "source": "env_004_03.pkl",
+        "context_group": "71649f58a5837f5d8bdad51a5ef54c3eeeec644e2d1588deea0a2c3da7a71026",
+        "transitions": 1375
+      },
+      {
+        "file": "train/env_133_01.npz",
+        "source": "env_133_01.pkl",
+        "context_group": "71773f96d9a7771ec4e90b8cc6c1a3a890f6be84e201344bfe715c345797b1d4",
+        "transitions": 965
+      },
+      {
+        "file": "train/env_072_01.npz",
+        "source": "env_072_01.pkl",
+        "context_group": "71d00b47e85426f806dbd3d098fe62db735713f640f96f82ecca726f518e89ff",
+        "transitions": 1091
+      },
+      {
+        "file": "train/env_032_01.npz",
+        "source": "env_032_01.pkl",
+        "context_group": "7230a123aaf88b6c0e567fc79f1e9a20edad1c17700bfd9665a8078078a66c1e",
+        "transitions": 821
+      },
+      {
+        "file": "train/env_021_04.npz",
+        "source": "env_021_04.pkl",
+        "context_group": "7263e067d8b5d5741e96d85280066fe4b26f9ed2b588487b5abaf13ceccd7bd8",
+        "transitions": 1058
+      },
+      {
+        "file": "train/env_145_02.npz",
+        "source": "env_145_02.pkl",
+        "context_group": "72a149090d4638cbe831459e55acfb4595ea1116f9e52a53195c2a4c48ba7fa9",
+        "transitions": 657
+      },
+      {
+        "file": "train/env_119_04.npz",
+        "source": "env_119_04.pkl",
+        "context_group": "72fa334c325beafe07c5ae99a82d70fd65840839099f0b2edd9ca2cccfb54e4e",
+        "transitions": 948
+      },
+      {
+        "file": "train/env_071_04.npz",
+        "source": "env_071_04.pkl",
+        "context_group": "732f7370f3e125568846f80346bb313749c5aa3667f03d092ed66c478870edb2",
+        "transitions": 1028
+      },
+      {
+        "file": "train/env_063_01.npz",
+        "source": "env_063_01.pkl",
+        "context_group": "733e070a5a199ac62a8bf2a1dc4495307ba478bdca3f1c9dfcea0f2c8d29f12f",
+        "transitions": 1447
+      },
+      {
+        "file": "train/env_144_01.npz",
+        "source": "env_144_01.pkl",
+        "context_group": "7360c680e2cf91d28cf205d04a18428dd575b271b57583426efd310881e71d4a",
+        "transitions": 874
+      },
+      {
+        "file": "train/env_130_02.npz",
+        "source": "env_130_02.pkl",
+        "context_group": "73656d8e4e042e83452cebfbd8581d49db9e15e38ae69c6b37bc7ec4df5be1e7",
+        "transitions": 892
+      },
+      {
+        "file": "train/env_141_04.npz",
+        "source": "env_141_04.pkl",
+        "context_group": "73a1377a8c9c5cd698ce380a949d26e9e211c0ecbf4b9ab8ecdb6ce25009d6fc",
+        "transitions": 929
+      },
+      {
+        "file": "train/env_017_05.npz",
+        "source": "env_017_05.pkl",
+        "context_group": "7439f91afa6199ee4a4679350594cd0f3df20824263f47722fa3473eca0e1717",
+        "transitions": 843
+      },
+      {
+        "file": "train/env_039_05.npz",
+        "source": "env_039_05.pkl",
+        "context_group": "7459550ba5ad79c4b52944841ea2640c1ef5e00a8f16d84f5e73ee6aa7c4acfe",
+        "transitions": 1041
+      },
+      {
+        "file": "train/env_047_03.npz",
+        "source": "env_047_03.pkl",
+        "context_group": "74659084bebb09da91971f39df4b7c6eaf833b9818a0f248be419292569f58ca",
+        "transitions": 1200
+      },
+      {
+        "file": "train/env_112_02.npz",
+        "source": "env_112_02.pkl",
+        "context_group": "74d4186a546f391381ba103b2996b789a5f9c7da60b59169bce9818760f12466",
+        "transitions": 1061
+      },
+      {
+        "file": "train/env_026_06.npz",
+        "source": "env_026_06.pkl",
+        "context_group": "7577db9e5a439410e6303bd7ee770078ca4f58d5e0973f7e555f8beb7bd9a2ce",
+        "transitions": 968
+      },
+      {
+        "file": "train/env_068_01.npz",
+        "source": "env_068_01.pkl",
+        "context_group": "76818fcd4565cf980f241373e0271e965eed8368f709b1538141ed2b03c0d9f0",
+        "transitions": 1609
+      },
+      {
+        "file": "train/env_117_01.npz",
+        "source": "env_117_01.pkl",
+        "context_group": "76f6281cfcaa91ee6cb8c1b190aa07356bbddcab30c952d90a8765011abead09",
+        "transitions": 1023
+      },
+      {
+        "file": "train/env_078_02.npz",
+        "source": "env_078_02.pkl",
+        "context_group": "7799ec090fc4a4ed66a9a87112b06b1949ceca6f7b2659fb89ea8dc2d8d3027e",
+        "transitions": 1298
+      },
+      {
+        "file": "train/env_026_05.npz",
+        "source": "env_026_05.pkl",
+        "context_group": "77e3a3dcc11281ee7ae420f7416ef9ab4406c5f8e33c921b8cb2c8b405986218",
+        "transitions": 1190
+      },
+      {
+        "file": "train/env_103_01.npz",
+        "source": "env_103_01.pkl",
+        "context_group": "78ea8dd0723f9a8ac8ec45a843db01e19a45db07546e3f3758357b4912de5abd",
+        "transitions": 924
+      },
+      {
+        "file": "train/env_110_01.npz",
+        "source": "env_110_01.pkl",
+        "context_group": "78fa8b08dd6516c00c8642af176ffc0cbb1fe9b71183d46c78ba2ee90f35f37d",
+        "transitions": 950
+      },
+      {
+        "file": "train/env_099_03.npz",
+        "source": "env_099_03.pkl",
+        "context_group": "794f0141bdec1e9f1527255e1b106a04349ff92aee8b8b567ac693306d7af39b",
+        "transitions": 937
+      },
+      {
+        "file": "train/env_078_06.npz",
+        "source": "env_078_06.pkl",
+        "context_group": "79eefd62b5f3fa60272b0e795cfcaa3c0c54de071dd1cd8f16339a4332f53b8d",
+        "transitions": 968
+      },
+      {
+        "file": "train/env_062_05.npz",
+        "source": "env_062_05.pkl",
+        "context_group": "7a10fcc682b85ecc644f316218eb7c700f977a4b395e2ca461845e64a362e45f",
+        "transitions": 859
+      },
+      {
+        "file": "train/env_074_02.npz",
+        "source": "env_074_02.pkl",
+        "context_group": "7a315c38493d02afb51501b2497c6cfceef0306456e8f0e29900a4f098f4c5ba",
+        "transitions": 844
+      },
+      {
+        "file": "train/env_022_02.npz",
+        "source": "env_022_02.pkl",
+        "context_group": "7a339a08a57e755504f78e353187f95118d2536ea1e7f76e1c362dc21c011ae5",
+        "transitions": 1061
+      },
+      {
+        "file": "train/env_120_01.npz",
+        "source": "env_120_01.pkl",
+        "context_group": "7acb02b5292f58f5a5e142b469a82992ba1b074fa84b7c9592fd976c1ebea42d",
+        "transitions": 1060
+      },
+      {
+        "file": "train/env_049_06.npz",
+        "source": "env_049_06.pkl",
+        "context_group": "7b8bc475202afed28d5ff8a3f22274ef988b8329916d68df8434c168b861f160",
+        "transitions": 1111
+      },
+      {
+        "file": "train/env_146_02.npz",
+        "source": "env_146_02.pkl",
+        "context_group": "7b9bb8e6a9b315bb60c24ae735a212fb5ad37e86d4cc00c476a0cee12008a9de",
+        "transitions": 833
+      },
+      {
+        "file": "train/env_132_02.npz",
+        "source": "env_132_02.pkl",
+        "context_group": "7be115be1267a7c1155ceceace7f8ed5dab44fad3ffa59035799b2b1bb3d9c20",
+        "transitions": 814
+      },
+      {
+        "file": "train/env_120_03.npz",
+        "source": "env_120_03.pkl",
+        "context_group": "7bff82b6749f1c98e6cbe107dd2f3847f3d424311db44094725348cc6394e1c9",
+        "transitions": 1080
+      },
+      {
+        "file": "train/env_079_06.npz",
+        "source": "env_079_06.pkl",
+        "context_group": "7cbc9c6a538f1b05be66282e177c92a0b508aff5d59d4591c5ec45b74ff9f058",
+        "transitions": 891
+      },
+      {
+        "file": "train/env_055_03.npz",
+        "source": "env_055_03.pkl",
+        "context_group": "7dc15117a9e9a7d7a3683ebc7f7144c1f5e895d80721367fc390d5a710f77606",
+        "transitions": 1390
+      },
+      {
+        "file": "train/env_144_03.npz",
+        "source": "env_144_03.pkl",
+        "context_group": "7dd7bce40a9c3cfc68106b56cf7c7556c7a512e410007e9a1d5cece5ea41010b",
+        "transitions": 791
+      },
+      {
+        "file": "train/env_080_03.npz",
+        "source": "env_080_03.pkl",
+        "context_group": "7de0978304cc399198ff5768e2b58265d92b5972afb35fc6e11b0e5d8af25e17",
+        "transitions": 916
+      },
+      {
+        "file": "train/env_054_04.npz",
+        "source": "env_054_04.pkl",
+        "context_group": "808f2df357b28afc8b4fff7d330a8976be16270a28df10bef8eea8bdc9bb3aac",
+        "transitions": 856
+      },
+      {
+        "file": "train/env_079_03.npz",
+        "source": "env_079_03.pkl",
+        "context_group": "80acd83817eb6726f1ee4ceb44e263e3dc6cc80bf6108500ec26f9d44baa22db",
+        "transitions": 1183
+      },
+      {
+        "file": "train/env_046_02.npz",
+        "source": "env_046_02.pkl",
+        "context_group": "80b8ee13418b6592c918004602b10cc51111ef82d815756205534c859bb0e5bb",
+        "transitions": 1207
+      },
+      {
+        "file": "train/env_001_01.npz",
+        "source": "env_001_01.pkl",
+        "context_group": "814c8a3f221d6dfb223864bed3630021db6184fbf2ee5f22078b9f3ec1e94c3c",
+        "transitions": 1588
+      },
+      {
+        "file": "train/env_051_01.npz",
+        "source": "env_051_01.pkl",
+        "context_group": "814c8a3f221d6dfb223864bed3630021db6184fbf2ee5f22078b9f3ec1e94c3c",
+        "transitions": 1588
+      },
+      {
+        "file": "train/env_011_03.npz",
+        "source": "env_011_03.pkl",
+        "context_group": "8176ec7630e26e2ccd89b507fbb381d9ddd9e6d124e47c9d3c6e9a2926f520e6",
+        "transitions": 1022
+      },
+      {
+        "file": "train/env_041_06.npz",
+        "source": "env_041_06.pkl",
+        "context_group": "817d75ff6bb73608508f5aeb9c4c47478f2e3923961e5b637beb4b3feeede499",
+        "transitions": 877
+      },
+      {
+        "file": "train/env_007_01.npz",
+        "source": "env_007_01.pkl",
+        "context_group": "81c49b89f69fbca1497e3d2c85b68819f97697a0bb3ce36174b9204352af5b69",
+        "transitions": 1098
+      },
+      {
+        "file": "train/env_045_02.npz",
+        "source": "env_045_02.pkl",
+        "context_group": "81cc3830b0651d10e485436b3be95ff0fac9e1c6af3ed6df6193b48d08373f68",
+        "transitions": 1275
+      },
+      {
+        "file": "train/env_150_02.npz",
+        "source": "env_150_02.pkl",
+        "context_group": "81fde37f3ec6da8ea47c6e522eaa9f271be466c10a44e264d1b33f95e99175ad",
+        "transitions": 785
+      },
+      {
+        "file": "train/env_135_03.npz",
+        "source": "env_135_03.pkl",
+        "context_group": "8294a360e1402a8c46ea8dfdeeee3fd3ca739d9557676ff1ae91353c7e40eb81",
+        "transitions": 805
+      },
+      {
+        "file": "train/env_013_06.npz",
+        "source": "env_013_06.pkl",
+        "context_group": "82d43cc7449ca373bfa648d8f0813ce5ca174f16d1ea7ba6038b01d2490b5f85",
+        "transitions": 883
+      },
+      {
+        "file": "train/env_024_06.npz",
+        "source": "env_024_06.pkl",
+        "context_group": "82ff04f7462d58a6eaec66f9d9deae5823ee67f9e09298c83b1d538294504437",
+        "transitions": 819
+      },
+      {
+        "file": "train/env_135_02.npz",
+        "source": "env_135_02.pkl",
+        "context_group": "830f61cfcdc60addf93c9ff4a69669e94499ced9552e7c6d7e610e7091c67dd2",
+        "transitions": 909
+      },
+      {
+        "file": "train/env_051_04.npz",
+        "source": "env_051_04.pkl",
+        "context_group": "847be50f86275ff6d693b2f116725fc1457f0463dc4cde460dc687a03ce3e573",
+        "transitions": 702
+      },
+      {
+        "file": "train/env_068_02.npz",
+        "source": "env_068_02.pkl",
+        "context_group": "84b4db438de1d6be295290e6f5fcc15d52f2afd887e6757794c32983f2071568",
+        "transitions": 877
+      },
+      {
+        "file": "train/env_036_01.npz",
+        "source": "env_036_01.pkl",
+        "context_group": "84d3c5dec8036e27df1378988f4e06404f9cf25b0fd3e0edb294f7601cad95c3",
+        "transitions": 956
+      },
+      {
+        "file": "train/env_001_02.npz",
+        "source": "env_001_02.pkl",
+        "context_group": "859d5b44f657eff662b8cc395d4b460e6238d68d7ec506fba0528eb86bcb1bdb",
+        "transitions": 1481
+      },
+      {
+        "file": "train/env_046_05.npz",
+        "source": "env_046_05.pkl",
+        "context_group": "8615967eb92f6c6032a5ebb15ab58f536c26ca12384dcc53e8ad8e2791d85aaa",
+        "transitions": 977
+      },
+      {
+        "file": "train/env_051_05.npz",
+        "source": "env_051_05.pkl",
+        "context_group": "8650b661b2541f0f2f35582ec40a7fed5ef5bc9361176c20fae941a48f4a3569",
+        "transitions": 1034
+      },
+      {
+        "file": "train/env_085_01.npz",
+        "source": "env_085_01.pkl",
+        "context_group": "865e03b0a9f914e234b998e243aa1b221de405d8fd13dbb0bb8c86f0056a7c46",
+        "transitions": 1510
+      },
+      {
+        "file": "train/env_062_01.npz",
+        "source": "env_062_01.pkl",
+        "context_group": "86658a360396d68565e3da061073e0b7b291919aa9d6c75a4ea41b498923d6a0",
+        "transitions": 1142
+      },
+      {
+        "file": "train/env_004_05.npz",
+        "source": "env_004_05.pkl",
+        "context_group": "86b6c4b4e41e192db26ee4e01dd99e353cf1847403d7ea467b6fe1829bfba4e5",
+        "transitions": 761
+      },
+      {
+        "file": "train/env_081_01.npz",
+        "source": "env_081_01.pkl",
+        "context_group": "88004c75ddeaa3becbe90ecece3767ae2e546ffd4cdd1cbdd4e9b9b693189146",
+        "transitions": 1545
+      },
+      {
+        "file": "train/env_030_01.npz",
+        "source": "env_030_01.pkl",
+        "context_group": "8947442c8f6616ef94c0ecaeb69a0c73d4ac59007a117c4825715d092686c9b4",
+        "transitions": 1027
+      },
+      {
+        "file": "train/env_009_01.npz",
+        "source": "env_009_01.pkl",
+        "context_group": "8947ae9c5cd5f42f72d30790a9dc650332e03b327503c347c099c6bcf89804a3",
+        "transitions": 1407
+      },
+      {
+        "file": "train/env_113_02.npz",
+        "source": "env_113_02.pkl",
+        "context_group": "8948c63721fc83b0de2e9a2af37bcebcb9e78b7ec18b63626ebe0df105225090",
+        "transitions": 782
+      },
+      {
+        "file": "train/env_016_03.npz",
+        "source": "env_016_03.pkl",
+        "context_group": "898ebac41c7f411aedb63787d87fec003965b559f95fa13f52ec99a7d22c51e3",
+        "transitions": 1041
+      },
+      {
+        "file": "train/env_127_02.npz",
+        "source": "env_127_02.pkl",
+        "context_group": "8a384c6c3fb0c848c02463661f4bb47cad372a1baf8459ec7f7f29f4301b1905",
+        "transitions": 953
+      },
+      {
+        "file": "train/env_036_02.npz",
+        "source": "env_036_02.pkl",
+        "context_group": "8a468462d34b09ac53ded7ac911e93964e8479a17aafa17da8b4ba0e2eb85995",
+        "transitions": 1410
+      },
+      {
+        "file": "train/env_060_05.npz",
+        "source": "env_060_05.pkl",
+        "context_group": "8acafb4cb5eadf88b4a1cba20754c74bbd81921185fb521e6f8cb783ba6851b3",
+        "transitions": 1126
+      },
+      {
+        "file": "train/env_037_01.npz",
+        "source": "env_037_01.pkl",
+        "context_group": "8af6836a47782f760431bdee9a504dbcf8d2bc3d8c7161f6222aed5ae15f3da3",
+        "transitions": 1126
+      },
+      {
+        "file": "train/env_091_06.npz",
+        "source": "env_091_06.pkl",
+        "context_group": "8bd5ef790983f0c958bf669816da80b6fc6bf775b677fb0a300b053ffd2d8d69",
+        "transitions": 821
+      },
+      {
+        "file": "train/env_015_02.npz",
+        "source": "env_015_02.pkl",
+        "context_group": "8c9846a5d83212752524b1fd81d7e4ca7aa7a26a9cb125b667bb77279e1df430",
+        "transitions": 1194
+      },
+      {
+        "file": "train/env_079_05.npz",
+        "source": "env_079_05.pkl",
+        "context_group": "8cbe0dd54da699b43c5a776dfd6b52e42bc0b3ce409ae01dc3a45291a601043a",
+        "transitions": 1095
+      },
+      {
+        "file": "train/env_099_06.npz",
+        "source": "env_099_06.pkl",
+        "context_group": "8cbfaec19bacb5da5240a4a5506dadcdc956bbe4b3f629925244ccf91686f415",
+        "transitions": 829
+      },
+      {
+        "file": "train/env_112_01.npz",
+        "source": "env_112_01.pkl",
+        "context_group": "8d144edd061b12598a676ea3d0f3309d62fee00937106b787b7d731da503855c",
+        "transitions": 1048
+      },
+      {
+        "file": "train/env_024_01.npz",
+        "source": "env_024_01.pkl",
+        "context_group": "8d2325998bb934ef20979547ee0b789d4bcbe2963feee1864a04558dd6600c46",
+        "transitions": 1491
+      },
+      {
+        "file": "train/env_116_02.npz",
+        "source": "env_116_02.pkl",
+        "context_group": "8d2f4d8755d1c99870a16df5100a30139e6fa2a1002c5640c4b5102a38d14b13",
+        "transitions": 917
+      },
+      {
+        "file": "train/env_079_02.npz",
+        "source": "env_079_02.pkl",
+        "context_group": "8d4a5a0c7449de5bf138bed4802455fea4bf9893906ac7bb25b77b5f1874d92a",
+        "transitions": 1221
+      },
+      {
+        "file": "train/env_016_06.npz",
+        "source": "env_016_06.pkl",
+        "context_group": "8db7b23df59948bc29be83b6fb25a015c9c4abe32a87bf6a4cf3d83cae71d760",
+        "transitions": 984
+      },
+      {
+        "file": "train/env_085_02.npz",
+        "source": "env_085_02.pkl",
+        "context_group": "8dc2dd3158f1f012997fa1afa091f5cebb4e2ff4641dc0e4ef14e6ed8c97f565",
+        "transitions": 1105
+      },
+      {
+        "file": "train/env_068_04.npz",
+        "source": "env_068_04.pkl",
+        "context_group": "8e0002d3eac4796cf0b876f5f91311a802ac84399899dfb710ab480b0d60a7ec",
+        "transitions": 837
+      },
+      {
+        "file": "train/env_071_06.npz",
+        "source": "env_071_06.pkl",
+        "context_group": "8ed88e53e3ea5af4f32a8dc0ee7221ff73003362affbf7a352abc7d7febd4cf9",
+        "transitions": 697
+      },
+      {
+        "file": "train/env_040_04.npz",
+        "source": "env_040_04.pkl",
+        "context_group": "8ef5176c45efcaa0884ee982f5f321450d637206370708c2cd9a59d4dc30f547",
+        "transitions": 1019
+      },
+      {
+        "file": "train/env_011_01.npz",
+        "source": "env_011_01.pkl",
+        "context_group": "8f6a80d9f1c6b4cf73f26eb535dd20f9ef80cedf9a76cd55d826ea1cd8e76a3b",
+        "transitions": 856
+      },
+      {
+        "file": "train/env_028_01.npz",
+        "source": "env_028_01.pkl",
+        "context_group": "8f6a80d9f1c6b4cf73f26eb535dd20f9ef80cedf9a76cd55d826ea1cd8e76a3b",
+        "transitions": 856
+      },
+      {
+        "file": "train/env_057_01.npz",
+        "source": "env_057_01.pkl",
+        "context_group": "8fe985aa25a25294777fd14609c34c8b6df414274b32a1865b23f5f1cfd26c76",
+        "transitions": 1054
+      },
+      {
+        "file": "train/env_070_03.npz",
+        "source": "env_070_03.pkl",
+        "context_group": "902c4821b4b4c262846c0ab51259b5a7a30818d02e5b69a215083b577c7c1aae",
+        "transitions": 909
+      },
+      {
+        "file": "train/env_041_01.npz",
+        "source": "env_041_01.pkl",
+        "context_group": "9089ec18b2900b68508115b8c163ed01fb0fbc422888a54e494d06f185fae5f5",
+        "transitions": 1006
+      },
+      {
+        "file": "train/env_059_03.npz",
+        "source": "env_059_03.pkl",
+        "context_group": "90b1ccb0e6116e5a3da84141bedfbe9eb80943d4e7e4749f27e4af89e0865f67",
+        "transitions": 1036
+      },
+      {
+        "file": "train/env_058_03.npz",
+        "source": "env_058_03.pkl",
+        "context_group": "91a9efdee65dcd51d14d75de93d21b05b70d26a00539f6aa83130cf9a97fc25b",
+        "transitions": 852
+      },
+      {
+        "file": "train/env_097_03.npz",
+        "source": "env_097_03.pkl",
+        "context_group": "91d4776bc108e9268d4923f1f1b9847469850e7059edfed8a20a3bc0170da570",
+        "transitions": 774
+      },
+      {
+        "file": "train/env_125_04.npz",
+        "source": "env_125_04.pkl",
+        "context_group": "92b7894d80bfe57c4f487b6fbc16c2073a704e68faf21d299b3d52dcd32e4260",
+        "transitions": 804
+      },
+      {
+        "file": "train/env_147_02.npz",
+        "source": "env_147_02.pkl",
+        "context_group": "93e7901a1abdc6a717eea40d8aa601033254e77d3e5d3d9a61b95125c04adb6f",
+        "transitions": 803
+      },
+      {
+        "file": "train/env_080_04.npz",
+        "source": "env_080_04.pkl",
+        "context_group": "93fb7b8d4d7b5c35d6d9dfa881f8bf6dff66b55d9116c4f9d9bae6a68e7d10bb",
+        "transitions": 1270
+      },
+      {
+        "file": "train/env_149_03.npz",
+        "source": "env_149_03.pkl",
+        "context_group": "94b2101a970cb592f3c3102f1c9058c1e1cebc2b2bb99b4abef1e5f9a2382fd4",
+        "transitions": 688
+      },
+      {
+        "file": "train/env_099_02.npz",
+        "source": "env_099_02.pkl",
+        "context_group": "952405cd272ea52227cc04c36063cc41ba987f28da272df1795e016d574ecf34",
+        "transitions": 1614
+      },
+      {
+        "file": "train/env_031_04.npz",
+        "source": "env_031_04.pkl",
+        "context_group": "95d29271e7d7d517ceed5f04fe7b7f7123a037bc308cd85f9175d924fe07ae0e",
+        "transitions": 1267
+      },
+      {
+        "file": "train/env_066_04.npz",
+        "source": "env_066_04.pkl",
+        "context_group": "964f86926cc1e9f1f63ed7b23575b45fad19fe7ee03ebacf8537d921e80bff0b",
+        "transitions": 1014
+      },
+      {
+        "file": "train/env_091_02.npz",
+        "source": "env_091_02.pkl",
+        "context_group": "96b6f010d61731adee6e270176b82f926e9b070c78047eabbc5fb7fa277a010b",
+        "transitions": 1289
+      },
+      {
+        "file": "train/env_144_04.npz",
+        "source": "env_144_04.pkl",
+        "context_group": "972b9209f9a6a874477ad6a7686dea2ada4aabda8c0a869b6342c662ea8d8a9f",
+        "transitions": 769
+      },
+      {
+        "file": "train/env_036_03.npz",
+        "source": "env_036_03.pkl",
+        "context_group": "976494c45bd0a81182499bc86b9d3aecf9e2531cf38253a47e6b5c795cfc9e93",
+        "transitions": 1007
+      },
+      {
+        "file": "train/env_012_04.npz",
+        "source": "env_012_04.pkl",
+        "context_group": "97f6cfb83fa3cdcdd5a6067d47401e12306f6cc1084a2841a4bb9af56b24e85b",
+        "transitions": 975
+      },
+      {
+        "file": "train/env_145_04.npz",
+        "source": "env_145_04.pkl",
+        "context_group": "980b46dcedbcab6d72f4e17a18bc37c6e38a914537bbe754fbc6c1182e409f82",
+        "transitions": 708
+      },
+      {
+        "file": "train/env_008_05.npz",
+        "source": "env_008_05.pkl",
+        "context_group": "983015a8f33ae83e2b8797feb0b4b5e1030b5f3b589a1ef631e52e2e90fee73a",
+        "transitions": 745
+      },
+      {
+        "file": "train/env_128_03.npz",
+        "source": "env_128_03.pkl",
+        "context_group": "9856c29a79d90b547783845b1a5fe4b65740d2bcb187395da8f680c2ce1e5e6f",
+        "transitions": 926
+      },
+      {
+        "file": "train/env_047_02.npz",
+        "source": "env_047_02.pkl",
+        "context_group": "988fca2cc39b3cf33621541909fa4c119e2f73cb5fec5221ac15cefc400f39a4",
+        "transitions": 1250
+      },
+      {
+        "file": "train/env_093_02.npz",
+        "source": "env_093_02.pkl",
+        "context_group": "99557e61e3a2311ab65ff31859083009e388c15b8aa6aa4961b0732f58d31883",
+        "transitions": 1169
+      },
+      {
+        "file": "train/env_095_05.npz",
+        "source": "env_095_05.pkl",
+        "context_group": "9955ea5e529090dc48016597b904e98ff3c092b1ebd097cd89ac684daafec7cb",
+        "transitions": 817
+      },
+      {
+        "file": "train/env_140_04.npz",
+        "source": "env_140_04.pkl",
+        "context_group": "9a00d05501fd4787f0377f44ff516689d36363d4f9d1ff19c0c1254899e4ccbe",
+        "transitions": 855
+      },
+      {
+        "file": "train/env_076_04.npz",
+        "source": "env_076_04.pkl",
+        "context_group": "9a175636435ac38c37f54b3c98cb87f0672b82e85c068fbf463e771c7c6138de",
+        "transitions": 752
+      },
+      {
+        "file": "train/env_122_03.npz",
+        "source": "env_122_03.pkl",
+        "context_group": "9a29958f36e4e045c4a76eed31120f752a7b6ce6ed02e8c646956a6d24e28963",
+        "transitions": 790
+      },
+      {
+        "file": "train/env_030_03.npz",
+        "source": "env_030_03.pkl",
+        "context_group": "9b213252eae922cabf43e0f9fbd56ce206e66f9f89e2958999d5ccf37ff0aba1",
+        "transitions": 1184
+      },
+      {
+        "file": "train/env_020_06.npz",
+        "source": "env_020_06.pkl",
+        "context_group": "9bb5ea6e6f78655fecd4336de831086766a409cb0c978bc99dec3bb6804f0f3c",
+        "transitions": 868
+      },
+      {
+        "file": "train/env_052_03.npz",
+        "source": "env_052_03.pkl",
+        "context_group": "9be328210d020b35a7fd29db911e245f2a225cf4a4820d911c2b262668ad9006",
+        "transitions": 937
+      },
+      {
+        "file": "train/env_091_04.npz",
+        "source": "env_091_04.pkl",
+        "context_group": "9c24c5feb92a97f50a8bbc7ddd6ecab5f4d324fcf25653e58808a8097edb41d9",
+        "transitions": 685
+      },
+      {
+        "file": "train/env_131_01.npz",
+        "source": "env_131_01.pkl",
+        "context_group": "9c9dd66c95b8ea1cc90668e22c75bb0ab5130dcc88e95305afe2494a0a52154d",
+        "transitions": 1024
+      },
+      {
+        "file": "train/env_025_04.npz",
+        "source": "env_025_04.pkl",
+        "context_group": "9caf73b3246f05f6f5c812c3ad9b0551c29b2ce4324a0efdbaf5b2f2bb30a3e0",
+        "transitions": 1172
+      },
+      {
+        "file": "train/env_072_04.npz",
+        "source": "env_072_04.pkl",
+        "context_group": "9d15acf610561bceec5ba144508c3be1f647aabfa9bac4022970504a1c220a7d",
+        "transitions": 808
+      },
+      {
+        "file": "train/env_136_04.npz",
+        "source": "env_136_04.pkl",
+        "context_group": "9d3e819ae1c5fbcbb300b93d4a18e714955357dfb6fa4cde0754602e14b21d2d",
+        "transitions": 791
+      },
+      {
+        "file": "train/env_020_02.npz",
+        "source": "env_020_02.pkl",
+        "context_group": "9df8821e48ed670e41b2c59158599956306ac66231fb433c7b09a63ebb884c4c",
+        "transitions": 1221
+      },
+      {
+        "file": "train/env_142_02.npz",
+        "source": "env_142_02.pkl",
+        "context_group": "9eefe771431be3a7f502c89f854f3b35dd906df95c5924c793a081652866484b",
+        "transitions": 1040
+      },
+      {
+        "file": "train/env_104_04.npz",
+        "source": "env_104_04.pkl",
+        "context_group": "9ef88fad6fc772ca1c70125b402099cdac64122a041696a0e69578391873378d",
+        "transitions": 872
+      },
+      {
+        "file": "train/env_100_02.npz",
+        "source": "env_100_02.pkl",
+        "context_group": "9f518cd5abebafed8581b19f060874cbe1fddce58cf081d4a8d42b56a075e855",
+        "transitions": 753
+      },
+      {
+        "file": "train/env_145_01.npz",
+        "source": "env_145_01.pkl",
+        "context_group": "9ff986119fc91b74bad260ab6dad66f9f3380ba2ee447a9f54786cf1a90310a5",
+        "transitions": 798
+      },
+      {
+        "file": "train/env_076_01.npz",
+        "source": "env_076_01.pkl",
+        "context_group": "a00714f90cc4be350de5857acfecc9aaba4b6de2f8b1a8fe0c87b1d6b5ad1213",
+        "transitions": 1072
+      },
+      {
+        "file": "train/env_121_03.npz",
+        "source": "env_121_03.pkl",
+        "context_group": "a08363fd55a7fd6c29ab3565989a0e3ad8296d4d9c00f4be5835e2c4746f7576",
+        "transitions": 1113
+      },
+      {
+        "file": "train/env_089_02.npz",
+        "source": "env_089_02.pkl",
+        "context_group": "a09b307c6a8308996521dfd7a993d44504aa4f36f759cd8f11e65f30188c19ec",
+        "transitions": 972
+      },
+      {
+        "file": "train/env_146_03.npz",
+        "source": "env_146_03.pkl",
+        "context_group": "a0af69eab48ed182eda2dec7c0c6aea03bd7a7d98f0dd429962917524b0d0e56",
+        "transitions": 557
+      },
+      {
+        "file": "train/env_048_05.npz",
+        "source": "env_048_05.pkl",
+        "context_group": "a12fc0ca7d3cf4684f279857eaf7b3bae4c74389beb36ffb215236cf4bc19de7",
+        "transitions": 835
+      },
+      {
+        "file": "train/env_062_06.npz",
+        "source": "env_062_06.pkl",
+        "context_group": "a1b38ae33b6c5ffb7932e1147f955aedb457310d47d4deb02e60fc4c4b2b6b15",
+        "transitions": 966
+      },
+      {
+        "file": "train/env_075_02.npz",
+        "source": "env_075_02.pkl",
+        "context_group": "a1b5b54e8691b68b8183c1c3e7dab09ac69620ed1735e61581d7f4f7d700bcda",
+        "transitions": 875
+      },
+      {
+        "file": "train/env_035_01.npz",
+        "source": "env_035_01.pkl",
+        "context_group": "a1cb954adef63d1dd60fa4e9886edbfed793c2dae671f3ad47ede39a0b2686b8",
+        "transitions": 1133
+      },
+      {
+        "file": "train/env_134_04.npz",
+        "source": "env_134_04.pkl",
+        "context_group": "a207e44e992b04873ef656a692274b3eb48fe95a40c5efc0b2c3b21cc287b1f5",
+        "transitions": 799
+      },
+      {
+        "file": "train/env_034_03.npz",
+        "source": "env_034_03.pkl",
+        "context_group": "a208fe52a478f44e77270aec0674146169fdc0b9fea2e6e8d8d6e2ecd8c7f6bc",
+        "transitions": 828
+      },
+      {
+        "file": "train/env_095_02.npz",
+        "source": "env_095_02.pkl",
+        "context_group": "a2180e92b6967b074708facb3761f7be3ab91934594823411fd4b3e46709d045",
+        "transitions": 1123
+      },
+      {
+        "file": "train/env_088_01.npz",
+        "source": "env_088_01.pkl",
+        "context_group": "a243108fb1502167158c1764c39f7d04b6e6ac1835392f2e1b9a0f4df7a9a1f4",
+        "transitions": 1311
+      },
+      {
+        "file": "train/env_129_03.npz",
+        "source": "env_129_03.pkl",
+        "context_group": "a2c9a29ab9da3e2c6138e9cd36ca4da19c89d9f697fe29c85102a2817fedd7d5",
+        "transitions": 1078
+      },
+      {
+        "file": "train/env_089_04.npz",
+        "source": "env_089_04.pkl",
+        "context_group": "a2ff29e83e0e2d02e3682f6e09b104af07fb5f14d6c0eb9924eba687b82d1c4d",
+        "transitions": 1192
+      },
+      {
+        "file": "train/env_011_05.npz",
+        "source": "env_011_05.pkl",
+        "context_group": "a36ca8d862de490e12c8fb7f610af8930b86116262d75cff6f5522874c5f3f69",
+        "transitions": 1058
+      },
+      {
+        "file": "train/env_060_03.npz",
+        "source": "env_060_03.pkl",
+        "context_group": "a37b9650af95bad02ac79681a9d6a570ad944b2bf43007f2a25e1610c9a51af3",
+        "transitions": 1160
+      },
+      {
+        "file": "train/env_103_03.npz",
+        "source": "env_103_03.pkl",
+        "context_group": "a51d6f368fcf9d2c20677b01ad18bd75bbca7f4e6dbe10fe79d0096cf66842ac",
+        "transitions": 1029
+      },
+      {
+        "file": "train/env_122_01.npz",
+        "source": "env_122_01.pkl",
+        "context_group": "a5daa72569baa7f8d89d29eec6b64ba0d6777c484142c51ff23a7fea044cfae9",
+        "transitions": 1180
+      },
+      {
+        "file": "train/env_114_04.npz",
+        "source": "env_114_04.pkl",
+        "context_group": "a61b38d6fb9361981d276e8b9e77b8066dd7c63f2dc4448ef18ad7c5addc811f",
+        "transitions": 784
+      },
+      {
+        "file": "train/env_007_02.npz",
+        "source": "env_007_02.pkl",
+        "context_group": "a68447007dc7e03b91673c41226d348b739e6f9e09834a204d7d91883cbe06d2",
+        "transitions": 861
+      },
+      {
+        "file": "train/env_047_06.npz",
+        "source": "env_047_06.pkl",
+        "context_group": "a72c1930d028a40bd88db7b84f36dc279461c0a5fe7062c64d13ebccfae6bc11",
+        "transitions": 1135
+      },
+      {
+        "file": "train/env_002_02.npz",
+        "source": "env_002_02.pkl",
+        "context_group": "a796e08f9e05a7a0a58c4c3487e15e69e3b93b6abdec1950be39077d668cd471",
+        "transitions": 1255
+      },
+      {
+        "file": "train/env_115_02.npz",
+        "source": "env_115_02.pkl",
+        "context_group": "a8dfb5f27ba7a47296ac0170905ee35ab50085b1c3fc0b7ffbc6cd6d21c5f3a5",
+        "transitions": 928
+      },
+      {
+        "file": "train/env_084_02.npz",
+        "source": "env_084_02.pkl",
+        "context_group": "a901b43427af50d04b4c1fecbbb9ebeeedae0e63690152b05e0731273e479851",
+        "transitions": 1048
+      },
+      {
+        "file": "train/env_071_05.npz",
+        "source": "env_071_05.pkl",
+        "context_group": "a93e70c14bc8b0c79fce87f19d961ffe231469b9f16b9854ae2e3ab273a06b0e",
+        "transitions": 813
+      },
+      {
+        "file": "train/env_061_06.npz",
+        "source": "env_061_06.pkl",
+        "context_group": "a987d83ac961b6ff7023e9ca8d329731666252952742c8bed620678da90c7cd9",
+        "transitions": 939
+      },
+      {
+        "file": "train/env_018_06.npz",
+        "source": "env_018_06.pkl",
+        "context_group": "ab02f08d80b1da7d1063d361336a904674b7c2c867f99bbd66a4f5582dcbef1a",
+        "transitions": 1096
+      },
+      {
+        "file": "train/env_094_01.npz",
+        "source": "env_094_01.pkl",
+        "context_group": "ab04c83d28bf99e3e2de6aaa6b2248c3d4541226501f44ac134b5208150fc26d",
+        "transitions": 1404
+      },
+      {
+        "file": "train/env_147_03.npz",
+        "source": "env_147_03.pkl",
+        "context_group": "ab4e9035e342955321c5de11678e97116a033516b530014aa757a3dbb9bda576",
+        "transitions": 812
+      },
+      {
+        "file": "train/env_033_01.npz",
+        "source": "env_033_01.pkl",
+        "context_group": "ab62f245f977e9feee457960472e984c1516c49f60a07a66b3dfd5b31d99a655",
+        "transitions": 889
+      },
+      {
+        "file": "train/env_003_05.npz",
+        "source": "env_003_05.pkl",
+        "context_group": "ab6f6d90b3b2c1815481a05acfbbdd38c5f914db0fae478cd2f33bb2f75fa8ca",
+        "transitions": 952
+      },
+      {
+        "file": "train/env_117_04.npz",
+        "source": "env_117_04.pkl",
+        "context_group": "ac0547ec327ef0b388774cb2021150aae1a05f873144bc1e6e3bf3889adcba63",
+        "transitions": 712
+      },
+      {
+        "file": "train/env_082_05.npz",
+        "source": "env_082_05.pkl",
+        "context_group": "ac63b688d3ad6144ea94d3854b2fe9589de7617f9db1026378a9466545e94ac0",
+        "transitions": 1095
+      },
+      {
+        "file": "train/env_111_01.npz",
+        "source": "env_111_01.pkl",
+        "context_group": "ac7103e5a03553ec9f8cee9b87c4ddef50acd40e2ab660a2e59ecda0fc2c4b42",
+        "transitions": 858
+      },
+      {
+        "file": "train/env_023_05.npz",
+        "source": "env_023_05.pkl",
+        "context_group": "ac7a48c1689418a28974d08b777aab45504fdf889cf4a9602a2587e7908b9e3f",
+        "transitions": 1023
+      },
+      {
+        "file": "train/env_098_06.npz",
+        "source": "env_098_06.pkl",
+        "context_group": "ac89e19ae6dbd164f8caf791870dcc7ff0fa980acbcbb4098138865139934e85",
+        "transitions": 532
+      },
+      {
+        "file": "train/env_075_06.npz",
+        "source": "env_075_06.pkl",
+        "context_group": "aca115c96c1ee93b709f2f19629552516908f48ccc3a95389ecffd7880845c8f",
+        "transitions": 827
+      },
+      {
+        "file": "train/env_124_04.npz",
+        "source": "env_124_04.pkl",
+        "context_group": "ad318e528366635ee3abf409c7bfc53531cb5ab9a584ef5af4e7714e247ac5b0",
+        "transitions": 851
+      },
+      {
+        "file": "train/env_072_03.npz",
+        "source": "env_072_03.pkl",
+        "context_group": "ae16e9f3c3d7609f71e0acfb8f89cd3b95b48290ce8cb0a0c6347b67cdac81f3",
+        "transitions": 699
+      },
+      {
+        "file": "train/env_101_01.npz",
+        "source": "env_101_01.pkl",
+        "context_group": "ae32b3bb9a2a023c50ac1b8525d5021dcc3264e4fc1979b3771da6376bbb0e86",
+        "transitions": 1157
+      },
+      {
+        "file": "train/env_041_02.npz",
+        "source": "env_041_02.pkl",
+        "context_group": "ae429e9c6ed8048d344a8f8e1710d4d1e6bbc7ef94c2ee42b00a9c15ce4bf15e",
+        "transitions": 931
+      },
+      {
+        "file": "train/env_024_03.npz",
+        "source": "env_024_03.pkl",
+        "context_group": "aed4c777bc824146900fa9e9977b3a3f0825897b066666192680c524fd31f62f",
+        "transitions": 1188
+      },
+      {
+        "file": "train/env_054_06.npz",
+        "source": "env_054_06.pkl",
+        "context_group": "af23f1d0a041410d85bc5306629b5483d5bcdf438003e9c22602555b382a13d1",
+        "transitions": 1005
+      },
+      {
+        "file": "train/env_033_06.npz",
+        "source": "env_033_06.pkl",
+        "context_group": "afc04878d299696b2d642349eb70ab3a12854f6448a30ebfe3534db6175b9301",
+        "transitions": 619
+      },
+      {
+        "file": "train/env_030_06.npz",
+        "source": "env_030_06.pkl",
+        "context_group": "b00026bd37fca06239e537a5377b28c3cd7f0517f7504765c93b20952077f287",
+        "transitions": 972
+      },
+      {
+        "file": "train/env_041_05.npz",
+        "source": "env_041_05.pkl",
+        "context_group": "b04566ea195b03e445209c52d950fd34cafe454d19cd24f5be03e1a22ef2a797",
+        "transitions": 988
+      },
+      {
+        "file": "train/env_126_02.npz",
+        "source": "env_126_02.pkl",
+        "context_group": "b13fc4ec01f45f3fb0f2a0e0df1ce02fc1da842ca9b09af3af97743590578842",
+        "transitions": 898
+      },
+      {
+        "file": "train/env_090_02.npz",
+        "source": "env_090_02.pkl",
+        "context_group": "b16c3e7965bfc34d19257965802322f3248d6dcf31d246daecaffff22d673443",
+        "transitions": 816
+      },
+      {
+        "file": "train/env_147_04.npz",
+        "source": "env_147_04.pkl",
+        "context_group": "b2846aa3adfa6cd28eb891c5435280afcac2441af6667be4c66120918931a109",
+        "transitions": 718
+      },
+      {
+        "file": "train/env_029_02.npz",
+        "source": "env_029_02.pkl",
+        "context_group": "b31a5372ce2444fd83c998fb96ea7b8389f612ce932475f845a3e17b4028c578",
+        "transitions": 1062
+      },
+      {
+        "file": "train/env_030_05.npz",
+        "source": "env_030_05.pkl",
+        "context_group": "b3735ed4c0166dee28dbfd551ec52faef92ac631a8a62ce44868b67584abe636",
+        "transitions": 1142
+      },
+      {
+        "file": "train/env_080_05.npz",
+        "source": "env_080_05.pkl",
+        "context_group": "b499c1a9b672cbef3b2aa7974afd202476d12163b7c36f2d429921070d2d3635",
+        "transitions": 985
+      },
+      {
+        "file": "train/env_011_02.npz",
+        "source": "env_011_02.pkl",
+        "context_group": "b4e0f2ffc0b6cbeae6af26ff39f22f7bf2e10f250c04c1f0024bb7cdb0f12cff",
+        "transitions": 1254
+      },
+      {
+        "file": "train/env_025_01.npz",
+        "source": "env_025_01.pkl",
+        "context_group": "b57e9142e3bc80faa7afa079d84401c74d0283cc65b49687afa28d8aff119dab",
+        "transitions": 1417
+      },
+      {
+        "file": "train/env_042_02.npz",
+        "source": "env_042_02.pkl",
+        "context_group": "b57efe8bf281957f261dd3bed38760a88bb8240e304419890fd857b699957fdd",
+        "transitions": 1094
+      },
+      {
+        "file": "train/env_071_02.npz",
+        "source": "env_071_02.pkl",
+        "context_group": "b57efe8bf281957f261dd3bed38760a88bb8240e304419890fd857b699957fdd",
+        "transitions": 1094
+      },
+      {
+        "file": "train/env_005_01.npz",
+        "source": "env_005_01.pkl",
+        "context_group": "b6c97ef62aeb922cc6193f8dfe8be812702b608fee17107127df74b8607cd635",
+        "transitions": 793
+      },
+      {
+        "file": "train/env_129_04.npz",
+        "source": "env_129_04.pkl",
+        "context_group": "b6d2bf91221cb617198220686e287244302f83fa3b4702b2de29731926eaa67b",
+        "transitions": 742
+      },
+      {
+        "file": "train/env_047_01.npz",
+        "source": "env_047_01.pkl",
+        "context_group": "b7df88c482a100a59524f0833c562d506717da70a4575524c8116052bf39ebd8",
+        "transitions": 1124
+      },
+      {
+        "file": "train/env_105_04.npz",
+        "source": "env_105_04.pkl",
+        "context_group": "b7ff86233b53059bb53b2b2dc009239b1792066c047e83b8901fa61e08ecc0bb",
+        "transitions": 850
+      },
+      {
+        "file": "train/env_108_02.npz",
+        "source": "env_108_02.pkl",
+        "context_group": "b8800181ff95759b314048e3630a881e7c9618a468d3e0c34d5ac78653e83d19",
+        "transitions": 813
+      },
+      {
+        "file": "train/env_061_03.npz",
+        "source": "env_061_03.pkl",
+        "context_group": "b894d3ddbaded0e5b7c38edafb5118a5504f1f8a5c9c2b5d0f24315f9da88573",
+        "transitions": 1079
+      },
+      {
+        "file": "train/env_092_03.npz",
+        "source": "env_092_03.pkl",
+        "context_group": "b8be3c87caa336644ae6e5dc15712c6182dde90360da9506dac2ef1fc9f56018",
+        "transitions": 918
+      },
+      {
+        "file": "train/env_067_04.npz",
+        "source": "env_067_04.pkl",
+        "context_group": "b8c9aaf50b2531d7271e77d7d5ceafab5d3cd77553e0e43509ec2599bcf04b98",
+        "transitions": 821
+      },
+      {
+        "file": "train/env_051_06.npz",
+        "source": "env_051_06.pkl",
+        "context_group": "b921227c0dbf03e49ba423d7c5bcbb7d9ebb5d728033d3dbb0f8de5ecd633ceb",
+        "transitions": 839
+      },
+      {
+        "file": "train/env_009_06.npz",
+        "source": "env_009_06.pkl",
+        "context_group": "b96544fd1ba5d6abbd1b8e48c3c9ab2c07bf07d70dbabde927323bc39a20da20",
+        "transitions": 1629
+      },
+      {
+        "file": "train/env_076_02.npz",
+        "source": "env_076_02.pkl",
+        "context_group": "b96fd902cb369f1652509305b3123126e2f11a3afc8625e7463aa099bede0531",
+        "transitions": 1020
+      },
+      {
+        "file": "train/env_053_06.npz",
+        "source": "env_053_06.pkl",
+        "context_group": "b9ed70b540615e3354417ee21f8fb7c511a7c6a11bd81541be41603df5a4f43a",
+        "transitions": 965
+      },
+      {
+        "file": "train/env_049_04.npz",
+        "source": "env_049_04.pkl",
+        "context_group": "ba726c6e412ab518c82b197f881396bd96f5bfd7bc37cddb359920b25a70ccb0",
+        "transitions": 600
+      },
+      {
+        "file": "train/env_001_04.npz",
+        "source": "env_001_04.pkl",
+        "context_group": "bb0b5e87bc92cc234b8a10f6cfe0ba004e0eb8d15230e02fc23332a540243b9d",
+        "transitions": 1003
+      },
+      {
+        "file": "train/env_043_05.npz",
+        "source": "env_043_05.pkl",
+        "context_group": "bb2e586e0dee6223b751d09c1b36462a4854a7714abb20195285a1b8273d4bf2",
+        "transitions": 964
+      },
+      {
+        "file": "train/env_014_02.npz",
+        "source": "env_014_02.pkl",
+        "context_group": "bb489a3a3c0e507092b4766edfac40abda062448e97a7072c95e4fbd54cfb8ce",
+        "transitions": 1214
+      },
+      {
+        "file": "train/env_082_01.npz",
+        "source": "env_082_01.pkl",
+        "context_group": "bb7002e5959346a64e11bdfe18cef9e7c075e30096fa4d5697121a7948051062",
+        "transitions": 1296
+      },
+      {
+        "file": "train/env_038_02.npz",
+        "source": "env_038_02.pkl",
+        "context_group": "bb90b13cfde30053b17d0feeedaa9efcc1917629e01c7af8587c9c4590a5320c",
+        "transitions": 1295
+      },
+      {
+        "file": "train/env_009_02.npz",
+        "source": "env_009_02.pkl",
+        "context_group": "bb93461e2e7fc952c91b35d0b17d93a4a5fa17317eb4f9a814f832308c5ed69a",
+        "transitions": 1403
+      },
+      {
+        "file": "train/env_128_04.npz",
+        "source": "env_128_04.pkl",
+        "context_group": "bbe94785e5767a2bded6e844a9dc149573e2711b5011d40c5b01c7b534f0f011",
+        "transitions": 950
+      },
+      {
+        "file": "train/env_125_02.npz",
+        "source": "env_125_02.pkl",
+        "context_group": "bc3f36fbc6e41b1f4a8cbcc3f97c648af217805db883faebcd15b76486f0e6fd",
+        "transitions": 1126
+      },
+      {
+        "file": "train/env_035_02.npz",
+        "source": "env_035_02.pkl",
+        "context_group": "bc509611ea14537eca6585b814b99018d876c92047d2e77b08f021b683543815",
+        "transitions": 812
+      },
+      {
+        "file": "train/env_062_04.npz",
+        "source": "env_062_04.pkl",
+        "context_group": "bcc7a8b69958f9d3a2e28700750aad6b6896bf44e3f3284ac276773eab05860b",
+        "transitions": 968
+      },
+      {
+        "file": "train/env_033_02.npz",
+        "source": "env_033_02.pkl",
+        "context_group": "bd00d6faf7b54ae8ee992a8b1fd41f2f3ceb48a3ea963e610cfc626b2deda3f0",
+        "transitions": 874
+      },
+      {
+        "file": "train/env_052_02.npz",
+        "source": "env_052_02.pkl",
+        "context_group": "bdd514083eb1947e58c09d239ede2fd487b7fde9aa982c363be3c33cb3408e15",
+        "transitions": 1403
+      },
+      {
+        "file": "train/env_057_02.npz",
+        "source": "env_057_02.pkl",
+        "context_group": "bdd514083eb1947e58c09d239ede2fd487b7fde9aa982c363be3c33cb3408e15",
+        "transitions": 1403
+      },
+      {
+        "file": "train/env_119_01.npz",
+        "source": "env_119_01.pkl",
+        "context_group": "be129d3b0619031ab53e8f1629dc91e1db060cfc609723b80117178daf56e8d8",
+        "transitions": 981
+      },
+      {
+        "file": "train/env_027_04.npz",
+        "source": "env_027_04.pkl",
+        "context_group": "beb97601ba1d27660b9c9295a3cb6f49336c3c702ee5e9a58b020ea78fc36445",
+        "transitions": 755
+      },
+      {
+        "file": "train/env_053_02.npz",
+        "source": "env_053_02.pkl",
+        "context_group": "bef206a5b22427777ac486e90d2abd5f0feff645ce1647346a4d4bf754d04510",
+        "transitions": 1382
+      },
+      {
+        "file": "train/env_140_02.npz",
+        "source": "env_140_02.pkl",
+        "context_group": "bf57e86227a4831c2d34856639a5e94b1c5415cc22a656ee92c411eb7ceeab3a",
+        "transitions": 835
+      },
+      {
+        "file": "train/env_090_05.npz",
+        "source": "env_090_05.pkl",
+        "context_group": "bfa0b14dea3ff01e4aa6336721f2e42eec3b5282fbbfd7b02fd485e07fa9d34b",
+        "transitions": 877
+      },
+      {
+        "file": "train/env_070_04.npz",
+        "source": "env_070_04.pkl",
+        "context_group": "c02e0f57bd82447ab0144db1db7a6d16d504b698a3c57fb0c30919ae782b090c",
+        "transitions": 732
+      },
+      {
+        "file": "train/env_065_03.npz",
+        "source": "env_065_03.pkl",
+        "context_group": "c03dc3790aa6787716d833648261914a6834c89081ce8f9f5a08ba5e7de81e81",
+        "transitions": 756
+      },
+      {
+        "file": "train/env_080_01.npz",
+        "source": "env_080_01.pkl",
+        "context_group": "c077cececadfb066b286cc4d0d9dee090f6aa15b962fd0988d3d65d9614ea2d6",
+        "transitions": 1223
+      },
+      {
+        "file": "train/env_017_06.npz",
+        "source": "env_017_06.pkl",
+        "context_group": "c07e0957c753a8920e23448e25f42450ee27bd23058fbf35a88a072daa7d11a9",
+        "transitions": 1134
+      },
+      {
+        "file": "train/env_088_04.npz",
+        "source": "env_088_04.pkl",
+        "context_group": "c09f0d07cb9b2ac7883fd6945a5453c28365613135ff2a0446503eab4851d4ff",
+        "transitions": 960
+      },
+      {
+        "file": "train/env_005_02.npz",
+        "source": "env_005_02.pkl",
+        "context_group": "c0a757e9768b3e242937703a8c3a94147c7f6a10363278e811a3148c0e8b8bf1",
+        "transitions": 1136
+      },
+      {
+        "file": "train/env_024_04.npz",
+        "source": "env_024_04.pkl",
+        "context_group": "c0b4c227036c38fc6ffae1cf15ea6b7086ca671937e1dd0129200c61c1326199",
+        "transitions": 691
+      },
+      {
+        "file": "train/env_089_06.npz",
+        "source": "env_089_06.pkl",
+        "context_group": "c0fa6dfbf77bdca61970cb13fae9cfe9db46fd1d52aa94e2523fba95a171c900",
+        "transitions": 1031
+      },
+      {
+        "file": "train/env_081_03.npz",
+        "source": "env_081_03.pkl",
+        "context_group": "c137207b32a108e2211abd4ce6d668c50b59090b45dfbccbb711843927e6c812",
+        "transitions": 888
+      },
+      {
+        "file": "train/env_136_03.npz",
+        "source": "env_136_03.pkl",
+        "context_group": "c1b6eec5296864ca33fabc8231148c45b775fbe60d388cf20a7a7254145eefe3",
+        "transitions": 873
+      },
+      {
+        "file": "train/env_052_01.npz",
+        "source": "env_052_01.pkl",
+        "context_group": "c2000e9f7ce3d05f0bfaa8472b9423f21cf3070745b3040beb4e43172898de06",
+        "transitions": 1311
+      },
+      {
+        "file": "train/env_065_02.npz",
+        "source": "env_065_02.pkl",
+        "context_group": "c23ae1723f5903eaffb38338c6a4c2c5f8cb6bcd291f96f4ed0526743ec3d008",
+        "transitions": 1182
+      },
+      {
+        "file": "train/env_015_05.npz",
+        "source": "env_015_05.pkl",
+        "context_group": "c2bbe1392711b68c81d2a0c798dee2a5a0c0ac6104f5a6252f045c7def7c99cf",
+        "transitions": 722
+      },
+      {
+        "file": "train/env_099_01.npz",
+        "source": "env_099_01.pkl",
+        "context_group": "c2ecb56199de2eaac26623267e0986e3bb7a8d224c446f8c64ed306f8c187739",
+        "transitions": 1071
+      },
+      {
+        "file": "train/env_038_03.npz",
+        "source": "env_038_03.pkl",
+        "context_group": "c2f9f110dd7c77a335410e1d9e773dae000c4facb4f1e1fea4ca39c8cf2ef25b",
+        "transitions": 914
+      },
+      {
+        "file": "train/env_146_01.npz",
+        "source": "env_146_01.pkl",
+        "context_group": "c38e088ba36141c72e5f53bab6e63fa623d3bdabf185c826282a7a86a32fbf13",
+        "transitions": 884
+      },
+      {
+        "file": "train/env_095_04.npz",
+        "source": "env_095_04.pkl",
+        "context_group": "c418e7b12362a0449fae361faa935374eff31505ae96b1436125f5e0584bf8df",
+        "transitions": 1050
+      },
+      {
+        "file": "train/env_050_02.npz",
+        "source": "env_050_02.pkl",
+        "context_group": "c4215ae06b28653a0a94b7dcbe33ffbf9b387da83bf08e8ea348dfc756cf4201",
+        "transitions": 641
+      },
+      {
+        "file": "train/env_085_06.npz",
+        "source": "env_085_06.pkl",
+        "context_group": "c43d56686d16023c1b6fe009941ca9201e9a553dd75e87171279cb6783b67f38",
+        "transitions": 829
+      },
+      {
+        "file": "train/env_055_05.npz",
+        "source": "env_055_05.pkl",
+        "context_group": "c4b8a0d8369645e42d3de54d49765914dc27bf2c0454d24719187d625f594472",
+        "transitions": 812
+      },
+      {
+        "file": "train/env_027_03.npz",
+        "source": "env_027_03.pkl",
+        "context_group": "c5647d11068c5caff56c1ab6b40a4165b12423b0c86a7aff6a1e0891b4c1cfad",
+        "transitions": 1047
+      },
+      {
+        "file": "train/env_076_05.npz",
+        "source": "env_076_05.pkl",
+        "context_group": "c570fb040fc545fffd570a42ec59a697136e04eeaf843058e757620cf23bf6ec",
+        "transitions": 965
+      },
+      {
+        "file": "train/env_113_01.npz",
+        "source": "env_113_01.pkl",
+        "context_group": "c59406174738c03a6e02a0ff390e2fa22ebd361ebdae017bdd91ebf904a904f6",
+        "transitions": 949
+      },
+      {
+        "file": "train/env_077_04.npz",
+        "source": "env_077_04.pkl",
+        "context_group": "c616087cfaec4311c5e0aa5f148bc63c55cb59f4d675f2cc6708968dd5ae9d18",
+        "transitions": 1069
+      },
+      {
+        "file": "train/env_135_04.npz",
+        "source": "env_135_04.pkl",
+        "context_group": "c61cf3db9a34099e55b7cd2589a9e38f2934138069fa31fb43fb8a30ef5307e2",
+        "transitions": 760
+      },
+      {
+        "file": "train/env_124_03.npz",
+        "source": "env_124_03.pkl",
+        "context_group": "c64a1f037687be6312a4bf3bb2f1e482ab1e67303f76f9501093bf303c0ffd93",
+        "transitions": 802
+      },
+      {
+        "file": "train/env_138_04.npz",
+        "source": "env_138_04.pkl",
+        "context_group": "c71c4dc724b661fbe8ec484fc12e865b0e9eaa8a7627c2666c81c29150cc6afb",
+        "transitions": 820
+      },
+      {
+        "file": "train/env_112_03.npz",
+        "source": "env_112_03.pkl",
+        "context_group": "c7235afe4a1ee500288bc8c840a05f70854f5e99236f0f1649d824b57bd8835f",
+        "transitions": 847
+      },
+      {
+        "file": "train/env_128_02.npz",
+        "source": "env_128_02.pkl",
+        "context_group": "c72741f462154644d5dc761cecd54a99b3c4a2657cd286c0278b007cb9d0c81f",
+        "transitions": 1192
+      },
+      {
+        "file": "train/env_080_02.npz",
+        "source": "env_080_02.pkl",
+        "context_group": "c795fa90691674e5e0897c0c563c3d1cf29e43581dd7c50b49a8606e11d3bada",
+        "transitions": 956
+      },
+      {
+        "file": "train/env_015_03.npz",
+        "source": "env_015_03.pkl",
+        "context_group": "c802d0315e0fa0a841f07f7de9d7c8991cc1f68f44371912bcc056973edcfc89",
+        "transitions": 1009
+      },
+      {
+        "file": "train/env_064_06.npz",
+        "source": "env_064_06.pkl",
+        "context_group": "c8223f07791b974fa7b437b969f2464266ed2d209fd42a6c05ef1cb0971cca3f",
+        "transitions": 1300
+      },
+      {
+        "file": "train/env_085_03.npz",
+        "source": "env_085_03.pkl",
+        "context_group": "c8ee44b27c8241a7afe2d17408075ce562039c58cbc744c6696eafca31fe3285",
+        "transitions": 942
+      },
+      {
+        "file": "train/env_043_04.npz",
+        "source": "env_043_04.pkl",
+        "context_group": "c9a833a27fb93efbbf06c4b52c91219d1aaf2f6b7493579da5a1be93b5fb0001",
+        "transitions": 800
+      },
+      {
+        "file": "train/env_067_01.npz",
+        "source": "env_067_01.pkl",
+        "context_group": "ca3c2338f9173b7fec3601e2c757e6a2bfcd7677e73b69e471d53514b5c61deb",
+        "transitions": 1720
+      },
+      {
+        "file": "train/env_144_02.npz",
+        "source": "env_144_02.pkl",
+        "context_group": "caba39babac7292d62d80a9f7619663ba1ff03d04b05f500d8df675127ae5e6d",
+        "transitions": 760
+      },
+      {
+        "file": "train/env_075_01.npz",
+        "source": "env_075_01.pkl",
+        "context_group": "cac8a78836e5e014bb9e0a8117fdcf91847148b61f1e49efb24cb507a58a5221",
+        "transitions": 979
+      },
+      {
+        "file": "train/env_067_02.npz",
+        "source": "env_067_02.pkl",
+        "context_group": "cb719b05426064d1c461658798808383d3dd4f80c969cafaf62fc98e4afeedba",
+        "transitions": 940
+      },
+      {
+        "file": "train/env_057_06.npz",
+        "source": "env_057_06.pkl",
+        "context_group": "cc312f79a0a62ddcef4f4cfc354a1cde573795ab3628a575efe4ce1e0ea47897",
+        "transitions": 987
+      },
+      {
+        "file": "train/env_082_02.npz",
+        "source": "env_082_02.pkl",
+        "context_group": "cc7197767d8c4bfe3a44aa95e521a0ee55bcacf1be58d2e82996d2be7c94ae05",
+        "transitions": 838
+      },
+      {
+        "file": "train/env_050_01.npz",
+        "source": "env_050_01.pkl",
+        "context_group": "ccb912cda596f57562503bff59cd7aab8bedb5ac98cbce3c4c01c052101a690b",
+        "transitions": 1267
+      },
+      {
+        "file": "train/env_026_01.npz",
+        "source": "env_026_01.pkl",
+        "context_group": "cd576c8907976f5074ebd81148fb159f6282eef9b4918483220b2a6628c8ae11",
+        "transitions": 821
+      },
+      {
+        "file": "train/env_043_01.npz",
+        "source": "env_043_01.pkl",
+        "context_group": "cdda08ac5fa31f19afb236ce7da60fb6c5f2f503598b3b31824aeb37796b4159",
+        "transitions": 1213
+      },
+      {
+        "file": "train/env_024_02.npz",
+        "source": "env_024_02.pkl",
+        "context_group": "ce72091db275b0bb3cb9e05b1fbcd6e72942747da07d919fa855b9ef1a92ce07",
+        "transitions": 1134
+      },
+      {
+        "file": "train/env_051_03.npz",
+        "source": "env_051_03.pkl",
+        "context_group": "ce852f566e67b61a7722d35f890e3700377dc40a26bdcf8d2095cae9149eae6b",
+        "transitions": 1178
+      },
+      {
+        "file": "train/env_009_03.npz",
+        "source": "env_009_03.pkl",
+        "context_group": "cf61850657fe02a029314604cf2f12ef94f7c9228415cb355cc6bf8154c87a34",
+        "transitions": 1148
+      },
+      {
+        "file": "train/env_042_04.npz",
+        "source": "env_042_04.pkl",
+        "context_group": "cf7f3b725bad4f1083d21576b7a2c0126c95d2a7162590b85c9f5ba29cbf736f",
+        "transitions": 831
+      },
+      {
+        "file": "train/env_122_02.npz",
+        "source": "env_122_02.pkl",
+        "context_group": "cfc19c81a46f99f21a9ba616d623a527b2214a0bf5a160a6191bb933718539a2",
+        "transitions": 867
+      },
+      {
+        "file": "train/env_031_06.npz",
+        "source": "env_031_06.pkl",
+        "context_group": "d06a0117d1225cee733bddb1b976cbe74898e4885dead366a85a0e968ca7e96c",
+        "transitions": 881
+      },
+      {
+        "file": "train/env_145_03.npz",
+        "source": "env_145_03.pkl",
+        "context_group": "d0ac7ba86209e301bb1da79039d36acafcf79e4d50141dcf4f724f0175e13bd1",
+        "transitions": 823
+      },
+      {
+        "file": "train/env_125_03.npz",
+        "source": "env_125_03.pkl",
+        "context_group": "d115c6cf4ddd5ff4180df43d883910fd83c9426a98fd6e6c035b9fa53cb0cbc4",
+        "transitions": 753
+      },
+      {
+        "file": "train/env_029_06.npz",
+        "source": "env_029_06.pkl",
+        "context_group": "d1164b0a021ea70484a4563ac3232a338fdc9214a3559174da338758e65f72e1",
+        "transitions": 949
+      },
+      {
+        "file": "train/env_071_01.npz",
+        "source": "env_071_01.pkl",
+        "context_group": "d14f9ebcea8cd2705d02c58b8556f62b78829a363af45edbf4ff183f135cead5",
+        "transitions": 1222
+      },
+      {
+        "file": "train/env_020_03.npz",
+        "source": "env_020_03.pkl",
+        "context_group": "d15d50b50ec6fd6ead5c1a8ddeead12a7555b9849e0b4866a3d352eda2736e43",
+        "transitions": 909
+      },
+      {
+        "file": "train/env_076_03.npz",
+        "source": "env_076_03.pkl",
+        "context_group": "d199fee37ace5eda90712cf610739849e547bdeedefac7d71a9af93c7729b6cf",
+        "transitions": 960
+      },
+      {
+        "file": "train/env_088_02.npz",
+        "source": "env_088_02.pkl",
+        "context_group": "d1ca8969257c15b2ef87b0f3baecebb07b6526330880867b82d25bfabeef23df",
+        "transitions": 708
+      },
+      {
+        "file": "train/env_038_04.npz",
+        "source": "env_038_04.pkl",
+        "context_group": "d2c9514ff9a38f83c2f371f4552a2a7b0a2bba1e060fcae325bec4fc084fd551",
+        "transitions": 767
+      },
+      {
+        "file": "train/env_148_01.npz",
+        "source": "env_148_01.pkl",
+        "context_group": "d33a9b731438f570fcb24b02a7e2976f5bd343e0616f211fb6aa117815eb33a7",
+        "transitions": 785
+      },
+      {
+        "file": "train/env_059_02.npz",
+        "source": "env_059_02.pkl",
+        "context_group": "d38dcf31262898cf74ce50d1376a025b61b6064de237d718bb946f671c902f7c",
+        "transitions": 1187
+      },
+      {
+        "file": "train/env_015_06.npz",
+        "source": "env_015_06.pkl",
+        "context_group": "d3fb347293f53d4e02aa0d397a5e8dfe2fbb7f322095851a635f40df0b9768e7",
+        "transitions": 972
+      },
+      {
+        "file": "train/env_053_04.npz",
+        "source": "env_053_04.pkl",
+        "context_group": "d4e83a8e8f750a247e3e0af1f76e9eb6a7fa68508c8f5ab1c5a98cd0d9dc0e29",
+        "transitions": 750
+      },
+      {
+        "file": "train/env_098_02.npz",
+        "source": "env_098_02.pkl",
+        "context_group": "d58010d3cd8ad2405551798847e80c661b1530b41309fb212f4a8f6c88afc4db",
+        "transitions": 840
+      },
+      {
+        "file": "train/env_070_02.npz",
+        "source": "env_070_02.pkl",
+        "context_group": "d613d80234669c1b84894a5b45e18d3c825327f5e11a534b4c06babb9b227a79",
+        "transitions": 987
+      },
+      {
+        "file": "train/env_004_06.npz",
+        "source": "env_004_06.pkl",
+        "context_group": "d6585ad50dba0ed9c28498b57cedd5702ce3a96eb7fd623bc56c1e96bbcaa8cd",
+        "transitions": 937
+      },
+      {
+        "file": "train/env_096_03.npz",
+        "source": "env_096_03.pkl",
+        "context_group": "d69ab678b611219e6347b8252746bcef362ba587adff3b863fa83cc7099157a4",
+        "transitions": 793
+      },
+      {
+        "file": "train/env_115_04.npz",
+        "source": "env_115_04.pkl",
+        "context_group": "d736f0f4d8d4be0758e15a636ba7b7a5e86a83cdd33747094b532bfe0efef6c8",
+        "transitions": 1021
+      },
+      {
+        "file": "train/env_107_04.npz",
+        "source": "env_107_04.pkl",
+        "context_group": "d7cd6083b78805ad960bdde37c82199eb2a83bc98e571862d6b3ff98c80c61c1",
+        "transitions": 1147
+      },
+      {
+        "file": "train/env_114_02.npz",
+        "source": "env_114_02.pkl",
+        "context_group": "d87434cfa9d3f880b29011cfa15815a8bf0c7bb41f4e70988c7aad791025a896",
+        "transitions": 941
+      },
+      {
+        "file": "train/env_037_06.npz",
+        "source": "env_037_06.pkl",
+        "context_group": "d890d1af0b422d83ec8b177fef56a9a664544b7b316d5dbadc068e8a21c91f15",
+        "transitions": 813
+      },
+      {
+        "file": "train/env_106_03.npz",
+        "source": "env_106_03.pkl",
+        "context_group": "da48b1db0d9ccf8b2784da75084e07fff1948cea434d50cf048d18b8c0a76fa2",
+        "transitions": 746
+      },
+      {
+        "file": "train/env_058_04.npz",
+        "source": "env_058_04.pkl",
+        "context_group": "da7e2829dd28ee8e540fd52080eb6bc32839adbca2dcf80207c7528ac9263804",
+        "transitions": 678
+      },
+      {
+        "file": "train/env_078_01.npz",
+        "source": "env_078_01.pkl",
+        "context_group": "daa59523257b17c62e6d523fd7d84d6256be281ad4a326b78c2a03bf46a69533",
+        "transitions": 1638
+      },
+      {
+        "file": "train/env_018_01.npz",
+        "source": "env_018_01.pkl",
+        "context_group": "dac297c6cbdd0eee50fc753a5dc74838275c4574584da759a1e71c76d326bcd2",
+        "transitions": 950
+      },
+      {
+        "file": "train/env_086_06.npz",
+        "source": "env_086_06.pkl",
+        "context_group": "dae6265e8e32edf117c36d8928abe7f42b50fee6e9f00e39d4d015a7f1143c11",
+        "transitions": 1062
+      },
+      {
+        "file": "train/env_150_04.npz",
+        "source": "env_150_04.pkl",
+        "context_group": "daebeaebd48861a8833efafbdfd2bbfc54d16b7b1281dd7831b5311690d16183",
+        "transitions": 604
+      },
+      {
+        "file": "train/env_026_04.npz",
+        "source": "env_026_04.pkl",
+        "context_group": "db39ceb16247c3c4dd509d1f485dcbf7a9786378ccc683b01b5139af699d232a",
+        "transitions": 1172
+      },
+      {
+        "file": "train/env_130_01.npz",
+        "source": "env_130_01.pkl",
+        "context_group": "db4a50524ef6634f3500a19a9c9e261f4ef64f62331b58558d5e60a334c795aa",
+        "transitions": 1136
+      },
+      {
+        "file": "train/env_079_01.npz",
+        "source": "env_079_01.pkl",
+        "context_group": "dba09631192b6badefca2aebc9b52fd1c825f56db25f58c1c33444ef7a26846b",
+        "transitions": 1157
+      },
+      {
+        "file": "train/env_127_01.npz",
+        "source": "env_127_01.pkl",
+        "context_group": "dbde96e4389cf2934491018dea6666bd77d562e6c985185b3ba45c2b56a1e30e",
+        "transitions": 787
+      },
+      {
+        "file": "train/env_143_02.npz",
+        "source": "env_143_02.pkl",
+        "context_group": "dc190b348d2ea43781ac6e9b220520882b6183f29f0f17de91cd1439306b2d1f",
+        "transitions": 830
+      },
+      {
+        "file": "train/env_108_04.npz",
+        "source": "env_108_04.pkl",
+        "context_group": "dc63c13d2256f3da4ae60bd4709a0954fe16a8afaa6346302bf4ad1eb502c1e9",
+        "transitions": 1002
+      },
+      {
+        "file": "train/env_012_06.npz",
+        "source": "env_012_06.pkl",
+        "context_group": "dd61586bf3852e767b4dca029a9edffedfd655f9938b9ed89a1738b67dbc68ec",
+        "transitions": 906
+      },
+      {
+        "file": "train/env_014_05.npz",
+        "source": "env_014_05.pkl",
+        "context_group": "ddb8d96112b932718c536ebae87ba0904cc0b2a9cbac8d21a902aaa230197a66",
+        "transitions": 1389
+      },
+      {
+        "file": "train/env_147_01.npz",
+        "source": "env_147_01.pkl",
+        "context_group": "ddc3d06c86da3e3be9ab6182d2b4ea3731ce028fd473da31e384fc9b4309b5f7",
+        "transitions": 801
+      },
+      {
+        "file": "train/env_019_03.npz",
+        "source": "env_019_03.pkl",
+        "context_group": "dddcd8fc98c2a63c147ea2cfad7b2bca5625fbb7b769ce5749938147498ddd24",
+        "transitions": 887
+      },
+      {
+        "file": "train/env_036_04.npz",
+        "source": "env_036_04.pkl",
+        "context_group": "de30774a4f4396da4cf0b56d1cac36c914ab1fc419e25f9243a1cc2fbeca1d0a",
+        "transitions": 852
+      },
+      {
+        "file": "train/env_118_01.npz",
+        "source": "env_118_01.pkl",
+        "context_group": "de9e413103bed9e26176a2217723723864f88b20d7b7013945f7d8c3aed75e8e",
+        "transitions": 873
+      },
+      {
+        "file": "train/env_020_04.npz",
+        "source": "env_020_04.pkl",
+        "context_group": "dea1ccd07a257e27c00c88f90283feddd89f0826773af252fe7f6d0e907a2515",
+        "transitions": 745
+      },
+      {
+        "file": "train/env_059_06.npz",
+        "source": "env_059_06.pkl",
+        "context_group": "deb4cb2d223d18e6feeba54d5d309db8d268dc37f412799ae34c65fec3557f96",
+        "transitions": 944
+      },
+      {
+        "file": "train/env_050_06.npz",
+        "source": "env_050_06.pkl",
+        "context_group": "df4d8e11aaa14cf5ff543f346346e1a4a966542d82b5e0d727ea510acc78096b",
+        "transitions": 619
+      },
+      {
+        "file": "train/env_094_02.npz",
+        "source": "env_094_02.pkl",
+        "context_group": "df725fa7517540b390f20d13ff982afbcbbbd8f8b09869c4e94accc15320a562",
+        "transitions": 1029
+      },
+      {
+        "file": "train/env_003_06.npz",
+        "source": "env_003_06.pkl",
+        "context_group": "df8ab94e472102d6b20910b9f9929e133182fa1d452df1052322fa7cd2a27218",
+        "transitions": 1036
+      },
+      {
+        "file": "train/env_077_03.npz",
+        "source": "env_077_03.pkl",
+        "context_group": "dfc692cc20ffc7e2e822fb527e904312ea300c221fcbd12f8c95998a3cc5d45a",
+        "transitions": 804
+      },
+      {
+        "file": "train/env_052_06.npz",
+        "source": "env_052_06.pkl",
+        "context_group": "e06bdeb48351abca9134c47e875578be1559f399954730b686043711082968dc",
+        "transitions": 730
+      },
+      {
+        "file": "train/env_099_05.npz",
+        "source": "env_099_05.pkl",
+        "context_group": "e0a54ef47c507f7fad6b4457852eb292410bde22caf11e4e96cc86bc3277d486",
+        "transitions": 1282
+      },
+      {
+        "file": "train/env_028_05.npz",
+        "source": "env_028_05.pkl",
+        "context_group": "e16e9831c611f76170573c6c24ce1e801cd0e941950f3cf08b919511431393bc",
+        "transitions": 1011
+      },
+      {
+        "file": "train/env_022_01.npz",
+        "source": "env_022_01.pkl",
+        "context_group": "e21dfa01fdccc8d7bdf08f665a116e6bb6cf3e3cd1e199ccf542a1ed3d41812b",
+        "transitions": 1137
+      },
+      {
+        "file": "train/env_068_05.npz",
+        "source": "env_068_05.pkl",
+        "context_group": "e40765419aa3555667b70595a2257736263069eeb3be82954ae24866e3dee030",
+        "transitions": 990
+      },
+      {
+        "file": "train/env_132_01.npz",
+        "source": "env_132_01.pkl",
+        "context_group": "e40bbdc2bbf9b4d0bf0383814d83561c21874d965f455ff22bbe30d647d82d08",
+        "transitions": 811
+      },
+      {
+        "file": "train/env_047_04.npz",
+        "source": "env_047_04.pkl",
+        "context_group": "e431d3610397b99dcdc2227bfb718782794f681883966f56017ff18c0c929fca",
+        "transitions": 1002
+      },
+      {
+        "file": "train/env_021_02.npz",
+        "source": "env_021_02.pkl",
+        "context_group": "e4409e1b8323b8e46aab6b7287f314c62679fd11af2bbad2ad26e4c9ac4abe76",
+        "transitions": 862
+      },
+      {
+        "file": "train/env_090_06.npz",
+        "source": "env_090_06.pkl",
+        "context_group": "e48d1724ccf9b87850213a0e02a056cac4808cf83d72028d193573179cb80f51",
+        "transitions": 620
+      },
+      {
+        "file": "train/env_074_05.npz",
+        "source": "env_074_05.pkl",
+        "context_group": "e490919f1a81589fe1ea2657304d19d73ea365f125bdb7dd411d424b39aa2c2f",
+        "transitions": 1001
+      },
+      {
+        "file": "train/env_136_01.npz",
+        "source": "env_136_01.pkl",
+        "context_group": "e58141262b0a45f2b3806e4b311284ba8057094347c65577efde7961eb84fb3d",
+        "transitions": 828
+      },
+      {
+        "file": "train/env_142_03.npz",
+        "source": "env_142_03.pkl",
+        "context_group": "e5c7a03d0fbd243b8b8e6238ea3f1b83e6540fff6f2e53e7862951ccc40f0620",
+        "transitions": 864
+      },
+      {
+        "file": "train/env_101_02.npz",
+        "source": "env_101_02.pkl",
+        "context_group": "e5e92808b67cb3f5d57b5864e08a0112e5adf0462e81d04384ae6c2693373741",
+        "transitions": 1082
+      },
+      {
+        "file": "train/env_029_04.npz",
+        "source": "env_029_04.pkl",
+        "context_group": "e6094a15b6b0d2905f5de5eb48a04c59c2854f9306f1ca36067e87977ba0919f",
+        "transitions": 954
+      },
+      {
+        "file": "train/env_090_01.npz",
+        "source": "env_090_01.pkl",
+        "context_group": "e6794fa9d1923bf76f4be67ca81ead4c5374455a92edec896e22844a2d3a6b6c",
+        "transitions": 1432
+      },
+      {
+        "file": "train/env_120_04.npz",
+        "source": "env_120_04.pkl",
+        "context_group": "e7192afffb7def911b1ab364a7f08edd11eb26eb4d8a888569d447de4bcdf69e",
+        "transitions": 954
+      },
+      {
+        "file": "train/env_067_05.npz",
+        "source": "env_067_05.pkl",
+        "context_group": "e73bfae79e357816ad1b8d6dc82a4975bd02d72a5c17cd323f52f5d8db98c3d1",
+        "transitions": 832
+      },
+      {
+        "file": "train/env_136_02.npz",
+        "source": "env_136_02.pkl",
+        "context_group": "e749a39f7c57d78ef5df6e4c2cf2b745a30df5aaacb86b3f3b5afba4f96ac9de",
+        "transitions": 1129
+      },
+      {
+        "file": "train/env_021_06.npz",
+        "source": "env_021_06.pkl",
+        "context_group": "e75a572e95e71a3ee614dba0f46c55d85f82ab2c5d2e03db3c3c6b6b4ad70fee",
+        "transitions": 884
+      },
+      {
+        "file": "train/env_096_05.npz",
+        "source": "env_096_05.pkl",
+        "context_group": "e763cb050b8c4d8130663185c79f499f826370887817a05054220da3b7d5684f",
+        "transitions": 739
+      },
+      {
+        "file": "train/env_008_04.npz",
+        "source": "env_008_04.pkl",
+        "context_group": "e76d91280261d8548ba6851a5b51946b9198bd9b2dabc50f89761a3690776fe5",
+        "transitions": 819
+      },
+      {
+        "file": "train/env_017_01.npz",
+        "source": "env_017_01.pkl",
+        "context_group": "e7bcb576e32e9d4432dad4c9f8cb5cc566371548ad2b06c79eea0e44afd80690",
+        "transitions": 812
+      },
+      {
+        "file": "train/env_002_06.npz",
+        "source": "env_002_06.pkl",
+        "context_group": "e831a15f6d82a7806ebbfc64488732a3a087f338a1bd8612c213eb0c1782253f",
+        "transitions": 1033
+      },
+      {
+        "file": "train/env_098_01.npz",
+        "source": "env_098_01.pkl",
+        "context_group": "e8788d55a368d0968f7d98a11c32f013704d98553b75bdfcb36c938cd798add4",
+        "transitions": 860
+      },
+      {
+        "file": "train/env_107_01.npz",
+        "source": "env_107_01.pkl",
+        "context_group": "e8fbba3e2e88dfe76d87b21bb1fc48d493d5936135f3836b328d024a4f16c110",
+        "transitions": 841
+      },
+      {
+        "file": "train/env_074_06.npz",
+        "source": "env_074_06.pkl",
+        "context_group": "e985eb83708a818cc74be33829854bada5c39c9e7c2c76cb558bcad17d4e7bf1",
+        "transitions": 1067
+      },
+      {
+        "file": "train/env_038_05.npz",
+        "source": "env_038_05.pkl",
+        "context_group": "ea82af22ff828497986c8cab32de77d1a3ac7b2cefdae17a636749b58ee8a4ea",
+        "transitions": 990
+      },
+      {
+        "file": "train/env_041_04.npz",
+        "source": "env_041_04.pkl",
+        "context_group": "ea89eb71718ac47b707d128976e84537095a4519c3592d2e041d65bf5e701c62",
+        "transitions": 1202
+      },
+      {
+        "file": "train/env_111_03.npz",
+        "source": "env_111_03.pkl",
+        "context_group": "eaaf72b51dd1619a2a8cce5b4c5f5ddf85f980c38cefdb1222c817dcf2f19a94",
+        "transitions": 754
+      },
+      {
+        "file": "train/env_065_01.npz",
+        "source": "env_065_01.pkl",
+        "context_group": "eadbbadfdf1c856480c0ded6fb5eb09dad3dea1b71062bf04068120b84530349",
+        "transitions": 1286
+      },
+      {
+        "file": "train/env_092_06.npz",
+        "source": "env_092_06.pkl",
+        "context_group": "eb967be55e7ef43a3a08621695154dc8949d082d9a99768b0c3b3509d973bb66",
+        "transitions": 959
+      },
+      {
+        "file": "train/env_004_01.npz",
+        "source": "env_004_01.pkl",
+        "context_group": "ebd4adb1560d26c327f87706d2b25ed3b0f1a5ba4d670e0166e02920dcda126a",
+        "transitions": 897
+      },
+      {
+        "file": "train/env_015_04.npz",
+        "source": "env_015_04.pkl",
+        "context_group": "ec2daced0370a2da839a76e3ac286fe1ddb33c2865d8dd1f3ecedac46eae93e0",
+        "transitions": 1056
+      },
+      {
+        "file": "train/env_074_03.npz",
+        "source": "env_074_03.pkl",
+        "context_group": "ed37811d4020e93a26f6b8a76df389ea69acfd88fcc7fd852adf5b1b49a2d405",
+        "transitions": 891
+      },
+      {
+        "file": "train/env_056_05.npz",
+        "source": "env_056_05.pkl",
+        "context_group": "ed45c084f0fa4aee31f38e3972d6a2415f55e053f344b6d39480c4f1e5e28149",
+        "transitions": 797
+      },
+      {
+        "file": "train/env_118_04.npz",
+        "source": "env_118_04.pkl",
+        "context_group": "ed61ca15bc7185ff7f83eb4a17158564f99244d6930147c98a1697f376c017d5",
+        "transitions": 887
+      },
+      {
+        "file": "train/env_140_01.npz",
+        "source": "env_140_01.pkl",
+        "context_group": "ed788895d45f8e133643985c4f7f049c48a1c4bf036e30f9f6e79fca7d5c7d5b",
+        "transitions": 1018
+      },
+      {
+        "file": "train/env_014_01.npz",
+        "source": "env_014_01.pkl",
+        "context_group": "ee8ace40b40f702b590c99927705578f5e502266b7c616e5442ff8519d38b40d",
+        "transitions": 957
+      },
+      {
+        "file": "train/env_082_04.npz",
+        "source": "env_082_04.pkl",
+        "context_group": "ee9cdbd9bd391bb600717097fce402a1ccd8a95a31672a5bd19e70b945f79fde",
+        "transitions": 906
+      },
+      {
+        "file": "train/env_026_03.npz",
+        "source": "env_026_03.pkl",
+        "context_group": "ef131cf01305d1606eea23d1dddb4f49c1fd239be599766674c1cb9e0d8cc173",
+        "transitions": 966
+      },
+      {
+        "file": "train/env_025_05.npz",
+        "source": "env_025_05.pkl",
+        "context_group": "ef385dcd5cc56455c010cf9af978bd0d07d30c2586f705a0a7a6a6f13fb56131",
+        "transitions": 977
+      },
+      {
+        "file": "train/env_007_03.npz",
+        "source": "env_007_03.pkl",
+        "context_group": "ef990dcd6bafb0d7f4be14eb5e3d79b9b29a649d7db7bffcfa2c9bb39ff40ed4",
+        "transitions": 890
+      },
+      {
+        "file": "train/env_019_05.npz",
+        "source": "env_019_05.pkl",
+        "context_group": "efd330858a5d3d848370414ddf590f9634e8ac0b2476bfc2da407497649cd5de",
+        "transitions": 928
+      },
+      {
+        "file": "train/env_025_02.npz",
+        "source": "env_025_02.pkl",
+        "context_group": "efda0864a60793ff9b67649f0d9b38796948db1d74226c1ee94701222901e31e",
+        "transitions": 1476
+      },
+      {
+        "file": "train/env_036_05.npz",
+        "source": "env_036_05.pkl",
+        "context_group": "efe60e3b1de41f76cd7a0121735ad98a656e0d1ef147d876450b87f401d140de",
+        "transitions": 1011
+      },
+      {
+        "file": "train/env_067_06.npz",
+        "source": "env_067_06.pkl",
+        "context_group": "eff4edf2fb40e1bdf391a59dbc1febac41f8844122e9b8a0412311b863f20676",
+        "transitions": 865
+      },
+      {
+        "file": "train/env_124_02.npz",
+        "source": "env_124_02.pkl",
+        "context_group": "f0016395225bc29ecf2c52b8a704f6a47c7667face28d04196a13cb025fe9d8f",
+        "transitions": 924
+      },
+      {
+        "file": "train/env_019_02.npz",
+        "source": "env_019_02.pkl",
+        "context_group": "f01781d0b7450067263ca13a4fcee432820319286febee311522c07ca77dd0db",
+        "transitions": 1529
+      },
+      {
+        "file": "train/env_014_06.npz",
+        "source": "env_014_06.pkl",
+        "context_group": "f1542ac2c2c6118426f3471e5daa6e85324957a51d29d5b09e6948aab8362c4c",
+        "transitions": 975
+      },
+      {
+        "file": "train/env_049_01.npz",
+        "source": "env_049_01.pkl",
+        "context_group": "f1a1f8a41d1c10e1170b9a0dfa374d30ac9bbd81721c27bfda5d6856ada508a2",
+        "transitions": 866
+      },
+      {
+        "file": "train/env_092_04.npz",
+        "source": "env_092_04.pkl",
+        "context_group": "f1b2ba3dcdaaed80aee9e888c1c5ca8d85035b4bfa3feb386eec055fa4b1a8b3",
+        "transitions": 802
+      },
+      {
+        "file": "train/env_056_06.npz",
+        "source": "env_056_06.pkl",
+        "context_group": "f206650a0aa93590889a8aca5a2d12c84dd88669d51bbeb95495fda39206dc65",
+        "transitions": 891
+      },
+      {
+        "file": "train/env_107_03.npz",
+        "source": "env_107_03.pkl",
+        "context_group": "f2130a7b8d873f93d081a80cfbee539739292722acd2c901b59673d7e2837cd8",
+        "transitions": 1111
+      },
+      {
+        "file": "train/env_137_01.npz",
+        "source": "env_137_01.pkl",
+        "context_group": "f23b6b4dbb0126271d3385caf15cfed99831cd3c2b61b45a88b4126d4d836a3a",
+        "transitions": 839
+      },
+      {
+        "file": "train/env_106_01.npz",
+        "source": "env_106_01.pkl",
+        "context_group": "f2a2d5ca331b8ba671b366403d67da3b4cab83e7b095ec49ad5a41e53d3b06a4",
+        "transitions": 1051
+      },
+      {
+        "file": "train/env_137_02.npz",
+        "source": "env_137_02.pkl",
+        "context_group": "f2ca184324d47d08f6da1f9b8a3872287ae07169c201a32af69d8ea785fd26de",
+        "transitions": 960
+      },
+      {
+        "file": "train/env_028_03.npz",
+        "source": "env_028_03.pkl",
+        "context_group": "f3325784b7deef9fbedb0579bd33b566bbae469cf64bee767f8d590f255a0b3b",
+        "transitions": 1022
+      },
+      {
+        "file": "train/env_023_01.npz",
+        "source": "env_023_01.pkl",
+        "context_group": "f34c8417b47b17a360eee386565422456a8ad7d39b133ad5f3bf11a66c68cf4c",
+        "transitions": 909
+      },
+      {
+        "file": "train/env_044_06.npz",
+        "source": "env_044_06.pkl",
+        "context_group": "f36af3ccbba8397a77844bd6fdce63ee170516c15fa2981cded80efec10cc7bb",
+        "transitions": 817
+      },
+      {
+        "file": "train/env_026_02.npz",
+        "source": "env_026_02.pkl",
+        "context_group": "f36b81a7e606692d378ee4a17990ec179954040787e527548ffe2d5e7a7c5ee5",
+        "transitions": 852
+      },
+      {
+        "file": "train/env_043_02.npz",
+        "source": "env_043_02.pkl",
+        "context_group": "f394e1dd2d5646f9edbf0bc1ceb885e390ab49e0539f4cb88ce13853cea2d1ed",
+        "transitions": 910
+      },
+      {
+        "file": "train/env_011_06.npz",
+        "source": "env_011_06.pkl",
+        "context_group": "f46a24198ee4ceaa911150f4c62f70bb63dcff2df0277f471f8fcf3a9716be6e",
+        "transitions": 856
+      },
+      {
+        "file": "train/env_083_05.npz",
+        "source": "env_083_05.pkl",
+        "context_group": "f46aa6b18a8b3001bd87d6722e9b19cfe342b91201d28c7b7351ce463ad4cc85",
+        "transitions": 902
+      },
+      {
+        "file": "train/env_064_05.npz",
+        "source": "env_064_05.pkl",
+        "context_group": "f48558d456c08910f67ac5dd9b79697df6c595d3c1be084713aba6da3cd2c9e1",
+        "transitions": 1226
+      },
+      {
+        "file": "train/env_137_03.npz",
+        "source": "env_137_03.pkl",
+        "context_group": "f4bffd3c1b4f263c317164c09a4986dd13e7fad0ca011400420a1228ac26322e",
+        "transitions": 870
+      },
+      {
+        "file": "train/env_040_02.npz",
+        "source": "env_040_02.pkl",
+        "context_group": "f560e5d213c9a413f87ead89f27dca0b320d115c9ead7edf3cf96c19597c6fd9",
+        "transitions": 816
+      },
+      {
+        "file": "train/env_143_03.npz",
+        "source": "env_143_03.pkl",
+        "context_group": "f67141cb0825a71c448c037d1ee93bf019718e11e86eeab79a1959a5ca14af68",
+        "transitions": 693
+      },
+      {
+        "file": "train/env_014_03.npz",
+        "source": "env_014_03.pkl",
+        "context_group": "f6f2bb2e94d0d5769ed8be518e42696a808f6697e672bb98d8fcd8bd30dab6c4",
+        "transitions": 1220
+      },
+      {
+        "file": "train/env_042_03.npz",
+        "source": "env_042_03.pkl",
+        "context_group": "f6fb9c3373a5c47a0c1f953a3a6f67c3ee413f2fa630d8357b360d72d83c6f34",
+        "transitions": 855
+      },
+      {
+        "file": "train/env_032_06.npz",
+        "source": "env_032_06.pkl",
+        "context_group": "f701dcc5f9a6f0dbbd59bf312edf607a00c5468d33a71cbd777835201f807774",
+        "transitions": 839
+      },
+      {
+        "file": "train/env_060_02.npz",
+        "source": "env_060_02.pkl",
+        "context_group": "f721db567444d1f5688deaedab07846bad65c442abcc007d29fabe749991fbff",
+        "transitions": 1457
+      },
+      {
+        "file": "train/env_039_02.npz",
+        "source": "env_039_02.pkl",
+        "context_group": "f731e683c702907c64b72111b1e4b93aaf7fdf954a152f9a8aab49d5c07f7762",
+        "transitions": 1067
+      },
+      {
+        "file": "train/env_059_05.npz",
+        "source": "env_059_05.pkl",
+        "context_group": "f75d40e10c5a6f135e70219f5cadd2d260ce5fd8ba3e14abef0d0ffda8df70cb",
+        "transitions": 1004
+      },
+      {
+        "file": "train/env_109_01.npz",
+        "source": "env_109_01.pkl",
+        "context_group": "f76b382179c1518227c26c86a703be5924df492621412ae9e603e675b48fc1aa",
+        "transitions": 1037
+      },
+      {
+        "file": "train/env_109_02.npz",
+        "source": "env_109_02.pkl",
+        "context_group": "f7c1651dd0c4da17433a2de414324cf6dfacb6a4dd7563802182ecd0f34be515",
+        "transitions": 1100
+      },
+      {
+        "file": "train/env_141_01.npz",
+        "source": "env_141_01.pkl",
+        "context_group": "f7e3b3c966d3561d045ac18cc24655939c57c95f6c26106f46782d57f03f7d4f",
+        "transitions": 711
+      },
+      {
+        "file": "train/env_065_04.npz",
+        "source": "env_065_04.pkl",
+        "context_group": "f834d95c0847612a0c4220f27dfb4f071791a54d7b99609860b7e19761caf9b9",
+        "transitions": 818
+      },
+      {
+        "file": "train/env_002_04.npz",
+        "source": "env_002_04.pkl",
+        "context_group": "f849d07088fe9638a8d75afaeb4d243c9d2bf018d4fd8334323bd1249ca6f497",
+        "transitions": 918
+      },
+      {
+        "file": "train/env_064_01.npz",
+        "source": "env_064_01.pkl",
+        "context_group": "f8ec2edb2fde3102a11c22eb3e79bb904a68d21e12350366b93b4d02cd109717",
+        "transitions": 1317
+      },
+      {
+        "file": "train/env_115_03.npz",
+        "source": "env_115_03.pkl",
+        "context_group": "f99cc6cb2e69c4170b821255e79eb837099ed7a1bcf55763c229b787c6d13ff6",
+        "transitions": 868
+      },
+      {
+        "file": "train/env_056_03.npz",
+        "source": "env_056_03.pkl",
+        "context_group": "f9e980ee5ffdef36b8315d687e77e20965d1ca80354a2edef15d80c0a968da95",
+        "transitions": 1361
+      },
+      {
+        "file": "train/env_121_04.npz",
+        "source": "env_121_04.pkl",
+        "context_group": "fa8c2a9aa2586a9922dc2375c349a4fdfd91dac91ba1b0cf43377d70388d4c2b",
+        "transitions": 698
+      },
+      {
+        "file": "train/env_043_03.npz",
+        "source": "env_043_03.pkl",
+        "context_group": "fb86ff4350018098cacd778ff59830f5d352cbf921e9ce098f07b8634c0a1ce9",
+        "transitions": 907
+      },
+      {
+        "file": "train/env_111_02.npz",
+        "source": "env_111_02.pkl",
+        "context_group": "fbb8384350c2d6ebc1c68132ee4e167d12d183eedf256cf88f976e409b59650f",
+        "transitions": 879
+      },
+      {
+        "file": "train/env_091_05.npz",
+        "source": "env_091_05.pkl",
+        "context_group": "fd1f27ecd610b361064609f0ea0042a59006ab6d2e9ae23029c0a8e8a3308b2f",
+        "transitions": 865
+      },
+      {
+        "file": "train/env_055_06.npz",
+        "source": "env_055_06.pkl",
+        "context_group": "fde19f8fc82e578a454a64e5a92e1e27c2637052452c8cbfa87f503fb963d61b",
+        "transitions": 766
+      },
+      {
+        "file": "train/env_078_05.npz",
+        "source": "env_078_05.pkl",
+        "context_group": "fed7b8341a686e160d2b4d13fa768d3f7aba112951c236a6fc0d649cf166823c",
+        "transitions": 1005
+      },
+      {
+        "file": "train/env_049_05.npz",
+        "source": "env_049_05.pkl",
+        "context_group": "fedc2c8524f05600a908ba050723f2e5eeace3f5025cd3a9d44ebeda815406cd",
+        "transitions": 1266
+      },
+      {
+        "file": "train/env_044_02.npz",
+        "source": "env_044_02.pkl",
+        "context_group": "ff3c23b42afaecc4736852b4bac48b5b3cf76af9ee7ae3c50e2bdca4d945138b",
+        "transitions": 1500
+      },
+      {
+        "file": "train/env_017_02.npz",
+        "source": "env_017_02.pkl",
+        "context_group": "ff92160dbb5b2ef480ca98b434fb14ac3818893d724aeb23687541e2c8afdde9",
+        "transitions": 876
+      },
+      {
+        "file": "train/env_027_01.npz",
+        "source": "env_027_01.pkl",
+        "context_group": "fff00da472beebeb4d41c301fc745f0e2b66f69a54d43d4f1f62aa974def0e5f",
+        "transitions": 949
+      },
+      {
+        "file": "train/env_038_01.npz",
+        "source": "env_038_01.pkl",
+        "context_group": "fff658d4004021ab7471faea9d599f68b97262303e2a7389aa17c85c06294a3c",
+        "transitions": 1149
+      }
+    ],
+    "val": [
+      {
+        "file": "val/env_062_03.npz",
+        "source": "env_062_03.pkl",
+        "context_group": "01a50e4791c597cb08d3d732f0ec09921f90dcc02cf3ac918bd55411a31f5e08",
+        "transitions": 970
+      },
+      {
+        "file": "val/env_091_03.npz",
+        "source": "env_091_03.pkl",
+        "context_group": "01a50e4791c597cb08d3d732f0ec09921f90dcc02cf3ac918bd55411a31f5e08",
+        "transitions": 970
+      },
+      {
+        "file": "val/env_095_01.npz",
+        "source": "env_095_01.pkl",
+        "context_group": "034469e1982f3cc9e3e8ef0389baf7edb729f8629f14e4d9bed985abfcb57d69",
+        "transitions": 855
+      },
+      {
+        "file": "val/env_126_01.npz",
+        "source": "env_126_01.pkl",
+        "context_group": "03d2ca7469b4df06a7d400633aa3921b87779c39b7f2ef08cab99e8f160f7144",
+        "transitions": 862
+      },
+      {
+        "file": "val/env_022_06.npz",
+        "source": "env_022_06.pkl",
+        "context_group": "0bb88476be53edaf5b2fe18ac092001a5c326a7f0ae50ea1f55ea0a7fbe42af5",
+        "transitions": 1079
+      },
+      {
+        "file": "val/env_022_04.npz",
+        "source": "env_022_04.pkl",
+        "context_group": "0c148b1d819a8bc8c465876b97a4ee4e99f006e0821d7d74f5fd160fa8104ea6",
+        "transitions": 662
+      },
+      {
+        "file": "val/env_034_02.npz",
+        "source": "env_034_02.pkl",
+        "context_group": "0c409546c6427f0e52b78bf747f9514a465057d543634594b642d685b25293b6",
+        "transitions": 918
+      },
+      {
+        "file": "val/env_006_02.npz",
+        "source": "env_006_02.pkl",
+        "context_group": "0db239a2e50f461a2d2653966918fb99a2537acacd524b8ace12d3f9ddbae8c3",
+        "transitions": 838
+      },
+      {
+        "file": "val/env_108_01.npz",
+        "source": "env_108_01.pkl",
+        "context_group": "0fbf32a2f0749856e79e5a84bab8f621fdfd3365780e3023a45045cb038222a9",
+        "transitions": 1241
+      },
+      {
+        "file": "val/env_066_06.npz",
+        "source": "env_066_06.pkl",
+        "context_group": "11b32d5d86c232817749adef00ebbb7d9cc0d6043a7c27d7180070942491f20f",
+        "transitions": 943
+      },
+      {
+        "file": "val/env_050_03.npz",
+        "source": "env_050_03.pkl",
+        "context_group": "132fd2b871c34d31ca1d097a2856d045e153aec9e9073998e664893a4367b665",
+        "transitions": 1012
+      },
+      {
+        "file": "val/env_011_04.npz",
+        "source": "env_011_04.pkl",
+        "context_group": "1d999d7181f72adbf81b0cdc7d20785a76420c1fdf1f3025501c081a8761415e",
+        "transitions": 1159
+      },
+      {
+        "file": "val/env_116_04.npz",
+        "source": "env_116_04.pkl",
+        "context_group": "1e08425bc64cdfacf46d41419d82fe61df05eed6e801cb843e71fc2cea29fc10",
+        "transitions": 776
+      },
+      {
+        "file": "val/env_072_05.npz",
+        "source": "env_072_05.pkl",
+        "context_group": "1e688292e574e1b83bcc56a146325bc28031f3e320373d9007729029914c6249",
+        "transitions": 873
+      },
+      {
+        "file": "val/env_059_01.npz",
+        "source": "env_059_01.pkl",
+        "context_group": "2183eb147e8a99793062575bdc127a9c254acc392d38096a29aafc6232b0aebf",
+        "transitions": 1038
+      },
+      {
+        "file": "val/env_085_05.npz",
+        "source": "env_085_05.pkl",
+        "context_group": "242f955df0c12234b48f62ce5122a4111164db3229a327acffd057e8e2e866e7",
+        "transitions": 912
+      },
+      {
+        "file": "val/env_012_05.npz",
+        "source": "env_012_05.pkl",
+        "context_group": "24b911c462ad47e3dc7ddf96e53f534bd7787e38eaa0e7f512be17de48f3144c",
+        "transitions": 836
+      },
+      {
+        "file": "val/env_017_03.npz",
+        "source": "env_017_03.pkl",
+        "context_group": "267df994395923faf1004c03ee1a5e6518730d227e5576394d0019502d1cbf3b",
+        "transitions": 1003
+      },
+      {
+        "file": "val/env_057_03.npz",
+        "source": "env_057_03.pkl",
+        "context_group": "26d8d4116cfecb08c9463a5b24d1e657d443a01b98138ab6a8a736123f0db620",
+        "transitions": 1103
+      },
+      {
+        "file": "val/env_105_03.npz",
+        "source": "env_105_03.pkl",
+        "context_group": "2a871ad729371b3f19a977a6ae685b704dc1b64d8dab0cb8e6ad205a190999f7",
+        "transitions": 981
+      },
+      {
+        "file": "val/env_010_02.npz",
+        "source": "env_010_02.pkl",
+        "context_group": "2dd50a48bbee9b7390315dd50efaa713d478fa187be65996a323f70907d4d7ac",
+        "transitions": 1024
+      },
+      {
+        "file": "val/env_083_02.npz",
+        "source": "env_083_02.pkl",
+        "context_group": "34694578ee5d67a36ea91264a0b6d89fcd24446bcb510d037a04ae9e57dbf5cb",
+        "transitions": 1083
+      },
+      {
+        "file": "val/env_039_01.npz",
+        "source": "env_039_01.pkl",
+        "context_group": "35551642c52e6abe44b48025d91e83ffafa5d0f489b6a422cf6a8c5f222bef89",
+        "transitions": 1032
+      },
+      {
+        "file": "val/env_084_06.npz",
+        "source": "env_084_06.pkl",
+        "context_group": "3cf7a2f248bf76c7d6655c445507fce6e123c3f77350576ea80fa3a513e81833",
+        "transitions": 797
+      },
+      {
+        "file": "val/env_115_01.npz",
+        "source": "env_115_01.pkl",
+        "context_group": "43571160da9767fc8620466985fbf036c54738b6de311596d222ab0fa7bdda22",
+        "transitions": 888
+      },
+      {
+        "file": "val/env_027_02.npz",
+        "source": "env_027_02.pkl",
+        "context_group": "43945e21c7e8ba092b6c64b5dcbc61ce6c279f968e1e5559a1d17ab15cad7660",
+        "transitions": 988
+      },
+      {
+        "file": "val/env_051_02.npz",
+        "source": "env_051_02.pkl",
+        "context_group": "469830f5c6093c121974bd1a9c2cdef526f4059491d7187da8c9bfa80576b1e9",
+        "transitions": 1383
+      },
+      {
+        "file": "val/env_056_01.npz",
+        "source": "env_056_01.pkl",
+        "context_group": "47360862b1ee7583203c667d9cbcbf474bb892a2320ccb913b45720790fe6ab7",
+        "transitions": 1611
+      },
+      {
+        "file": "val/env_073_01.npz",
+        "source": "env_073_01.pkl",
+        "context_group": "47360862b1ee7583203c667d9cbcbf474bb892a2320ccb913b45720790fe6ab7",
+        "transitions": 1611
+      },
+      {
+        "file": "val/env_100_04.npz",
+        "source": "env_100_04.pkl",
+        "context_group": "4aeb1c2709ec04728d4caea2e0c9ca79ddeb233818aa44c62472470b8bdcb734",
+        "transitions": 917
+      },
+      {
+        "file": "val/env_114_01.npz",
+        "source": "env_114_01.pkl",
+        "context_group": "4ff7d2dfd07629f30e964aa29427569bb4d156e285e5b015336599abc7edd6d1",
+        "transitions": 1010
+      },
+      {
+        "file": "val/env_056_02.npz",
+        "source": "env_056_02.pkl",
+        "context_group": "5948a8b0e13691eacfc2322d9f4c7d12bb8a7400379457f93bd2a7e4c1f25d25",
+        "transitions": 1048
+      },
+      {
+        "file": "val/env_078_04.npz",
+        "source": "env_078_04.pkl",
+        "context_group": "5d72423c948bbbc68b6775f02a1e4abd42b882e4d1676b10dc08142992e6e24b",
+        "transitions": 839
+      },
+      {
+        "file": "val/env_138_03.npz",
+        "source": "env_138_03.pkl",
+        "context_group": "5dcfa39e5be340f11a2224a1f108d62438863456499a62c85853acf3b1d0cd69",
+        "transitions": 719
+      },
+      {
+        "file": "val/env_119_02.npz",
+        "source": "env_119_02.pkl",
+        "context_group": "5f10784c206f2937c8eaa8a2c66a200589722ca3690f96523470281e0801e612",
+        "transitions": 916
+      },
+      {
+        "file": "val/env_068_03.npz",
+        "source": "env_068_03.pkl",
+        "context_group": "5f6c1b8179538836bd0e61cf3ded8d855824303b083c8afdfa9de8969964d395",
+        "transitions": 1220
+      },
+      {
+        "file": "val/env_073_03.npz",
+        "source": "env_073_03.pkl",
+        "context_group": "687161502e1288a3325305bc232034dc8a8e7b06b59d1ba4e359747eebc51e08",
+        "transitions": 1046
+      },
+      {
+        "file": "val/env_092_01.npz",
+        "source": "env_092_01.pkl",
+        "context_group": "6bebedac3834a06016fc73f17bd267c2337ab4d7f658ad9b9f022603be8053f2",
+        "transitions": 1215
+      },
+      {
+        "file": "val/env_146_04.npz",
+        "source": "env_146_04.pkl",
+        "context_group": "6cafaaf2ec537642166003c38d9c6aa53dbc81e46fb1e469435dda353a02dae9",
+        "transitions": 860
+      },
+      {
+        "file": "val/env_023_03.npz",
+        "source": "env_023_03.pkl",
+        "context_group": "6f9b3380c086c4d428b4539132a5fa1e84d3cdbcae1dadbc73c5095d8a087694",
+        "transitions": 1230
+      },
+      {
+        "file": "val/env_005_06.npz",
+        "source": "env_005_06.pkl",
+        "context_group": "733488bb3e6e10299d30801a27ef42e53db8c9a7fff42146bc82307e603cf35f",
+        "transitions": 1077
+      },
+      {
+        "file": "val/env_048_01.npz",
+        "source": "env_048_01.pkl",
+        "context_group": "73b4cb41bf29bd70dbf27c73cc05ad16250e3c252311d5bb6240c2ea595a3851",
+        "transitions": 797
+      },
+      {
+        "file": "val/env_134_03.npz",
+        "source": "env_134_03.pkl",
+        "context_group": "8107bab5688e5e82e66c53bb65178a783cf20a626452233c46b46402682dd4aa",
+        "transitions": 1048
+      },
+      {
+        "file": "val/env_008_06.npz",
+        "source": "env_008_06.pkl",
+        "context_group": "86675448b0124b921ca6748bd64adc4e0fa6b0ed97f9a7fae9eb719fd5bd185e",
+        "transitions": 997
+      },
+      {
+        "file": "val/env_092_02.npz",
+        "source": "env_092_02.pkl",
+        "context_group": "8dbc1380b1aab0b23cecbfc4e6d5322b09746ea946beab7dec93f52e4ff5f070",
+        "transitions": 909
+      },
+      {
+        "file": "val/env_031_05.npz",
+        "source": "env_031_05.pkl",
+        "context_group": "8e8a1448a3d014a63b88eb5b6933e4a4ce4baa82dbf8cff43df0bffc0bd3425d",
+        "transitions": 794
+      },
+      {
+        "file": "val/env_129_01.npz",
+        "source": "env_129_01.pkl",
+        "context_group": "8f0d68100f1777d39cf7bb7ba2bea5951c75bafff7303cb7b7b9cc61e6472f0c",
+        "transitions": 818
+      },
+      {
+        "file": "val/env_031_01.npz",
+        "source": "env_031_01.pkl",
+        "context_group": "92233cf3fc0cb624e543affa8e1b4b0235ef6a3b0e1e7de8be4b4ee4ebd07680",
+        "transitions": 756
+      },
+      {
+        "file": "val/env_069_06.npz",
+        "source": "env_069_06.pkl",
+        "context_group": "949dfdc9f394b743f59d3ef5cddadded6dfa7605e7e0f52bf24c313d2241c659",
+        "transitions": 795
+      },
+      {
+        "file": "val/env_102_02.npz",
+        "source": "env_102_02.pkl",
+        "context_group": "972734b7f311f37b21053090d018082e744e75f6f09a1a5feb0f739fad0f0b10",
+        "transitions": 928
+      },
+      {
+        "file": "val/env_133_02.npz",
+        "source": "env_133_02.pkl",
+        "context_group": "977a6c40bf764fbd8fe26a83acb727a384d5968e9b3a8aa24ca3764d1e3ab70e",
+        "transitions": 831
+      },
+      {
+        "file": "val/env_044_05.npz",
+        "source": "env_044_05.pkl",
+        "context_group": "98cb5919bfd41be71d427c8ee06c10260b907fa20a923f5bda6c00cff49323c4",
+        "transitions": 1073
+      },
+      {
+        "file": "val/env_006_03.npz",
+        "source": "env_006_03.pkl",
+        "context_group": "a395e1226f6e02ec12a5174848497e3e23a1d6b5bcc51e4faeac25eed8729593",
+        "transitions": 888
+      },
+      {
+        "file": "val/env_097_04.npz",
+        "source": "env_097_04.pkl",
+        "context_group": "a7d10ae8e2840e182027cafa777302785cace23f415acabd22eb71da95069e7f",
+        "transitions": 1134
+      },
+      {
+        "file": "val/env_100_06.npz",
+        "source": "env_100_06.pkl",
+        "context_group": "a81ab51f04c548dba1d788fbe5ce665f8d0adc6d72db177e081d38db9e2387b7",
+        "transitions": 650
+      },
+      {
+        "file": "val/env_022_05.npz",
+        "source": "env_022_05.pkl",
+        "context_group": "a9b0a45da03df0b5914eae071d1b34b2de8bcab56ec59e123865a05efef0c9ad",
+        "transitions": 1012
+      },
+      {
+        "file": "val/env_058_01.npz",
+        "source": "env_058_01.pkl",
+        "context_group": "aec513d40d33f6ee029244eaa0bee5c7f3193639c78289a7e9f48d9ae1e2f30c",
+        "transitions": 1266
+      },
+      {
+        "file": "val/env_029_05.npz",
+        "source": "env_029_05.pkl",
+        "context_group": "b274f0b9eebf2f556d3757e987d734f95819b3647fc50d2f480985b5dc670e39",
+        "transitions": 840
+      },
+      {
+        "file": "val/env_076_06.npz",
+        "source": "env_076_06.pkl",
+        "context_group": "b38f3296de66a33e6e2b4fe463be1fb1f1dbb755f7ae68da9e7db53ed74d289c",
+        "transitions": 887
+      },
+      {
+        "file": "val/env_035_05.npz",
+        "source": "env_035_05.pkl",
+        "context_group": "b780c802b3d9460b60c296b662a8c3fc5c950b0790ca58b9755796dfde30547f",
+        "transitions": 937
+      },
+      {
+        "file": "val/env_006_05.npz",
+        "source": "env_006_05.pkl",
+        "context_group": "b92b26b8056ced377e44b5f4ee954868e78fed1dde84d003659194635bd89d61",
+        "transitions": 963
+      },
+      {
+        "file": "val/env_116_03.npz",
+        "source": "env_116_03.pkl",
+        "context_group": "bc6fa4aec0e430aee57b8bed890b1240acb07dbb684a7f0cf15c3aef077323cd",
+        "transitions": 760
+      },
+      {
+        "file": "val/env_044_03.npz",
+        "source": "env_044_03.pkl",
+        "context_group": "c080914b79ca1c93077fc59b3d6b90123ff5dc1092fc8cefc5f2a706edd442f3",
+        "transitions": 1034
+      },
+      {
+        "file": "val/env_112_04.npz",
+        "source": "env_112_04.pkl",
+        "context_group": "c239769042985d7b87a707f5b50b3aecc3ef9e5177d395e359866765a0454c1b",
+        "transitions": 644
+      },
+      {
+        "file": "val/env_050_05.npz",
+        "source": "env_050_05.pkl",
+        "context_group": "cb5a2879d23f79a475cae5e012441deb03f02c48f298ad8c74e9146a46d6374d",
+        "transitions": 1033
+      },
+      {
+        "file": "val/env_048_02.npz",
+        "source": "env_048_02.pkl",
+        "context_group": "cc6c8894cb90398c27c61f3e3491e247808a1cf28126bc94ebadd03f07dc7d9c",
+        "transitions": 2170
+      },
+      {
+        "file": "val/env_127_03.npz",
+        "source": "env_127_03.pkl",
+        "context_group": "d73921c09d9997861b96c30a30089d4d64a0789af7a9104a32d6875b40d24980",
+        "transitions": 648
+      },
+      {
+        "file": "val/env_040_05.npz",
+        "source": "env_040_05.pkl",
+        "context_group": "d7d6e6dcfb7b4cf394748f38dd8a17ceba355e4fa7dbaee397e174c09b44647e",
+        "transitions": 936
+      },
+      {
+        "file": "val/env_100_01.npz",
+        "source": "env_100_01.pkl",
+        "context_group": "dd714bba3596c24483f2228e031a3aafec3e100df92fec06e220b39277384390",
+        "transitions": 963
+      },
+      {
+        "file": "val/env_034_06.npz",
+        "source": "env_034_06.pkl",
+        "context_group": "e240ad10ea0a54a31def88b4e0ad1fd2ddf30d990605161972386b3c5293a484",
+        "transitions": 770
+      },
+      {
+        "file": "val/env_093_06.npz",
+        "source": "env_093_06.pkl",
+        "context_group": "e849e0b4038ae63eaccbd16d9bf0be9dc7ccef21bd38dcf778638d8ebd59cb05",
+        "transitions": 846
+      },
+      {
+        "file": "val/env_077_05.npz",
+        "source": "env_077_05.pkl",
+        "context_group": "e8854213c4200f1f1bc1d11509f8984a43419834546427554b7a4cef9794dcc6",
+        "transitions": 968
+      },
+      {
+        "file": "val/env_041_03.npz",
+        "source": "env_041_03.pkl",
+        "context_group": "ec5b6a09a7e5cc7c04527803cd1a477e11b5aae998be2cdc37739555adbedc1d",
+        "transitions": 951
+      },
+      {
+        "file": "val/env_084_04.npz",
+        "source": "env_084_04.pkl",
+        "context_group": "ecb3e8f8555b4c4dfb33d9852598cf42fab57ef4982dfb8c3ee649fcd51ebe1b",
+        "transitions": 879
+      },
+      {
+        "file": "val/env_093_05.npz",
+        "source": "env_093_05.pkl",
+        "context_group": "f0921acace173b9c53253791e5ea8b234fa19916d58ec7ee75a21be62eef1228",
+        "transitions": 906
+      },
+      {
+        "file": "val/env_089_03.npz",
+        "source": "env_089_03.pkl",
+        "context_group": "f10ba6b8ba07c59fd96c73b66b9e8aa67a28e6c6f94576e5c6dc559609f41386",
+        "transitions": 951
+      },
+      {
+        "file": "val/env_090_03.npz",
+        "source": "env_090_03.pkl",
+        "context_group": "f7828ed59b63852908cd246c4fdebfeab84fc22e15b321d05eae47e3250f17de",
+        "transitions": 729
+      },
+      {
+        "file": "val/env_047_05.npz",
+        "source": "env_047_05.pkl",
+        "context_group": "f89a44e360f5995216dd925cde51d9a641a3112793de68a4879a9069f9f1f05f",
+        "transitions": 1716
+      },
+      {
+        "file": "val/env_139_01.npz",
+        "source": "env_139_01.pkl",
+        "context_group": "f8cada5ea8f6927ac3e58f2eb40b1b57b2c47b104706df03ca3b97f1edeb6d7b",
+        "transitions": 903
+      },
+      {
+        "file": "val/env_122_04.npz",
+        "source": "env_122_04.pkl",
+        "context_group": "f928fa2f3b5481f8973db66935b3ec5e858c821855ba7732770ddbfe69b4b4a9",
+        "transitions": 734
+      },
+      {
+        "file": "val/env_060_06.npz",
+        "source": "env_060_06.pkl",
+        "context_group": "fbfeab9909e14c87bc4fc00eeaa2b1d688f33cb5e8e2de44b0751b7f079d5a36",
+        "transitions": 896
+      },
+      {
+        "file": "val/env_036_06.npz",
+        "source": "env_036_06.pkl",
+        "context_group": "fe8beae515c32a0f43b3b1c622b6c5e46c6695bdaf1e41011f68ba3452d2fb28",
+        "transitions": 1174
+      }
+    ]
+  }
+}
