@@ -1,0 +1,26 @@
+{
+  "n_contexts": 82,
+  "n_traj": 4,
+  "success_rate": 0.8140243902439024,
+  "one_box_rate": 0.975609756097561,
+  "two_box_rate": 0.9176829268292683,
+  "three_box_rate": 0.823170731707317,
+  "entropy": 0.35110339635508464,
+  "score": 0.5825638932994935,
+  "mean_distance": 0.0332192780584575,
+  "mean_steps": 1345.1310975609756,
+  "mean_steps_success": 1205.2846441947565,
+  "mean_demo_len": 982.4512195121952,
+  "mode_counts": {
+    "1": 34,
+    "2": 68,
+    "3": 44,
+    "4": 50,
+    "5": 36,
+    "6": 35
+  },
+  "sources": [
+    "runs/inserting_abl_d64_nosn_20261014T105353Z/eval_inserting_val_exec8_main_s0_20261015T135456Z/",
+    "runs/inserting_abl_d64_nosn_20261014T105353Z/eval_inserting_val_exec8_main_s1_20261015T135458Z/"
+  ]
+}

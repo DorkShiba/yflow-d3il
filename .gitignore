@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+fm_baseline/runs/
+fm_baseline/logs/
+fm_baseline/baselines/
+*.pt
+*.pth

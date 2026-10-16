@@ -1,0 +1,26 @@
+{
+  "run_dir": "/root/d3il-work/codex/fm_baseline/runs/pushing_main_nosn_20261014T010928Z",
+  "checkpoint": "last.pt",
+  "checkpoint_step": 1000000,
+  "weights": "ema",
+  "contexts": "test",
+  "n_contexts": 30,
+  "n_traj": 4,
+  "ode_steps": 10,
+  "execute_steps": 8,
+  "max_steps": 400,
+  "seed": 0,
+  "success_rate": 0.9083333333333333,
+  "entropy": 0.49124477427118823,
+  "score": 0.6997890538022608,
+  "mean_distance": 0.04353297248591968,
+  "mean_steps": 237.51666666666668,
+  "mode_counts": {
+    "0": 37,
+    "1": 45,
+    "2": 7,
+    "3": 19
+  },
+  "plan_ms": 63.41010943013875,
+  "wall_sec": 1531.2060449123383
+}
