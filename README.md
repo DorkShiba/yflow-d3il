@@ -19,11 +19,16 @@ yflow-d3il/
 │   ├── sample.py               # 오프라인 생성 검사
 │   ├── eval_pushing.py         # Pushing 시뮬레이터 평가
 │   ├── eval_inserting.py       # Inserting 시뮬레이터 평가
-│   └── results/                # 두 베이스라인의 설정, 정규화 값, 학습 로그, 평가 결과
-└── preprocess/                 # data/를 만든 전처리·검증 스크립트
+│   ├── contexts/
+│   │   └── inserting_val.pkl   # Inserting 평가 초기 배치 82개 (원본 시연에서 추출)
+│   └── results/
+│       ├── pushing_baseline/   # baseline_ema.pt(학습된 가중치), config.json, normalizer.npz, metrics.csv, 평가 결과
+│       └── inserting_baseline/ # 위와 같은 구성
+├── preprocess/                 # data/를 만든 전처리·검증 스크립트
+└── requirements.txt            # 학습·평가에 필요한 패키지
 ```
 
-체크포인트(`*.pt`)와 학습·평가 실행 폴더(`fm_baseline/runs/`)는 용량 때문에 저장소에 넣지 않는다. 6절을 참고한다.
+**학습된 베이스라인 가중치는 `fm_baseline/results/<태스크>_baseline/baseline_ema.pt`에 있다.** 재개용 전체 체크포인트(`last.pt`, `ckpt_*.pt`)와 학습·평가 실행 폴더(`fm_baseline/runs/`)는 용량 때문에 저장소에 넣지 않는다. 6절을 참고한다.
 
 ## 2. 베이스라인 성능
 
@@ -68,58 +73,72 @@ yflow-d3il/
 
 ODE 10스텝, 8스텝 실행, context 구성, context당 4회, 시드는 베이스라인과 같게 유지해야 비교가 된다. 바꾸면 베이스라인도 같은 조건으로 다시 평가한다.
 
-## 5. 환경 준비
+## 5. 환경 준비 (새 VESSL 워크스페이스)
 
-VESSL 워크스페이스에는 아래가 이미 갖춰져 있다.
+각자 자기 워크스페이스에 아래 구조를 만든다. 스크립트는 이 배치를 기본값으로 찾으므로 경로 옵션 없이 돌아간다.
 
 ```text
 /root/d3il-work/
-├── d3il/                 # D3IL 공식 저장소 (시뮬레이터와 context 파일)
-├── raw/pushing, raw/inserting
-└── codex/
-    ├── venv/             # 작업용 가상환경
-    ├── HardFlow/         # HardFlow d3il 브랜치
-    ├── processed/        # data/와 같은 전처리 데이터
-    └── fm_baseline/      # 이 저장소의 fm_baseline과 같은 코드 + runs/
+├── yflow-d3il/    # 이 저장소
+├── HardFlow/      # HardFlow d3il 브랜치 (지정 commit)
+├── d3il/          # D3IL 공식 저장소 (시뮬레이터, Pushing 테스트 context)
+└── venv/
 ```
 
 ```bash
-source /root/d3il-work/codex/venv/bin/activate
-apt-get update && apt-get install -y libgl1 libglib2.0-0
-```
-
-워크스페이스를 재시작하면 시스템 패키지가 사라지므로 두 번째 줄을 다시 실행해야 시뮬레이터가 뜬다.
-
-새 환경에서 구성할 때 확인된 버전은 Python 3.10, PyTorch 2.3.1, NumPy 1.26.4, Gym 0.23.1, MuJoCo 2.3.2, Pinocchio(`pin`) 2.6.21, einops 0.8.1이다. 시뮬레이터 import에는 opencv, pybullet, pandas, scipy, gin-config, imageio, pyyaml, matplotlib도 필요하다. NumPy 2.x가 같이 설치되지 않게 주의한다. HardFlow의 `requirements.txt`는 버전이 달라 통째로 설치하지 않는다.
-
-```bash
+mkdir -p /root/d3il-work && cd /root/d3il-work
+git clone https://github.com/DorkShiba/yflow-d3il.git
 git clone -b d3il https://github.com/azizanlab/HardFlow.git
-cd HardFlow && git checkout a85105080dd0a28dca76b49ac0414f275de146ed && cd ..
+git -C HardFlow checkout a85105080dd0a28dca76b49ac0414f275de146ed
 git clone https://github.com/ALRhub/d3il.git
+python3 -m venv venv
+source venv/bin/activate
+pip install -r yflow-d3il/requirements.txt
 ```
 
-스크립트의 기본 경로는 VESSL 구조를 가정한다. 다른 곳에서는 `--data-root <저장소>/data`, `--hardflow-root`, `--d3il-root`, `--raw-root`(Inserting)를 지정한다. Inserting 평가는 초기 배치를 원본 시연 pkl에서 읽으므로 `raw/inserting`이 필요하다.
+이후 터미널을 열 때마다 `source /root/d3il-work/venv/bin/activate`만 하면 된다.
+
+- Python 3.10 또는 3.11을 쓴다. `pin`(Pinocchio)은 3.12 이상용 wheel이 없어 설치가 실패할 수 있다.
+- HardFlow와 D3IL은 받기만 하고 수정하거나 `pip install` 하지 않는다. HardFlow의 `requirements.txt`는 버전이 달라 설치하지 않는다.
+- D3IL 데이터 ZIP(약 17GB)은 받지 않아도 된다. 학습 데이터는 `data/`에, Inserting 평가 초기 배치는 `fm_baseline/contexts/`에, Pushing 테스트 context는 D3IL 저장소에 들어 있다.
+- 확인된 버전: PyTorch 2.3.1, NumPy 1.26.4, Gym 0.23.1, MuJoCo 2.3.2, Pinocchio 2.6.21, einops 0.8.1. NumPy 2.x가 설치되면 안 된다.
+- `ImportError: libGL.so.1`이 나면 `apt-get update && apt-get install -y libgl1 libglib2.0-0`을 실행한다. 시스템 패키지는 워크스페이스를 재시작하면 사라진다.
+
+설치 확인 (수 분):
+
+```bash
+cd /root/d3il-work/yflow-d3il/fm_baseline
+python sample.py --run-dir results/pushing_baseline --ckpt baseline_ema.pt --no-save
+python eval_inserting.py --run-dir results/inserting_baseline --ckpt baseline_ema.pt --check-obs 5
+python eval_pushing.py --run-dir results/pushing_baseline --ckpt baseline_ema.pt --n-contexts 3 --execute-steps 8 --tag setup_check
+```
+
+첫 명령은 `CHECK PASSED`, 두 번째는 `check summary  max`가 1e-4 이하, 세 번째는 대부분 `success 1`이 나오면 정상이다. Pushing의 `--check-obs`는 원본 시연 pkl이 있어야 해서 새 워크스페이스에서는 쓰지 않는다.
+
+경로 결정 규칙: `config.json`에 기록된 경로가 있으면 그것을, 없으면 저장소 기준 위치(`<저장소>/data/...`, `<저장소>/../HardFlow`, `<저장소>/../d3il`)를 쓴다. 다른 배치를 쓰면 `--hardflow-root`, `--data-dir`, `--d3il-root`(학습은 `--data-root`, `--hardflow-root`)로 지정한다.
 
 ## 6. 베이스라인 체크포인트
 
-| 태스크 | VESSL 실행 폴더 (`/root/d3il-work/codex/fm_baseline/`) |
-|---|---|
-| Pushing | `runs/pushing_main_nosn_20261014T010928Z` |
-| Inserting | `runs/inserting_abl_d64_nosn_20261014T105353Z` |
+| 태스크 | 저장소 안 위치 | 크기 | 원본 (VESSL `/root/d3il-work/codex/fm_baseline/`) |
+|---|---|---|---|
+| Pushing | `fm_baseline/results/pushing_baseline/` | 약 15MB | `runs/pushing_main_nosn_20261014T010928Z` |
+| Inserting | `fm_baseline/results/inserting_baseline/` | 약 63MB | `runs/inserting_abl_d64_nosn_20261014T105353Z` |
 
-각 폴더의 `last.pt`에 있는 **EMA 가중치**(`weights="ema"`)가 베이스라인이다. `config.json`과 `normalizer.npz`가 같이 있어야 불러올 수 있다. 다른 곳으로 옮길 때는 폴더째 복사하고, 복사본은 저장소의 `fm_baseline/baselines/`(git 제외)에 두는 것을 권한다.
+`baseline_ema.pt`는 원본 `last.pt`(100만 스텝)에서 **EMA 가중치만** 꺼내 저장한 파일이다(`{"ema", "step", "config"}`). 평가와 추론 시점 제약 실험에는 이것만 있으면 된다. 같은 폴더의 `config.json`과 `normalizer.npz`가 함께 있어야 불러올 수 있으므로 폴더 단위로 다룬다.
+
+`config.json`의 `hardflow_root`, `data_dir`는 원래 학습한 워크스페이스의 경로지만, 그 경로가 없으면 스크립트가 5절의 규칙으로 찾으므로 고칠 필요가 없다. 학습을 이어서 하려면 옵티마이저 상태가 든 원본 `last.pt`가 필요하다.
 
 ## 7. 불러와서 쓰기
 
 ```python
 import sys
-sys.path.insert(0, "/root/d3il-work/codex/fm_baseline")
+sys.path.insert(0, "/root/d3il-work/yflow-d3il/fm_baseline")
 import numpy as np
 from eval_pushing import load_model, Policy
 
-run = "/root/d3il-work/codex/fm_baseline/runs/pushing_main_nosn_20261014T010928Z"
-hardflow = "/root/d3il-work/codex/HardFlow"
-cfg, model, norm, apply_conditioning, Solver, step = load_model(run, "last.pt", "ema", hardflow, "cuda:0")
+run = "/root/d3il-work/yflow-d3il/fm_baseline/results/pushing_baseline"
+hardflow = "/root/d3il-work/HardFlow"
+cfg, model, norm, apply_conditioning, Solver, step = load_model(run, "baseline_ema.pt", "ema", hardflow, "cuda:0")
 policy = Policy(model, norm, cfg, apply_conditioning, Solver, ode_steps=10, device="cuda:0")
 
 obs = np.zeros(cfg["obs_dim"], dtype=np.float32)
@@ -152,11 +171,13 @@ actions = plan[:, :2]
 ## 9. 자주 하는 명령
 
 ```bash
-cd /root/d3il-work/codex/fm_baseline
-python sample.py --run-dir runs/pushing_main_nosn_20261014T010928Z
-python eval_pushing.py --run-dir runs/pushing_main_nosn_20261014T010928Z --n-contexts 30 --n-traj 4 --execute-steps 8 --tag <이름>
-python eval_inserting.py --run-dir runs/inserting_abl_d64_nosn_20261014T105353Z --n-traj 2 --seed 0 --tag <이름>_s0
-python eval_inserting.py --run-dir runs/inserting_abl_d64_nosn_20261014T105353Z --n-traj 2 --seed 1 --tag <이름>_s1
+source /root/d3il-work/venv/bin/activate
+cd /root/d3il-work/yflow-d3il/fm_baseline
+P=results/pushing_baseline; I=results/inserting_baseline
+python sample.py --run-dir $P --ckpt baseline_ema.pt
+python eval_pushing.py --run-dir $P --ckpt baseline_ema.pt --n-contexts 30 --n-traj 4 --execute-steps 8 --tag <이름>
+python eval_inserting.py --run-dir $I --ckpt baseline_ema.pt --n-traj 2 --seed 0 --tag <이름>_s0
+python eval_inserting.py --run-dir $I --ckpt baseline_ema.pt --n-traj 2 --seed 1 --tag <이름>_s1
 ```
 
-평가 시간은 Pushing 120회 약 25분, Inserting 82 × 2회 약 3.3시간(시드 두 개를 동시에 실행)이다. 학습 명령과 옵션은 `fm_baseline/README.md` 7절에 있다.
+평가 결과는 `--run-dir` 아래 `eval_*` 폴더에, 새로 학습한 실행 폴더는 `fm_baseline/runs/`에 저장되며 둘 다 git에서 제외된다. 평가 시간은 Pushing 120회 약 25분, Inserting 82 × 2회 약 3.3시간(시드 두 개를 동시에 실행)이다. 학습 명령과 옵션은 `fm_baseline/README.md` 7절에 있다.
