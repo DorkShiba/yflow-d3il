@@ -3,5 +3,7 @@ __pycache__/
 fm_baseline/runs/
 fm_baseline/logs/
 fm_baseline/baselines/
+fm_baseline/results/*/eval_*/
 *.pt
 *.pth
+!fm_baseline/results/*/baseline_ema.pt

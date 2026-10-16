@@ -9,7 +9,7 @@ import numpy as np
 import torch
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from train import Normalizer, add_spectral_norm, find_split_files, load_split, set_seed, window_index
+from train import Normalizer, add_spectral_norm, find_split_files, load_split, resolve_data_dir, resolve_hardflow, set_seed, window_index
 
 
 def parse_args():
@@ -21,6 +21,7 @@ def parse_args():
     p.add_argument("--ode-steps", type=int, default=10)
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--hardflow-root", default=None)
+    p.add_argument("--data-dir", default=None)
     p.add_argument("--ckpt", default=None)
     p.add_argument("--weights", choices=["auto", "ema", "model"], default="auto")
     p.add_argument("--no-save", action="store_true")
@@ -32,7 +33,8 @@ def main():
     args = parse_args()
     with open(os.path.join(args.run_dir, "config.json"), encoding="utf-8") as f:
         cfg = json.load(f)
-    hardflow_root = args.hardflow_root or cfg["hardflow_root"]
+    hardflow_root = resolve_hardflow(args.hardflow_root, cfg)
+    cfg["data_dir"] = resolve_data_dir(args.data_dir, cfg)
     sys.path.insert(0, hardflow_root)
     from hardflow.models_flow.flow_matcher import apply_conditioning
     from hardflow.models_flow.flow_policy import ConditionedODESolver
@@ -58,7 +60,7 @@ def main():
         add_spectral_norm(model, skip)
     ckpt_path = args.ckpt
     if ckpt_path is None:
-        for name in ["last.pt", "checkpoint.pt"]:
+        for name in ["last.pt", "checkpoint.pt", "baseline_ema.pt"]:
             if os.path.exists(os.path.join(args.run_dir, name)):
                 ckpt_path = name
                 break

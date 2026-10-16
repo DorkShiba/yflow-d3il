@@ -17,6 +17,9 @@ import torch
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from eval_pushing import Policy, load_model
+from train import resolve_d3il, resolve_data_dir, resolve_hardflow
+
+CONTEXTS_FILE = os.path.join(HERE, "contexts", "inserting_val.pkl")
 
 
 def parse_args():
@@ -24,8 +27,12 @@ def parse_args():
     p.add_argument("--run-dir", required=True)
     p.add_argument("--ckpt", default="last.pt")
     p.add_argument("--weights", choices=["ema", "model"], default="ema")
-    p.add_argument("--d3il-root", default="/root/d3il-work/d3il")
+    p.add_argument("--d3il-root", default=None)
+    p.add_argument("--hardflow-root", default=None)
+    p.add_argument("--data-dir", default=None)
     p.add_argument("--raw-root", default="/root/d3il-work/raw/inserting")
+    p.add_argument("--contexts-file", default=CONTEXTS_FILE)
+    p.add_argument("--export-contexts", default=None)
     p.add_argument("--split", choices=["val", "train"], default="val")
     p.add_argument("--n-contexts", type=int, default=0)
     p.add_argument("--n-traj", type=int, default=1)
@@ -102,17 +109,28 @@ def context_from_raw(data, quat2euler):
     return ctx
 
 
-def load_contexts(cfg, split, raw_root, quat2euler, n):
+def slim(data):
+    return {"robot": {"des_c_pos": np.asarray(data["robot"]["des_c_pos"]), "j_pos": np.asarray(data["robot"]["j_pos"][:1])}}
+
+
+def load_contexts(cfg, split, raw_root, quat2euler, n, contexts_file=None):
     split_dir = os.path.join(cfg["data_dir"], split)
     files = sorted(f for f in os.listdir(split_dir) if f.endswith(".npz"))
     if n > 0:
         files = files[:n]
+    stored = {}
+    if split == "val" and contexts_file and os.path.exists(contexts_file):
+        with open(contexts_file, "rb") as fh:
+            stored = pickle.load(fh)
     out = []
     for f in files:
-        path = find_raw(raw_root, f[:-4] + ".pkl")
-        with open(path, "rb") as fh:
-            data = pickle.load(fh)
-        out.append((f, data, context_from_raw(data, quat2euler), os.path.join(split_dir, f)))
+        if f in stored:
+            data, ctx = stored[f]["data"], stored[f]["context"]
+        else:
+            with open(find_raw(raw_root, f[:-4] + ".pkl"), "rb") as fh:
+                data = pickle.load(fh)
+            ctx = context_from_raw(data, quat2euler)
+        out.append((f, data, ctx, os.path.join(split_dir, f)))
     return out
 
 
@@ -123,14 +141,27 @@ def main():
         cfg0 = json.load(f)
     if cfg0["task"] != "inserting":
         raise SystemExit("This script evaluates inserting runs only")
-    cfg, model, norm, apply_conditioning, Solver, ckpt_step = load_model(run_dir, args.ckpt, args.weights, cfg0["hardflow_root"], args.device)
+    run_cwd = os.getcwd()
+    cfg, model, norm, apply_conditioning, Solver, ckpt_step = load_model(run_dir, args.ckpt, args.weights, resolve_hardflow(args.hardflow_root, cfg0), args.device)
+    cfg["data_dir"] = resolve_data_dir(args.data_dir, cfg)
 
-    Env, quat2euler = setup_d3il(args.d3il_root)
+    Env, quat2euler = setup_d3il(resolve_d3il(args.d3il_root))
+
+    if args.export_contexts:
+        items = load_contexts(cfg, "val", args.raw_root, quat2euler, 0, None)
+        out = {f: {"context": ctx, "data": slim(data)} for f, data, ctx, _ in items}
+        path = os.path.join(run_cwd, args.export_contexts) if not os.path.isabs(args.export_contexts) else args.export_contexts
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "wb") as fh:
+            pickle.dump(out, fh)
+        print(f"exported {len(out)} contexts to {path}")
+        return
+
     env = Env(render=False, n_substeps=35, max_steps_per_episode=args.max_steps)
     env.start()
 
     if args.check_obs > 0:
-        items = load_contexts(cfg, "val", args.raw_root, quat2euler, args.check_obs)
+        items = load_contexts(cfg, "val", args.raw_root, quat2euler, args.check_obs, args.contexts_file)
         errs = []
         for f, data, ctx, npz in items:
             env.reset(random=False, context=ctx)
@@ -146,7 +177,7 @@ def main():
         print(f"check summary  max {errs.max():.2e}  mean per-dim {np.round(errs.mean(0), 5).tolist()}", flush=True)
         return
 
-    items = load_contexts(cfg, args.split, args.raw_root, quat2euler, args.n_contexts)
+    items = load_contexts(cfg, args.split, args.raw_root, quat2euler, args.n_contexts, args.contexts_file)
     n_ctx = len(items)
     policy = Policy(model, norm, cfg, apply_conditioning, Solver, args.ode_steps, args.device)
     torch.manual_seed(args.seed)

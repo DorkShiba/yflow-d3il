@@ -84,10 +84,10 @@ dim 64 실행을 그대로 100만 스텝까지 이어서 학습해 Inserting 베
 | `sample.py` | 검증 윈도우에 대한 오프라인 생성 검사. 형태, 유한값, t=0 조건 유지, 행동·관측 RMSE와 기준선 출력 |
 | `eval_pushing.py` | Pushing 시뮬레이터 평가. `--check-obs`로 관측 형식 검증 |
 | `eval_inserting.py` | Inserting 시뮬레이터 평가. 검증 분할 초기 배치를 context로 사용 |
-| `results/` | 두 베이스라인의 `config.json`, `normalizer.npz`, `metrics.csv`, 평가 결과 JSON |
+| `results/` | 두 베이스라인의 학습된 가중치 `baseline_ema.pt`, `config.json`, `normalizer.npz`, `metrics.csv`, 평가 결과 JSON |
 | `../preprocess/` | `data/`를 만든 전처리·검증 스크립트 |
 
-학습 실행 폴더에는 `config.json`, `normalizer.npz`, `metrics.csv`, `last.pt`(재개용 전체 상태), `ckpt_XXXXXXX.pt`(2.5만 스텝마다 모델과 EMA 가중치)가 저장된다. 평가 폴더 `eval_*`에는 `results.json`과 rollout 궤적 `rollouts.npz`가 저장된다. 체크포인트와 rollout 궤적은 용량이 커서 저장소에 올리지 않는다.
+학습 실행 폴더에는 `config.json`, `normalizer.npz`, `metrics.csv`, `last.pt`(재개용 전체 상태), `ckpt_XXXXXXX.pt`(2.5만 스텝마다 모델과 EMA 가중치)가 저장된다. 평가 폴더 `eval_*`에는 `results.json`과 rollout 궤적 `rollouts.npz`가 저장된다. 재개용 전체 체크포인트와 rollout 궤적은 용량이 커서 저장소에 올리지 않는다. 베이스라인 EMA 가중치는 `results/<태스크>_baseline/baseline_ema.pt`에 있으며, 원본 `last.pt`(100만 스텝)에서 EMA 가중치만 꺼내 저장한 것이다.
 
 `train.py`의 `--resume`은 옵티마이저, EMA, 난수 상태까지 복원한다. 중간에 끊고 재개한 결과가 끊지 않은 학습과 가중치까지 일치함을 확인했다.
 
@@ -117,7 +117,8 @@ Inserting 본 평가는 시드 0과 1로 각각 82 × 2회를 동시에 실행�
 - VESSL venv: Python 3.10.12, PyTorch 2.3.1+cu121, NumPy 1.26.4, Gym 0.23.1, MuJoCo 2.3.2, einops 0.8.1. HardFlow의 `requirements.txt`는 통째로 설치하지 않았다.
 - 워크스페이스를 재시작하면 시스템 패키지가 사라진다. 시뮬레이터 평가 전에 `apt-get update && apt-get install -y libgl1 libglib2.0-0`이 필요할 수 있다. tmux도 같은 방식으로 다시 설치한다.
 - D3IL 공식 Inserting 환경 파일은 `d3il_sim.*` 경로로 import하고 시뮬레이터 내부는 `environments.d3il.d3il_sim.*`를 사용해, 수정하지 않은 저장소에서는 모듈이 두 벌 로드되어 `'Box' object has no attribute 'mj_load'` 오류가 난다. `eval_inserting.py`는 D3IL 코드를 바꾸지 않고 두 경로를 같은 모듈로 연결한다.
-- 원본 Inserting 파일은 `--raw-root`(기본 `/root/d3il-work/raw/inserting`) 아래를 재귀 검색한다.
+- Inserting 평가 초기 배치는 `contexts/inserting_val.pkl`(검증 분할 82개 시연의 `context`, 첫 관절 자세, 목표 손 궤적)에서 읽는다. 이 파일은 `eval_inserting.py --export-contexts contexts/inserting_val.pkl`로 원본 pkl에서 만들었다. 파일에 없는 시연은 `--raw-root`(기본 `/root/d3il-work/raw/inserting`) 아래 원본을 재귀 검색한다.
+- `config.json`의 경로가 없는 환경에서는 저장소 기준 위치(`<저장소>/data`, `<저장소>/../HardFlow`, `<저장소>/../d3il`)를 쓴다. 학습 결과는 기본으로 `fm_baseline/runs/`에 저장된다.
 
 ## 9. 남은 작업
 

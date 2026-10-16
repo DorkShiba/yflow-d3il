@@ -12,7 +12,7 @@ import torch
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from train import Normalizer, add_spectral_norm
+from train import Normalizer, add_spectral_norm, resolve_d3il, resolve_data_dir, resolve_hardflow
 
 
 def parse_args():
@@ -20,7 +20,9 @@ def parse_args():
     p.add_argument("--run-dir", required=True)
     p.add_argument("--ckpt", default="last.pt")
     p.add_argument("--weights", choices=["ema", "model"], default="ema")
-    p.add_argument("--d3il-root", default="/root/d3il-work/d3il")
+    p.add_argument("--d3il-root", default=None)
+    p.add_argument("--hardflow-root", default=None)
+    p.add_argument("--data-dir", default=None)
     p.add_argument("--raw-dir", default="/root/d3il-work/raw/pushing/all_data")
     p.add_argument("--contexts", choices=["test", "train"], default="test")
     p.add_argument("--n-contexts", type=int, default=30)
@@ -151,8 +153,10 @@ def main():
         cfg0 = json.load(f)
     if cfg0["task"] != "pushing":
         raise SystemExit("This script evaluates pushing runs only")
-    hardflow_root = cfg0["hardflow_root"]
+    hardflow_root = resolve_hardflow(args.hardflow_root, cfg0)
+    args.d3il_root = resolve_d3il(args.d3il_root)
     cfg, model, norm, apply_conditioning, Solver, ckpt_step = load_model(run_dir, args.ckpt, args.weights, hardflow_root, args.device)
+    cfg["data_dir"] = resolve_data_dir(args.data_dir, cfg)
 
     Block_Push_Env, quat2euler = setup_d3il(args.d3il_root)
     env = Block_Push_Env(render=False, n_substeps=35, max_steps_per_episode=args.max_steps)

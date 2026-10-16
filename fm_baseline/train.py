@@ -17,6 +17,35 @@ import torch.nn as nn
 from torch.nn.utils.parametrizations import spectral_norm
 
 TASK_DIMS = {"pushing": (12, 2), "inserting": (16, 2)}
+HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(HERE)
+WORK = os.path.dirname(REPO)
+
+
+def first_dir(*paths):
+    for p in paths:
+        if p and os.path.isdir(p):
+            return p
+    return next((p for p in paths if p), None)
+
+
+def resolve_hardflow(arg=None, cfg=None):
+    if arg:
+        return arg
+    return first_dir((cfg or {}).get("hardflow_root"), os.environ.get("HARDFLOW_ROOT"), os.path.join(WORK, "HardFlow"), "/root/d3il-work/codex/HardFlow")
+
+
+def resolve_data_dir(arg=None, cfg=None):
+    if arg:
+        return arg
+    saved = (cfg or {}).get("data_dir", "")
+    return first_dir(saved, os.path.join(REPO, "data", os.path.basename(saved.rstrip("/"))))
+
+
+def resolve_d3il(arg=None):
+    if arg:
+        return arg
+    return first_dir(os.environ.get("D3IL_ROOT"), "/root/d3il-work/d3il", os.path.join(WORK, "d3il"))
 
 
 def parse_args():
@@ -242,9 +271,9 @@ def main():
             if k not in keep:
                 setattr(args, k, v)
 
-    data_root = args.data_root or os.path.join(args.work_root, "processed")
-    hardflow_root = args.hardflow_root or os.path.join(args.work_root, "HardFlow")
-    out_root = args.out_root or os.path.join(args.work_root, "fm_baseline", "runs")
+    data_root = args.data_root or first_dir(os.path.join(REPO, "data"), os.path.join(args.work_root, "processed"))
+    hardflow_root = args.hardflow_root or first_dir(os.path.join(args.work_root, "HardFlow"), os.path.join(WORK, "HardFlow"))
+    out_root = args.out_root or os.path.join(HERE, "runs")
     sys.path.insert(0, hardflow_root)
     from hardflow.models_flow.flow_matcher import FlowMatcher
     from hardflow.models_flow.unet import TemporalUnet
