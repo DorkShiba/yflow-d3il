@@ -1,0 +1,69 @@
+# CPU default for portable smoke tests; use --device cuda:0 for GPU.
+task: inserting
+device: cpu
+paths:
+  run_dir: fm_baseline/results/inserting_baseline
+  output_root: fm_constraint/runs
+  data_root: data
+  hardflow_root: ../HardFlow
+  d3il_root: ../d3il
+  raw_root: /root/d3il-work/raw/inserting
+  contexts_file: fm_baseline/contexts/inserting_val.pkl
+model:
+  horizon: 16
+  dim: 64
+  dim_mults:
+  - 1
+  - 2
+  - 4
+  - 8
+  attention: false
+  sn: false
+  sn_skip_output: false
+train:
+  steps: 1000000
+  batch_size: 32
+  lr: 0.0002
+  scheduler: cosine
+  ema_decay: 0.995
+  seed: 42
+  log_every: 5000
+  save_every: 25000
+  val_batches: 8
+  val_seed: 1234
+  time_limit_hours: 0.0
+  tag: constraint
+  resume: null
+sample:
+  n_windows: 256
+  batch_size: 64
+  split: val
+  seed: 0
+  no_save: true
+eval:
+  checkpoint: baseline_ema.pt
+  weights: ema
+  ode_steps: 10
+  execute_steps: 8
+  max_steps: 2000
+  n_contexts: 0
+  n_traj: 4
+  seed: 0
+  comparison: none
+  check_obs: 0
+  export_contexts: null
+  split: val
+vlsa:
+  enabled: false
+  geometry: rectangle
+  gamma: null
+  margin_m: 0.01
+  pusher_radius_m: null
+  command_delta_limit_m: 0.01
+  obstacles: []
+  # Encloses the three goals and approach paths; internal maze walls are not QP constraints.
+  workspace:
+    x_min_m: 0.00
+    x_max_m: 0.85
+    y_min_m: -0.40
+    y_max_m: 0.75
