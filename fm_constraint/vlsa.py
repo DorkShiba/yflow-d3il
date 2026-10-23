@@ -38,21 +38,33 @@ def vlsa_constraint(nominal_delta, measured_xy, command_xy, config, *,
         raise ValueError('Invalid physical VLSA parameters')
     nominal, p, q = (np.asarray(x, dtype=float) for x in (nominal_delta, measured_xy, command_xy))
     result = {'action': None, 'status': 'invalid_input', 'h': [],
-              'residual': None, 'intervention_norm': None}
+              'residual': None, 'intervention_norm': None, 'solver_iterations': 0}
     if any(x.shape != (2,) or not np.isfinite(x).all() for x in (nominal, p, q)):
         result['latency_ms'] = 1000 * (perf_counter() - started)
         return result
     geometry = config.get('geometry', 'circle')
+    norm_enabled = config.get('action_norm_enabled', False)
+    radius = config.get('max_step_displacement_m')
+    if norm_enabled and (type(radius) not in (int, float) or not np.isfinite(radius) or radius <= 0):
+        raise ValueError('Action norm constraint requires a finite positive length')
+    if norm_enabled and geometry != 'rectangle':
+        raise ValueError('Action norm constraint currently requires rectangle geometry')
+    result['nominal_action_norm_m'] = float(np.hypot(*nominal))
+    result['max_step_displacement_m'] = radius if norm_enabled else None
     if geometry == 'rectangle':
         if config.get('obstacles'):
             raise ValueError('Rectangle command fence does not include circular obstacles')
-        low, high = workspace_limits(config['workspace'], margin)
-        # h and constraint rows follow x_min, x_max, y_min, y_max.
-        A = np.array([[1., 0.], [-1., 0.], [0., 1.], [0., -1.]])
-        h = np.array([q[0] - low[0], high[0] - q[0], q[1] - low[1], high[1] - q[1]])
-        b = -h
-        result['constraint_names'] = ['workspace.x_min', 'workspace.x_max', 'workspace.y_min', 'workspace.y_max']
-        result['measured_workspace_h'] = [p[0] - low[0], high[0] - p[0], p[1] - low[1], high[1] - p[1]]
+        lower, upper = np.full(2, -limit), np.full(2, limit)
+        A, b, h = np.empty((0, 2)), np.empty(0), np.empty(0)
+        if config.get('workspace_enabled', True):
+            low, high = workspace_limits(config['workspace'], margin)
+            lower, upper = np.maximum(lower, low - q), np.minimum(upper, high - q)
+            # h and constraint rows follow x_min, x_max, y_min, y_max.
+            A = np.array([[1., 0.], [-1., 0.], [0., 1.], [0., -1.]])
+            h = np.array([q[0] - low[0], high[0] - q[0], q[1] - low[1], high[1] - q[1]])
+            b = -h
+            result['constraint_names'] = ['workspace.x_min', 'workspace.x_max', 'workspace.y_min', 'workspace.y_max']
+            result['measured_workspace_h'] = [p[0] - low[0], high[0] - p[0], p[1] - low[1], high[1] - p[1]]
     elif geometry == 'circle':
         centers = np.asarray([o['center_xy_m'] for o in config['obstacles']], dtype=float).reshape(-1, 2)
         radii = np.asarray([o['radius_m'] for o in config['obstacles']], dtype=float)
@@ -79,6 +91,38 @@ def vlsa_constraint(nominal_delta, measured_xy, command_xy, config, *,
     result['h'] = h.tolist()
     if np.any(h < (-tol if geometry == 'rectangle' else 0)):
         result['status'] = 'initial_unsafe'
+    elif norm_enabled:
+        # Exact box/disk projection via its scalar KKT multiplier, not sequential clipping.
+        # Absorb boundary roundoff of at most tol; larger violations fail above.
+        lower, upper = np.minimum(lower, 0), np.maximum(upper, 0)
+        action = np.clip(nominal, lower, upper)
+        if np.hypot(*action) > radius:
+            left, right = 0., 1.
+            for _ in range(128):
+                result['solver_iterations'] += 1
+                if np.hypot(*np.clip(nominal / (1 + right), lower, upper)) <= radius:
+                    break
+                right *= 2
+            else:
+                result.update(status='numerical_failure', latency_ms=1000 * (perf_counter() - started))
+                return result
+            for _ in range(64):
+                result['solver_iterations'] += 1
+                middle = left + (right - left) / 2
+                if np.hypot(*np.clip(nominal / (1 + middle), lower, upper)) > radius:
+                    left = middle
+                else:
+                    right = middle
+            action = np.clip(nominal / (1 + right), lower, upper)
+        box_residual = float(max(0., np.max(-limit - action), np.max(action - limit),
+                                 np.max(b - A @ action) if len(b) else 0.))
+        norm_residual = float(max(0., np.hypot(*action) - radius))
+        if max(box_residual, norm_residual) > tol or not np.isfinite(action).all():
+            result['status'] = 'numerical_failure'
+        else:
+            result.update(action=action, status='solved', residual=box_residual,
+                          action_norm_residual_m=norm_residual,
+                          intervention_norm=float(np.hypot(*(action - nominal))))
     else:
         A = np.vstack([A, np.eye(2), -np.eye(2)])
         b = np.r_[b, [-limit] * 4]
@@ -104,4 +148,6 @@ def vlsa_constraint(nominal_delta, measured_xy, command_xy, config, *,
         else:
             result['status'] = 'infeasible'
     result['latency_ms'] = 1000 * (perf_counter() - started)
+    if result['action'] is not None:
+        result['executed_action_norm_m'] = float(np.hypot(*result['action']))
     return result

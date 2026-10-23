@@ -93,7 +93,7 @@ def test_symlink_output_cannot_escape_owned_tree(tmp_path, monkeypatch):
 def test_vlsa_requires_explicit_units_and_is_evaluation_only(tmp_path):
     values = yaml.safe_load((REPO / 'configs/pushing.yaml').read_text())
     values['vlsa'].update(enabled=True, gamma=10., margin_m=0.01, pusher_radius_m=0.02,
-                          geometry='circle', workspace=None,
+                          geometry='circle', workspace=None, action_norm_enabled=False,
                           command_delta_limit_m=0.01,
                           obstacles=[{'id': 'a', 'center_xy_m': [0.5, 0.2],
                                       'radius_m': 0.03, 'height_m': 0.2}])
@@ -111,6 +111,22 @@ def test_rectangle_enabled_without_external_obstacles(task):
     cfg.validate('eval')
     assert cfg.values['vlsa']['obstacles'] == []
     assert cfg.values['vlsa']['gamma'] is None
+    assert cfg.values['vlsa']['workspace_enabled'] is True
+    assert cfg.values['vlsa']['action_norm_enabled'] is True
+    assert cfg.values['vlsa']['max_step_displacement_m'] == .012
+
+
+@pytest.mark.parametrize('radius', [None, 0, -.01, float('nan'), float('inf'), True, '0.012'])
+def test_invalid_action_norm_limits_are_rejected(radius):
+    with pytest.raises(ValueError, match='max_step_displacement_m'):
+        ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml', {'vlsa.max_step_displacement_m': radius})
+
+
+def test_action_norm_off_allows_null_and_workspace_off_allows_no_rectangle():
+    cfg = ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml', {
+        'vlsa.enabled': True, 'vlsa.workspace_enabled': False, 'vlsa.workspace': None,
+        'vlsa.action_norm_enabled': False, 'vlsa.max_step_displacement_m': None})
+    cfg.validate('eval')
 
 
 @pytest.mark.parametrize('workspace', [

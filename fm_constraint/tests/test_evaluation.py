@@ -146,6 +146,7 @@ def test_contacts_accumulate_and_safe_success_is_distinct():
 def test_real_obstacles_are_never_silently_ignored():
     cfg = ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml', {
         'vlsa.geometry': 'circle', 'vlsa.workspace': None,
+        'vlsa.action_norm_enabled': False,
         'vlsa.obstacles': [{'id': 'a', 'center_xy_m': [.5, .2], 'radius_m': .03, 'height_m': .2}]})
     with pytest.raises(NotImplementedError, match='audit'):
         evaluate(cfg)
@@ -229,3 +230,34 @@ def test_rectangle_evaluation_entry_point_runs_with_vlsa_enabled(task, tmp_path,
     outputs = list((tmp_path / 'fm_constraint/runs').glob('eval_*/results.json'))
     assert len(outputs) == 1
     assert json.loads(outputs[0].read_text())['safe_success_rate'] is None
+
+
+def test_action_norm_runs_per_step_and_logs_executed_lengths():
+    cfg = {'enabled': True, 'geometry': 'rectangle', 'workspace_enabled': False,
+           'action_norm_enabled': True, 'max_step_displacement_m': .001,
+           'margin_m': .01, 'command_delta_limit_m': .01, 'obstacles': [],
+           'workspace': {'x_min_m': .2, 'x_max_m': .85, 'y_min_m': -.4, 'y_max_m': .5}}
+    env, policy = FakeEnv(), FakePolicy()
+    results, logs = run_evaluation(env, policy, CONTEXTS, read_state, build_obs, None,
+                                   'pushing', SETTINGS, vlsa=cfg)
+    assert results['success_rate'] == 1  # Outside workspace does not terminate when disabled.
+    assert results['workspace_enabled'] is False
+    assert results['action_norm_enabled'] is True
+    assert results['nominal_action_norm_exceed_rate'] == 1
+    assert results['executed_action_norm_exceed_rate'] == 0
+    assert results['action_attempts'] == results['executed_actions'] == 5
+    np.testing.assert_allclose(policy.conditions[1][:2], np.full(2, .002 / np.sqrt(2)))
+    for row in logs['c000_t0']:
+        assert row['executed_action_norm_m'] <= .001 + 1e-12
+        assert row['action_norm_residual_m'] <= 1e-12
+        assert row['solver_iterations'] > 0
+
+
+def test_stop_comparison_norm_logs_are_based_on_zero_executed_action():
+    cfg = {'enabled': False, 'geometry': 'rectangle', 'workspace_enabled': False,
+           'action_norm_enabled': True, 'max_step_displacement_m': .001,
+           'margin_m': 0., 'command_delta_limit_m': .01, 'obstacles': []}
+    results, logs = run_evaluation(FakeEnv(), FakePolicy(), CONTEXTS, read_state, build_obs,
+                                   None, 'pushing', {**SETTINGS, 'comparison': 'stop'}, vlsa=cfg)
+    assert results['executed_action_norm_exceed_rate'] == 0
+    assert all(row['executed_action_norm_m'] == 0 for row in logs['c000_t0'])

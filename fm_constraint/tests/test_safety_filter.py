@@ -99,3 +99,58 @@ def test_rectangle_boundary_allows_tangential_motion_and_blocks_outward_motion()
         'margin_m': .01, 'command_delta_limit_m': .01, 'obstacles': []}
     result = vlsa_constraint([-.005, .004], [.01, .5], [.01, .5], config)
     np.testing.assert_allclose(result['action'], [0, .004], atol=1e-12)
+
+
+@pytest.mark.parametrize('nominal', [[0, 0], [.005, 0], [.012, 0], [.02, .02], [1000, -2000]])
+def test_action_norm_only_matches_radial_projection(nominal):
+    config = {'geometry': 'rectangle', 'workspace_enabled': False, 'action_norm_enabled': True,
+              'max_step_displacement_m': .012, 'margin_m': 0.,
+              'command_delta_limit_m': 10000., 'obstacles': []}
+    a = np.array(nominal, dtype=float)
+    norm = np.linalg.norm(a)
+    expected = a * min(1, .012 / norm) if norm else a
+    result = vlsa_constraint(a, [0, 0], [0, 0], config)
+    assert result['status'] == 'solved'
+    np.testing.assert_allclose(result['action'], expected, atol=1e-12)
+
+
+def test_joint_box_disk_projection_matches_independent_optimizer():
+    scipy = pytest.importorskip('scipy.optimize')
+    config = {'geometry': 'rectangle', 'workspace_enabled': True, 'action_norm_enabled': True,
+              'max_step_displacement_m': .012, 'margin_m': .01, 'command_delta_limit_m': .01,
+              'obstacles': [], 'workspace': {'x_min_m': .2, 'x_max_m': .85, 'y_min_m': -.4, 'y_max_m': .5}}
+    low, high, radius = np.array([.21, -.39]), np.array([.84, .49]), .012
+    rng = np.random.default_rng(12)
+    points = [low, high, [low[0], high[1]], [high[0], low[1]], *rng.uniform(low, high, size=(40, 2))]
+    for q in points:
+        q, nominal = np.asarray(q), rng.normal(size=2) * .04
+        lower, upper = np.maximum(-.01, low - q), np.minimum(.01, high - q)
+        # Scale variables so the independent optimizer works in dimensionless units.
+        target = nominal / radius
+        ref = scipy.minimize(lambda y: .5 * np.sum((y - target) ** 2),
+                             .1 * (lower + upper) / radius,
+                             jac=lambda y: y - target, hess=lambda y: np.eye(2),
+                             method='trust-constr', bounds=scipy.Bounds(lower / radius, upper / radius),
+                             constraints=[scipy.NonlinearConstraint(
+                                 lambda y: y @ y, -np.inf, 1., jac=lambda y: 2 * y,
+                                 hess=lambda y, v: 2 * v[0] * np.eye(2))],
+                             options={'gtol': 1e-13, 'xtol': 1e-13, 'barrier_tol': 1e-13,
+                                      'initial_barrier_parameter': 1e-10, 'maxiter': 1000})
+        assert ref.success, ref.message
+        result = vlsa_constraint(nominal, q, q, config)
+        assert result['status'] == 'solved'
+        np.testing.assert_allclose(result['action'], ref.x * radius, atol=1e-7)
+        assert np.linalg.norm(result['action']) <= radius + 1e-12
+        assert result['residual'] <= 1e-9
+
+
+def test_joint_projection_is_better_than_sequential_clipping():
+    config = {'geometry': 'rectangle', 'workspace_enabled': True, 'action_norm_enabled': True,
+              'max_step_displacement_m': .008, 'margin_m': 0., 'command_delta_limit_m': .01,
+              'obstacles': [], 'workspace': {'x_min_m': 0., 'x_max_m': 1., 'y_min_m': 0., 'y_max_m': 1.}}
+    nominal = np.array([.02, .02])
+    result = vlsa_constraint(nominal, [.997, .5], [.997, .5], config)
+    sequential = np.array([.003, .01])
+    sequential *= .008 / np.linalg.norm(sequential)
+    assert np.linalg.norm(result['action'] - nominal) < np.linalg.norm(sequential - nominal)
+    np.testing.assert_allclose(result['action'], [.003, np.sqrt(.008 ** 2 - .003 ** 2)], atol=1e-12)

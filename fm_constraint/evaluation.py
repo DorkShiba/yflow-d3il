@@ -27,6 +27,7 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
     if not contexts:
         raise ValueError('No evaluation contexts')
     vlsa_enabled = vlsa is not None and vlsa['enabled']
+    norm_radius = vlsa.get('max_step_displacement_m') if vlsa is not None else None
     stop_comparison = settings.get('comparison') == 'stop'
     if vlsa_enabled and stop_comparison:
         raise ValueError('VLSA and its stop comparison are mutually exclusive')
@@ -69,7 +70,11 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
                 nominal = queue.pop(0)
                 record = {'step': steps, 'measured_state': c.tolist(), 'command_state': des.tolist(),
                           'nominal_action': nominal.tolist(), 'h': [], 'qp_status': 'disabled',
-                          'qp_residual': None, 'filter_latency_ms': 0.0, 'intervention_norm': 0.0}
+                          'qp_residual': None, 'filter_latency_ms': 0.0, 'intervention_norm': 0.0,
+                          'nominal_action_norm_m': float(np.hypot(*nominal)),
+                          'max_step_displacement_m': norm_radius,
+                          'executed_action_norm_m': None, 'action_norm_residual_m': None,
+                          'solver_iterations': 0}
                 if workspace is not None:
                     record['current_command_workspace_h'] = np.column_stack((des - low, high - des)).ravel().tolist()
                     record['current_measured_workspace_h'] = np.column_stack((c[:2] - low, high - c[:2])).ravel().tolist()
@@ -84,6 +89,7 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
                                   intervention_norm=filtered['intervention_norm'])
                     if 'constraint_names' in filtered:
                         record['constraint_names'] = filtered['constraint_names']
+                    record['solver_iterations'] = filtered.get('solver_iterations', 0)
                     if filtered['action'] is None:
                         failure = filtered['status']
                         record['safe_action'] = None
@@ -94,6 +100,9 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
                         action = np.zeros(2)
                         record['qp_status'] = 'stop_comparison'
                         record['intervention_norm'] = float(np.linalg.norm(nominal))
+                executed_norm = float(np.hypot(*action))
+                record.update(executed_action_norm_m=executed_norm,
+                              action_norm_residual_m=max(0., executed_norm - norm_radius) if norm_radius is not None else None)
                 des = des + action
                 command = np.concatenate([des, fixed_z, [0.0, 1.0, 0.0, 0.0]])
                 _, _, done, info = env.step(command)
@@ -150,6 +159,9 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
     results = {
         'n_contexts': len(contexts), 'n_traj': settings['n_traj'],
         'vlsa_enabled': bool(vlsa_enabled),
+        'workspace_enabled': bool(vlsa_enabled and vlsa.get('workspace_enabled', True)) if vlsa else False,
+        'action_norm_enabled': bool(vlsa_enabled and vlsa.get('action_norm_enabled', False)) if vlsa else False,
+        'max_step_displacement_m': norm_radius,
         'success_rate': success_rate, 'entropy': entropy,
         'score': None if entropy is None else 0.5 * (success_rate + entropy),
         'mean_distance': float(np.mean(distances)) if distances else None,
@@ -166,6 +178,17 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
         measured_workspace_violation_rate=float(np.mean([e['measured_workspace_violation'] for e in episodes])) if workspace is not None else None,
         command_workspace_success_rate=float(np.mean([e['success'] and not e['command_workspace_violation'] for e in episodes])) if workspace is not None else None,
         workspace_measurement='reset_and_control_steps' if workspace is not None else 'unavailable',
+    )
+    attempts = [row for episode_logs in rollouts.values() for row in episode_logs]
+    executed = [row for row in attempts if row['executed_action_norm_m'] is not None]
+    modifications = [float(np.linalg.norm(np.asarray(row['safe_action']) - row['nominal_action'])) for row in executed]
+    results.update(
+        action_attempts=len(attempts), executed_actions=len(executed),
+        nominal_action_norm_exceed_rate=float(np.mean([row['nominal_action_norm_m'] > norm_radius + 1e-9 for row in attempts])) if norm_radius is not None and attempts else None,
+        executed_action_norm_exceed_rate=float(np.mean([row['executed_action_norm_m'] > norm_radius + 1e-9 for row in executed])) if norm_radius is not None and executed else None,
+        intervention_rate=float(np.mean(np.asarray(modifications) > 1e-8)) if modifications else None,
+        mean_action_modification_m=float(np.mean(modifications)) if modifications else None,
+        max_action_modification_m=float(np.max(modifications)) if modifications else None,
     )
     if task == 'inserting':
         for n, word in [(1, 'one'), (2, 'two'), (3, 'three')]:

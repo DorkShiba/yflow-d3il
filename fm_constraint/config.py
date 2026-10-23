@@ -54,7 +54,9 @@ class ExperimentConfig:
                      **({'split': 'val'} if inserting else {'contexts': 'test'})},
             'vlsa': {'enabled': False, 'geometry': 'rectangle', 'gamma': None,
                      'margin_m': None, 'pusher_radius_m': None,
-                     'command_delta_limit_m': None, 'obstacles': [], 'workspace': None},
+                     'command_delta_limit_m': None, 'obstacles': [], 'workspace': None,
+                     'workspace_enabled': True, 'action_norm_enabled': True,
+                     'max_step_displacement_m': 0.012},
         }
         values = copy.deepcopy(defaults)
         for key, value in supplied.items():
@@ -85,7 +87,7 @@ class ExperimentConfig:
                 continue
             for key, default in fields.items():
                 value = values[group][key]
-                if default is None:
+                if default is None or key == 'max_step_displacement_m':
                     continue
                 if isinstance(default, float):
                     valid = type(value) in (int, float) and math.isfinite(value)
@@ -147,6 +149,13 @@ class ExperimentConfig:
             raise ValueError('eval.checkpoint must be a nonempty path')
         if safety['geometry'] not in ('circle', 'rectangle'):
             raise ValueError('Only circle and rectangle geometry are supported')
+        radius = safety['max_step_displacement_m']
+        if radius is not None and (type(radius) not in (int, float) or not math.isfinite(radius) or radius <= 0):
+            raise ValueError('max_step_displacement_m must be a finite positive length in meters')
+        if safety['action_norm_enabled'] and radius is None:
+            raise ValueError('action_norm_enabled requires max_step_displacement_m')
+        if safety['action_norm_enabled'] and safety['geometry'] != 'rectangle':
+            raise ValueError('Action norm constraint currently requires rectangle geometry')
         if safety['workspace'] is not None:
             workspace_limits(safety['workspace'], safety['margin_m'])
         if safety['geometry'] == 'rectangle' and safety['obstacles']:
@@ -178,7 +187,7 @@ class ExperimentConfig:
                     raise ValueError(f'vlsa.{key} must be explicitly set to a valid physical value')
             if safety['geometry'] == 'circle' and not safety['obstacles']:
                 raise ValueError('An enabled safety experiment requires obstacles')
-            if safety['geometry'] == 'rectangle':
+            if safety['geometry'] == 'rectangle' and safety['workspace_enabled']:
                 workspace_limits(safety['workspace'], safety['margin_m'])
         self.require_output(v['paths']['output_root'])
         if command in ('train', 'sample') and self.vlsa_enabled:

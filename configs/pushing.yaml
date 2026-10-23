@@ -55,6 +55,10 @@ eval:
 vlsa:
   enabled: false
   geometry: rectangle
+  workspace_enabled: true
+  action_norm_enabled: true
+  # 12 mm per command; training maximum is 10.7933 mm. Not a physical safety limit.
+  max_step_displacement_m: 0.012
   gamma: null
   margin_m: 0.01
   pusher_radius_m: null
