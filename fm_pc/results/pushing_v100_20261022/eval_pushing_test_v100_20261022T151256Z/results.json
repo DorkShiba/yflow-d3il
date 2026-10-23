@@ -1,0 +1,32 @@
+{
+  "run_dir": "/workspace/yflow-d3il/fm_baseline/results/pushing_baseline",
+  "checkpoint": "baseline_ema.pt",
+  "checkpoint_step": 1000000,
+  "weights": "ema",
+  "contexts": "test",
+  "n_contexts": 30,
+  "n_traj": 4,
+  "ode_steps": 10,
+  "execute_steps": 8,
+  "max_steps": 400,
+  "seed": 0,
+  "success_rate": 0.9166666666666666,
+  "entropy": 0.5094903993552317,
+  "score": 0.7130785330109491,
+  "mean_distance": 0.04008812972909898,
+  "mean_steps": 235.425,
+  "mode_counts": {
+    "0": 36,
+    "1": 48,
+    "2": 6,
+    "3": 19
+  },
+  "plan_ms": 114.68037958745356,
+  "inject": "none",
+  "constraints": null,
+  "constraint_info": {
+    "name": "none"
+  },
+  "constraint_params": "{}",
+  "wall_sec": 3100.362437725067
+}
