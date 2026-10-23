@@ -1,0 +1,91 @@
+{
+  "original_evaluation": {
+    "run_dir": "pushing_caps_nosn_caps_20261021T220406Z",
+    "checkpoint": "last.pt",
+    "checkpoint_step": 100000,
+    "weights": "ema",
+    "caps": {
+      "enabled": true,
+      "lambda_t": 0.01,
+      "lambda_s": 0.01,
+      "position_std": 0.001,
+      "yaw_std": 0.017453292519943295,
+      "batch_size": 2,
+      "ode_steps": 10,
+      "variant": "offline_first_action_common_noise_v1",
+      "action_reference_m": 0.008333588019013405,
+      "rng_seed": 1000045,
+      "distance": "mean_euclidean_norm",
+      "pair_source": "adjacent_obs_in_same_demo_window"
+    },
+    "smoothness": {
+      "action_delta_mean_m": {
+        "mean": 0.002214777330488546,
+        "n": 40
+      },
+      "action_delta_max_m": {
+        "mean": 0.014053328714999268,
+        "n": 40
+      },
+      "within_plan_delta_mean_m": {
+        "mean": 0.0017623152124388555,
+        "n": 40
+      },
+      "replan_delta_mean_m": {
+        "mean": 0.0054446186517954544,
+        "n": 40
+      },
+      "action_norm_mean_m": {
+        "mean": 0.005914929078800565,
+        "n": 40
+      },
+      "tracking_gap_mean_m": {
+        "mean": 0.01718708082558749,
+        "n": 40
+      },
+      "tracking_gap_max_m": {
+        "mean": 0.066879750848622,
+        "n": 40
+      },
+      "tracking_gap_over_0_1m_fraction": {
+        "mean": 0.0346875,
+        "n": 40
+      },
+      "tail_300_path_m": {
+        "mean": 1.577856901027884,
+        "n": 32
+      },
+      "tail_300_stationary": {
+        "mean": 0.0,
+        "n": 32
+      }
+    },
+    "contexts": "train",
+    "n_contexts": 10,
+    "n_traj": 4,
+    "ode_steps": 10,
+    "execute_steps": 8,
+    "max_steps": 400,
+    "seed": 0,
+    "noise_protocol": "per_rollout_v1",
+    "success_rate": 0.2,
+    "entropy": 0.10000000000066563,
+    "score": 0.1500000000003328,
+    "mean_distance": 0.14976405386888744,
+    "mean_steps": 365.225,
+    "mode_counts": {
+      "0": 3,
+      "1": 1,
+      "2": 3,
+      "3": 1
+    },
+    "plan_ms": 62.44363941130091,
+    "wall_sec": 784.6577301025391
+  },
+  "source_sha256": "2146df7ebd62f08486c765c23fdb3cc6bfab5ddf81558029178740061d1c1de7",
+  "replay_max_abs_error": {
+    "c": 0.00930134919344261,
+    "des": 2.960653877615016e-08,
+    "boxes": 1.6627059239822266
+  }
+}

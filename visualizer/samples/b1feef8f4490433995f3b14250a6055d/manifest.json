@@ -1,0 +1,80 @@
+{
+  "original_evaluation": {
+    "run_dir": "pushing_off_nosn_20261021T100735Z",
+    "checkpoint": "last.pt",
+    "checkpoint_step": 100000,
+    "weights": "ema",
+    "caps": {
+      "enabled": false
+    },
+    "smoothness": {
+      "action_delta_mean_m": {
+        "mean": 0.002004400914828539,
+        "n": 40
+      },
+      "action_delta_max_m": {
+        "mean": 0.01380715392662063,
+        "n": 40
+      },
+      "within_plan_delta_mean_m": {
+        "mean": 0.0015719226357957215,
+        "n": 40
+      },
+      "replan_delta_mean_m": {
+        "mean": 0.005086296598362191,
+        "n": 40
+      },
+      "action_norm_mean_m": {
+        "mean": 0.0069452981998296085,
+        "n": 40
+      },
+      "tracking_gap_mean_m": {
+        "mean": 0.014133556029149627,
+        "n": 40
+      },
+      "tracking_gap_max_m": {
+        "mean": 0.04980251260287898,
+        "n": 40
+      },
+      "tracking_gap_over_0_1m_fraction": {
+        "mean": 0.009062500000000001,
+        "n": 40
+      },
+      "tail_300_path_m": {
+        "mean": 1.7037215729102464,
+        "n": 15
+      },
+      "tail_300_stationary": {
+        "mean": 0.0,
+        "n": 15
+      }
+    },
+    "contexts": "train",
+    "n_contexts": 10,
+    "n_traj": 4,
+    "ode_steps": 10,
+    "execute_steps": 8,
+    "max_steps": 400,
+    "seed": 0,
+    "noise_protocol": "per_rollout_v1",
+    "success_rate": 0.65,
+    "entropy": 0.47532583347651924,
+    "score": 0.5626629167382596,
+    "mean_distance": 0.0963168186184902,
+    "mean_steps": 284.525,
+    "mode_counts": {
+      "0": 13,
+      "1": 6,
+      "2": 5,
+      "3": 2
+    },
+    "plan_ms": 62.58478081600176,
+    "wall_sec": 611.658041715622
+  },
+  "source_sha256": "dfeed1caac0bcb7e554fc06ef294cbbe14d460579c1c192626c5ae58b1b3d5b5",
+  "replay_max_abs_error": {
+    "c": 0.008376139461518661,
+    "des": 2.977391555525344e-08,
+    "boxes": 2.1217925597072984
+  }
+}

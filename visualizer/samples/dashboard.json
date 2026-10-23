@@ -1,0 +1,192 @@
+{
+  "default_task": "pushing",
+  "tasks": {
+    "pushing": {
+      "title": "Plain vs CAPS",
+      "panels": [
+        {
+          "job": "b1feef8f4490433995f3b14250a6055d",
+          "key": "c000_t0",
+          "label": "Plain / OFF",
+          "view": "scene"
+        },
+        {
+          "job": "68c1329176144bbdb11ef889f8b8e0d8",
+          "key": "c000_t0",
+          "label": "CAPS / T+S",
+          "view": "scene"
+        }
+      ],
+      "note": "동일 100k 학습 · seed 42 · train context 0 / traj 0 · eval seed 0 · exec 8 / fresh noise. 원본 평가 궤적 비교 · 관절 기록 없음(팔은 기준 자세). Mac 행동 replay가 원본과 달라 관절을 합치지 않았습니다. 단일 장면은 전체 성능을 대표하지 않습니다.",
+      "aggregate": {
+        "off": {
+          "run_dir": "pushing_off_nosn_20261021T100735Z",
+          "checkpoint": "last.pt",
+          "checkpoint_step": 100000,
+          "weights": "ema",
+          "caps": {
+            "enabled": false
+          },
+          "smoothness": {
+            "action_delta_mean_m": {
+              "mean": 0.002004400914828539,
+              "n": 40
+            },
+            "action_delta_max_m": {
+              "mean": 0.01380715392662063,
+              "n": 40
+            },
+            "within_plan_delta_mean_m": {
+              "mean": 0.0015719226357957215,
+              "n": 40
+            },
+            "replan_delta_mean_m": {
+              "mean": 0.005086296598362191,
+              "n": 40
+            },
+            "action_norm_mean_m": {
+              "mean": 0.0069452981998296085,
+              "n": 40
+            },
+            "tracking_gap_mean_m": {
+              "mean": 0.014133556029149627,
+              "n": 40
+            },
+            "tracking_gap_max_m": {
+              "mean": 0.04980251260287898,
+              "n": 40
+            },
+            "tracking_gap_over_0_1m_fraction": {
+              "mean": 0.009062500000000001,
+              "n": 40
+            },
+            "tail_300_path_m": {
+              "mean": 1.7037215729102464,
+              "n": 15
+            },
+            "tail_300_stationary": {
+              "mean": 0.0,
+              "n": 15
+            }
+          },
+          "contexts": "train",
+          "n_contexts": 10,
+          "n_traj": 4,
+          "ode_steps": 10,
+          "execute_steps": 8,
+          "max_steps": 400,
+          "seed": 0,
+          "noise_protocol": "per_rollout_v1",
+          "success_rate": 0.65,
+          "entropy": 0.47532583347651924,
+          "score": 0.5626629167382596,
+          "mean_distance": 0.0963168186184902,
+          "mean_steps": 284.525,
+          "mode_counts": {
+            "0": 13,
+            "1": 6,
+            "2": 5,
+            "3": 2
+          },
+          "plan_ms": 62.58478081600176,
+          "wall_sec": 611.658041715622
+        },
+        "caps": {
+          "run_dir": "pushing_caps_nosn_caps_20261021T220406Z",
+          "checkpoint": "last.pt",
+          "checkpoint_step": 100000,
+          "weights": "ema",
+          "caps": {
+            "enabled": true,
+            "lambda_t": 0.01,
+            "lambda_s": 0.01,
+            "position_std": 0.001,
+            "yaw_std": 0.017453292519943295,
+            "batch_size": 2,
+            "ode_steps": 10,
+            "variant": "offline_first_action_common_noise_v1",
+            "action_reference_m": 0.008333588019013405,
+            "rng_seed": 1000045,
+            "distance": "mean_euclidean_norm",
+            "pair_source": "adjacent_obs_in_same_demo_window"
+          },
+          "smoothness": {
+            "action_delta_mean_m": {
+              "mean": 0.002214777330488546,
+              "n": 40
+            },
+            "action_delta_max_m": {
+              "mean": 0.014053328714999268,
+              "n": 40
+            },
+            "within_plan_delta_mean_m": {
+              "mean": 0.0017623152124388555,
+              "n": 40
+            },
+            "replan_delta_mean_m": {
+              "mean": 0.0054446186517954544,
+              "n": 40
+            },
+            "action_norm_mean_m": {
+              "mean": 0.005914929078800565,
+              "n": 40
+            },
+            "tracking_gap_mean_m": {
+              "mean": 0.01718708082558749,
+              "n": 40
+            },
+            "tracking_gap_max_m": {
+              "mean": 0.066879750848622,
+              "n": 40
+            },
+            "tracking_gap_over_0_1m_fraction": {
+              "mean": 0.0346875,
+              "n": 40
+            },
+            "tail_300_path_m": {
+              "mean": 1.577856901027884,
+              "n": 32
+            },
+            "tail_300_stationary": {
+              "mean": 0.0,
+              "n": 32
+            }
+          },
+          "contexts": "train",
+          "n_contexts": 10,
+          "n_traj": 4,
+          "ode_steps": 10,
+          "execute_steps": 8,
+          "max_steps": 400,
+          "seed": 0,
+          "noise_protocol": "per_rollout_v1",
+          "success_rate": 0.2,
+          "entropy": 0.10000000000066563,
+          "score": 0.1500000000003328,
+          "mean_distance": 0.14976405386888744,
+          "mean_steps": 365.225,
+          "mode_counts": {
+            "0": 3,
+            "1": 1,
+            "2": 3,
+            "3": 1
+          },
+          "plan_ms": 62.44363941130091,
+          "wall_sec": 784.6577301025391
+        }
+      }
+    },
+    "inserting": {
+      "title": "Inserting baseline",
+      "panels": [
+        {
+          "job": "0dfcafbc9c31478aa1c9c89777d546e5",
+          "key": "c000_t0",
+          "label": "Plain / baseline",
+          "view": "scene"
+        }
+      ],
+      "note": "Mac CPU · baseline 1M · val context 0 / seed 0 · 기록된 관절과 블록 XYZ로 재생. Inserting CAPS 체크포인트/평가 기록은 로컬에 없어 비교 대기 상태입니다."
+    }
+  }
+}

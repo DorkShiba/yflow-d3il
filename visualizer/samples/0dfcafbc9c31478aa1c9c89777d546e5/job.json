@@ -1,0 +1,22 @@
+{
+  "id": "0dfcafbc9c31478aa1c9c89777d546e5",
+  "kind": "bundled_recording",
+  "status": "completed",
+  "created": 1792748305.6836,
+  "spec": {
+    "checkpoint": "baseline_ema.pt",
+    "task": "inserting",
+    "contexts": "val",
+    "seed": 0,
+    "n_contexts": 1,
+    "execute_steps": 8,
+    "max_steps": 2000,
+    "noise": "fresh",
+    "bundled_recording": true
+  },
+  "rollouts": [
+    "c000_t0"
+  ],
+  "label": "Inserting baseline · Mac CPU · joints + 3D goals",
+  "robot": false
+}

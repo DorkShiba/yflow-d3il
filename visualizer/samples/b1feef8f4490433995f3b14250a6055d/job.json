@@ -1,0 +1,24 @@
+{
+  "id": "b1feef8f4490433995f3b14250a6055d",
+  "kind": "bundled_recording",
+  "status": "completed",
+  "created": 1792742703.008539,
+  "spec": {
+    "task": "pushing",
+    "contexts": "train",
+    "seed": 0,
+    "execute_steps": 8,
+    "noise": "fresh",
+    "checkpoint_step": 100000,
+    "training_seed": 42,
+    "arm": "off",
+    "provenance": "Original frozen evaluation states; joints attached only when replay matches <1mm",
+    "joint_replay_matched": false,
+    "bundled_recording": true
+  },
+  "label": "Plain / OFF",
+  "robot": false,
+  "rollouts": [
+    "c000_t0"
+  ]
+}
