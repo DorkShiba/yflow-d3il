@@ -6,7 +6,7 @@ import sys
 import pytest
 import yaml
 
-from fm_constraint.config import ExperimentConfig, REPO, parse_config
+from configs.config import ExperimentConfig, REPO, parse_config
 
 
 def test_cli_yaml_and_checkpoint_compatibility():
@@ -47,7 +47,7 @@ def test_paths_do_not_depend_on_working_directory(tmp_path, monkeypatch):
 
 
 def test_resume_conflicts_are_not_silently_ignored(tmp_path, monkeypatch):
-    import fm_constraint.config as module
+    import configs.config as module
     monkeypatch.setattr(module, 'REPO', tmp_path)
     run = tmp_path / 'fm_constraint/runs/resume'
     run.mkdir(parents=True)
@@ -78,7 +78,7 @@ def test_legacy_import_collision_and_independent_import_orders():
 
 
 def test_symlink_output_cannot_escape_owned_tree(tmp_path, monkeypatch):
-    import fm_constraint.config as module
+    import configs.config as module
     monkeypatch.setattr(module, 'REPO', tmp_path)
     (tmp_path / 'fm_constraint/runs').mkdir(parents=True)
     baseline = tmp_path / 'fm_baseline'

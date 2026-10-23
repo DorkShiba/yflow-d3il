@@ -1,6 +1,6 @@
 """Inserting evaluation entry point using the shared execution loop."""
 
-from .config import parse_config
+from configs.config import parse_config
 from .evaluation import evaluate
 
 

@@ -40,7 +40,7 @@ python -m pytest fm_constraint/tests -q
 설정 우선순위는 명시한 CLI > YAML > 코드의 태스크별 기본값이다. 일반 override는 `--set SECTION.KEY=VALUE`를 반복 사용한다. 값은 YAML 타입으로 해석한다. 알 수 없는 키, 문자열 `"false"`를 boolean에 전달하는 경우, checkpoint 구조 불일치는 오류다. 상대 경로는 YAML 파일 위치·현재 작업 디렉터리가 아닌 저장소 루트 기준이다.
 
 ```python
-from fm_constraint.config import ExperimentConfig
+from configs.config import ExperimentConfig
 
 cfg = ExperimentConfig.from_yaml(
     'configs/pushing.yaml',

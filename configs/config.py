@@ -9,7 +9,7 @@ from pathlib import Path
 
 import yaml
 
-from .vlsa import workspace_limits
+from fm_constraint.vlsa import workspace_limits
 
 REPO = Path(__file__).resolve().parents[1]
 

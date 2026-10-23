@@ -1,6 +1,6 @@
 """Pushing evaluation entry point; policy and observations come from the baseline."""
 
-from .config import parse_config
+from configs.config import parse_config
 from .evaluation import evaluate
 
 

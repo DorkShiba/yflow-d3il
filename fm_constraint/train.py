@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 
 from . import checkpoint_reads, import_baseline
-from .config import parse_config
+from configs.config import parse_config
 
 
 def main():

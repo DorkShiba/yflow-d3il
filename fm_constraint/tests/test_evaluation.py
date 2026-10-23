@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 
 from fm_constraint.evaluation import evaluate, run_evaluation
-from fm_constraint.config import ExperimentConfig, REPO
+from configs.config import ExperimentConfig, REPO
 
 
 class FakeEnv:
@@ -188,7 +188,7 @@ def test_disabled_rectangle_still_measures_unmodified_commands():
 
 @pytest.mark.parametrize('task', ['pushing', 'inserting'])
 def test_rectangle_evaluation_entry_point_runs_with_vlsa_enabled(task, tmp_path, monkeypatch):
-    import fm_constraint.config as config_module
+    import configs.config as config_module
     cfg = ExperimentConfig.from_yaml(REPO / f'configs/{task}.yaml', {'vlsa.enabled': True})
     saved_model = cfg.check_checkpoint()
     cfg.values['eval'].update(n_contexts=1, n_traj=1, execute_steps=2, max_steps=5)
