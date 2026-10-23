@@ -1,0 +1,55 @@
+{
+  "run_dir": "/workspace/yflow-d3il/fm_baseline/results/pushing_baseline",
+  "checkpoint": "baseline_ema.pt",
+  "checkpoint_step": 1000000,
+  "weights": "ema",
+  "contexts": "test",
+  "n_contexts": 30,
+  "n_traj": 4,
+  "ode_steps": 10,
+  "execute_steps": 8,
+  "max_steps": 400,
+  "seed": 0,
+  "success_rate": 0.9583333333333334,
+  "entropy": 0.2408228818777188,
+  "score": 0.5995781076055261,
+  "mean_distance": 0.0342756218787777,
+  "mean_steps": 228.625,
+  "mode_counts": {
+    "0": 37,
+    "1": 49,
+    "2": 21,
+    "3": 8
+  },
+  "plan_ms": 175.83087791282875,
+  "inject": "none",
+  "sampler": "pc",
+  "pc_params": "{\"alpha\": 1.0}",
+  "constraints": "action_box,tracking",
+  "constraint_info": {
+    "sampler": {
+      "name": "pc",
+      "alpha": 1.0,
+      "eps": "auto(0.9*dt-safe)",
+      "rho": 0.9,
+      "delta": 0.01,
+      "tp": 1,
+      "tc": "ode_steps-tp",
+      "sets": [
+        {
+          "name": "action_box",
+          "a_max": 0.008333461359143257
+        },
+        {
+          "name": "tracking",
+          "d": 0.1
+        }
+      ]
+    },
+    "inject": {
+      "name": "none"
+    }
+  },
+  "constraint_params": "{}",
+  "wall_sec": 3178.144564628601
+}
