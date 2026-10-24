@@ -1,0 +1,19 @@
+{
+  "training_files": 1800,
+  "samples": 417518,
+  "dt_s": 0.035,
+  "polygon_sides": 32,
+  "training_sha256": "1b9042718f3c4a72c11a4648869c2ca4bccf40d50dd6a4a91f56d0169f5251d1",
+  "l2_quantiles_m_s2": {
+    "p50": 0.0,
+    "p95": 5.772222195811111,
+    "p99": 7.551660396742247,
+    "p999": 9.43021446891415,
+    "max": 12.981577643326348
+  },
+  "episode_start_max_m_s2": 8.030653227808486,
+  "polygon_required_max_m_s2": 13.044389946312288,
+  "recommended_max_m_s2": 13.7,
+  "training_polygon_retained_fraction": 1.0,
+  "selection": "ceil(max_training_polygon_requirement * 1.05 * 10) / 10"
+}

@@ -1,4 +1,4 @@
-# CPU default for portable smoke tests; use --device cuda:0 for GPU.
+# 가속도·물체 margin은 results의 학습 시연 통계에서 선정한 고정값이다.
 task: pushing
 device: cpu
 paths:
@@ -42,31 +42,72 @@ sample:
 eval:
   checkpoint: baseline_ema.pt
   weights: ema
-  ode_steps: 10
   execute_steps: 8
   max_steps: 400
   n_contexts: 30
   n_traj: 4
   seed: 0
-  comparison: none
   check_obs: 0
   export_contexts: null
   contexts: test
-vlsa:
-  enabled: false
-  geometry: rectangle
-  workspace_enabled: true
-  action_norm_enabled: true
-  # 12 mm per command; training maximum is 10.7933 mm. Not a physical safety limit.
-  max_step_displacement_m: 0.012
-  gamma: null
-  margin_m: 0.01
-  pusher_radius_m: null
-  command_delta_limit_m: 0.01
-  obstacles: []
-  # Research-defined virtual TCP-center region, not a physical wall or reachability bound.
+schema_version: 2
+control:
+  dt_s: 0.035
+sampling:
+  predict_steps: 10
+methods:
+  projection:
+    enabled: false
+    mode: every
+    scope: predict
+    skip_first: 0
+  vlsa:
+    enabled: false
+    scope: terminal_plan
+    execution_recheck: false
+    invalidate_queue_on_change: true
+  pc:
+    enabled: false
+    correct_steps: 9
+    alpha: 2.0
+    rho: 0.9
+    delta: 0.01
+    eps: auto
+constraints:
   workspace:
-    x_min_m: 0.20
-    x_max_m: 0.85
-    y_min_m: -0.40
-    y_max_m: 0.50
+    enabled: true
+    geometry: rectangle
+    source: research_bounds
+    low_m:
+    - 0.2
+    - -0.4
+    high_m:
+    - 0.85
+    - 0.5
+    margin_m: 0.01
+  acceleration:
+    enabled: true
+    max_m_s2: 13.7
+    approximation: inscribed_polygon
+    polygon_sides: 32
+  object_envelope:
+    enabled: true
+    geometry: regular_polygon
+    n_sides: 8
+    normal_offset_rad: 0.0
+    center: mean_blocks
+    include: all_blocks
+    footprint: centers
+    margin_m: 0.25
+    update: per_plan
+    auto_expand: false
+solver:
+  formulation: linear_inequality_qp
+  backend: osqp
+  dtype: float64
+  feasibility_tolerance_m: 1.0e-07
+  intervention_tolerance_m: 1.0e-07
+  eps_abs: 1.0e-09
+  eps_rel: 1.0e-09
+  max_iter: 20000
+  on_failure: abort_episode

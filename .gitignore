@@ -8,7 +8,4 @@ fm_baseline/results/*/eval_*/
 *.pth
 !fm_baseline/results/*/baseline_ema.pt
 
-fm_constrain/runs/
-
-# DOCS
-docs/
+fm_constraint/runs/

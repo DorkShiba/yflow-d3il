@@ -1,0 +1,81 @@
+{
+  "source_commit": "280a2e49ba667f387c94c30cd146d1f7575aa8fb",
+  "files": [
+    {
+      "original": "fm_pc/results/pushing_v100_20261022/eval_pushing_test_v100_20261022T151256Z/results.json",
+      "archived": "fm_constraint/results/legacy/pc/pushing_v100_20261022/eval_pushing_test_v100_20261022T151256Z/results.json",
+      "sha256": "306ee5b3aa057876cb1f6c526fcb9be6ead38b427ccda0af0ae62dbf950ef041"
+    },
+    {
+      "original": "fm_pc/results/pushing_v100_20261022/eval_pushing_test_v100_pc_a1_pc_action_box+tracking_20261022T163007Z/results.json",
+      "archived": "fm_constraint/results/legacy/pc/pushing_v100_20261022/eval_pushing_test_v100_pc_a1_pc_action_box+tracking_20261022T163007Z/results.json",
+      "sha256": "e45497f78eb17c676c83971caaa4087c0b0dc4d37c2ee76c9b2951327b9df90a"
+    },
+    {
+      "original": "fm_pc/results/pushing_v100_20261022/eval_pushing_test_v100_pc_nocbf_pc_action_box+tracking_20261022T163007Z/results.json",
+      "archived": "fm_constraint/results/legacy/pc/pushing_v100_20261022/eval_pushing_test_v100_pc_nocbf_pc_action_box+tracking_20261022T163007Z/results.json",
+      "sha256": "8409e05aecd7e380f35915e4f758a195c6fc8f4be7988dcc2a389f3d6af1037f"
+    },
+    {
+      "original": "fm_pc/results/pushing_v100_20261022/eval_pushing_test_v100_pc_pc_action_box+tracking_20261022T163007Z/results.json",
+      "archived": "fm_constraint/results/legacy/pc/pushing_v100_20261022/eval_pushing_test_v100_pc_pc_action_box+tracking_20261022T163007Z/results.json",
+      "sha256": "590b497b3d8bdc82c0a12595908cff387371fa54398dea9e5a92a88a6b980f69"
+    },
+    {
+      "original": "fm_pc/results/pushing_v100_20261022/summary.csv",
+      "archived": "fm_constraint/results/legacy/pc/pushing_v100_20261022/summary.csv",
+      "sha256": "425ffcfb9c3f9bc90315e1c47c76f5a4aad66ec2ca33bf6ad2fdfd0da34cb9fa"
+    },
+    {
+      "original": "fm_pc/results/pushing_v100_20261022/summary.json",
+      "archived": "fm_constraint/results/legacy/pc/pushing_v100_20261022/summary.json",
+      "sha256": "83be18130405cf8af575c438973f3992fb383e596c54f8fa0f87574e3936f60c"
+    },
+    {
+      "original": "fm_pc/results/pushing_v100_20261022/summary.md",
+      "archived": "fm_constraint/results/legacy/pc/pushing_v100_20261022/summary.md",
+      "sha256": "64ab8de6c07b53ef94c4705b06f546a02d69042e20eeee0f17b2b1d5651c5aa6"
+    },
+    {
+      "original": "fm_pc/results/pushing_v100_20261022/summary.png",
+      "archived": "fm_constraint/results/legacy/pc/pushing_v100_20261022/summary.png",
+      "sha256": "40a58a813b5db9e48abb637f13350e0803d6dc3a7d2ba212d27de86dd55153dc"
+    },
+    {
+      "original": "fm_projection/results/pushing_v100_20261022/eval_pushing_test_v100_20261022T151256Z/results.json",
+      "archived": "fm_constraint/results/legacy/projection/pushing_v100_20261022/eval_pushing_test_v100_20261022T151256Z/results.json",
+      "sha256": "306ee5b3aa057876cb1f6c526fcb9be6ead38b427ccda0af0ae62dbf950ef041"
+    },
+    {
+      "original": "fm_projection/results/pushing_v100_20261022/eval_pushing_test_v100_every_action_box+tracking_20261022T151253Z/results.json",
+      "archived": "fm_constraint/results/legacy/projection/pushing_v100_20261022/eval_pushing_test_v100_every_action_box+tracking_20261022T151253Z/results.json",
+      "sha256": "f94ace9f46e6505b3c0c4950458ca9d5ad34a9ac63c334726535e27679713d17"
+    },
+    {
+      "original": "fm_projection/results/pushing_v100_20261022/eval_pushing_test_v100_final_action_box+tracking_20261022T151256Z/results.json",
+      "archived": "fm_constraint/results/legacy/projection/pushing_v100_20261022/eval_pushing_test_v100_final_action_box+tracking_20261022T151256Z/results.json",
+      "sha256": "19725ea511cb1874ab03ca22e1a6497968858e1bab95b235f52453f1da8f3d34"
+    },
+    {
+      "original": "fm_projection/results/pushing_v100_20261022/summary.csv",
+      "archived": "fm_constraint/results/legacy/projection/pushing_v100_20261022/summary.csv",
+      "sha256": "1cccb7bf1b13ec26d0f7956c2ab5540f31c5b4f0fc29c39961beab91ad4e0495"
+    },
+    {
+      "original": "fm_projection/results/pushing_v100_20261022/summary.json",
+      "archived": "fm_constraint/results/legacy/projection/pushing_v100_20261022/summary.json",
+      "sha256": "ea73abe921b28c7ec9f96e6f05453d4aea5d038d275be9ab1b4807426bda4e1a"
+    },
+    {
+      "original": "fm_projection/results/pushing_v100_20261022/summary.md",
+      "archived": "fm_constraint/results/legacy/projection/pushing_v100_20261022/summary.md",
+      "sha256": "681303446119a629bc58f6f21ac6db8c10804460bb170a11c09646ab82e0807b"
+    },
+    {
+      "original": "fm_projection/results/pushing_v100_20261022/summary.png",
+      "archived": "fm_constraint/results/legacy/projection/pushing_v100_20261022/summary.png",
+      "sha256": "e0eeae596dff795f5feb509fc68b993e9501690907955f150f29cb9eb1411292"
+    }
+  ],
+  "mode": "archived_results_verified_before_source_package_removal"
+}

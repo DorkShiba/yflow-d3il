@@ -1,0 +1,12 @@
+{
+  "training_files": 718,
+  "training_sha256": "ce4e83cdc86cd80151e13a2bf4ed24bf8389f3772016c1dd66976d07cbd6f1d8",
+  "n_sides": 8,
+  "normal_offset_rad": 0.0,
+  "maximum_training_start_required_margin_m": 0.12671250088477898,
+  "selected_margin_m": 0.14,
+  "selection": "ceil((max(0,maximum_training_start_required_margin_m)+0.01)*100)/100",
+  "training_initial_positions_retained_fraction": 1.0,
+  "original_0_10_margin_outside_fraction_all_training_observations": 0.0021421307247565698,
+  "scope": "Fixed per-task configuration calibrated from training starts only; no runtime expansion"
+}

@@ -1,7 +1,6 @@
-"""YAML configuration; all relative paths are relative to the repository root."""
+"""통합 FM 설정: 중첩 YAML과 CLI를 검증하고 경로를 저장소 기준으로 해석한다."""
 
 import argparse
-import copy
 import json
 import math
 from dataclasses import dataclass
@@ -9,9 +8,27 @@ from pathlib import Path
 
 import yaml
 
-from fm_constraint.vlsa import workspace_limits
-
 REPO = Path(__file__).resolve().parents[1]
+
+
+def _merge_settings(target, supplied, prefix=''):
+    """알려진 키만 재귀 병합한다. 문자열 false를 bool로 묵시 변환하지 않는다."""
+    if not isinstance(supplied, dict):
+        raise ValueError(f'{prefix or "config"} must be a mapping')
+    for key, value in supplied.items():
+        name = f'{prefix}.{key}' if prefix else key
+        if key not in target:
+            raise ValueError(f'Unknown setting: {name}')
+        default = target[key]
+        if isinstance(default, dict):
+            _merge_settings(default, value, name)
+        else:
+            if default is not None and name != 'methods.pc.eps':
+                valid = (type(value) in (int, float) and math.isfinite(value)
+                         if isinstance(default, float) else type(value) is type(default))
+                if not valid:
+                    raise ValueError(f'Invalid type for {name}')
+            target[key] = value
 
 
 @dataclass
@@ -20,14 +37,15 @@ class ExperimentConfig:
 
     @classmethod
     def from_yaml(cls, path, overrides=None):
+        """CLI > YAML > 기본값 순서로 병합한다. 상대 경로는 REPO 기준이다."""
         with Path(path).open() as handle:
             supplied = yaml.safe_load(handle)
         if not isinstance(supplied, dict) or supplied.get('task') not in ('pushing', 'inserting'):
             raise ValueError('YAML must specify task: pushing or inserting')
         task = supplied['task']
         inserting = task == 'inserting'
-        defaults = {
-            'task': task, 'device': 'cpu',
+        values = {
+            'schema_version': 2, 'task': task, 'device': 'cpu',
             'paths': {
                 'run_dir': f'fm_baseline/results/{task}_baseline',
                 'output_root': 'fm_constraint/runs', 'data_root': 'data',
@@ -46,55 +64,44 @@ class ExperimentConfig:
             'sample': {'n_windows': 256, 'batch_size': 64, 'split': 'val',
                        'seed': 0, 'no_save': True},
             'eval': {'checkpoint': 'baseline_ema.pt', 'weights': 'ema',
-                     'ode_steps': 10, 'execute_steps': 8,
-                     'max_steps': 2000 if inserting else 400,
-                     'n_contexts': 0 if inserting else 30, 'n_traj': 4,
-                     'seed': 0, 'comparison': 'none', 'check_obs': 0,
-                     'export_contexts': None,
+                     'execute_steps': 8, 'max_steps': 2000 if inserting else 400,
+                     'n_contexts': 0 if inserting else 30, 'n_traj': 4, 'seed': 0,
+                     'check_obs': 0, 'export_contexts': None,
                      **({'split': 'val'} if inserting else {'contexts': 'test'})},
-            'vlsa': {'enabled': False, 'geometry': 'rectangle', 'gamma': None,
-                     'margin_m': None, 'pusher_radius_m': None,
-                     'command_delta_limit_m': None, 'obstacles': [], 'workspace': None,
-                     'workspace_enabled': True, 'action_norm_enabled': True,
-                     'max_step_displacement_m': 0.012},
+            'control': {'dt_s': 0.035},
+            'sampling': {'predict_steps': 10},
+            'methods': {
+                'projection': {'enabled': False, 'mode': 'every', 'scope': 'predict', 'skip_first': 0},
+                'vlsa': {'enabled': False, 'scope': 'terminal_plan', 'execution_recheck': False,
+                         'invalidate_queue_on_change': True},
+                'pc': {'enabled': False, 'correct_steps': 9, 'alpha': 2.0,
+                       'rho': 0.9, 'delta': 0.01, 'eps': 'auto'},
+            },
+            'constraints': {
+                'workspace': {'enabled': True, 'geometry': 'rectangle', 'source': 'research_bounds',
+                              'low_m': [0.00 if inserting else 0.20, -0.40],
+                              'high_m': [0.85, 0.75 if inserting else 0.50], 'margin_m': 0.01},
+                'acceleration': {'enabled': True, 'max_m_s2': None,
+                                 'approximation': 'inscribed_polygon', 'polygon_sides': 32},
+                'object_envelope': {'enabled': True, 'geometry': 'regular_polygon', 'n_sides': 8,
+                                    'normal_offset_rad': 0.0, 'center': 'mean_blocks',
+                                    'include': 'all_blocks', 'footprint': 'centers',
+                                    'margin_m': 0.10, 'update': 'per_plan', 'auto_expand': False},
+            },
+            'solver': {'formulation': 'linear_inequality_qp', 'backend': 'osqp', 'dtype': 'float64',
+                       'feasibility_tolerance_m': 1e-7, 'intervention_tolerance_m': 1e-7,
+                       'eps_abs': 1e-9, 'eps_rel': 1e-9, 'max_iter': 20000,
+                       'on_failure': 'abort_episode'},
         }
-        values = copy.deepcopy(defaults)
-        for key, value in supplied.items():
-            if key not in values:
-                raise ValueError(f'Unknown setting: {key}')
-            if isinstance(values[key], dict):
-                if not isinstance(value, dict):
-                    raise ValueError(f'{key} must be a mapping')
-                unknown = value.keys() - values[key].keys()
-                if unknown:
-                    raise ValueError(f'Unknown setting: {key}.{sorted(unknown)[0]}')
-                values[key].update(value)
-            else:
-                values[key] = value
+        _merge_settings(values, supplied)
         for dotted, value in (overrides or {}).items():
             parts = dotted.split('.')
-            if len(parts) == 1 and dotted in ('device',):
-                values[dotted] = value
-            elif len(parts) == 2 and parts[0] in defaults and isinstance(defaults[parts[0]], dict) and parts[1] in defaults[parts[0]]:
-                values[parts[0]][parts[1]] = value
-            else:
-                raise ValueError(f'Unknown or non-overridable setting: {dotted}')
-        # Check scalar types before resolving paths; bool is not a numeric value.
-        for group, fields in defaults.items():
-            if not isinstance(fields, dict):
-                if not isinstance(values[group], str):
-                    raise ValueError(f'{group} must be a string')
-                continue
-            for key, default in fields.items():
-                value = values[group][key]
-                if default is None or key == 'max_step_displacement_m':
-                    continue
-                if isinstance(default, float):
-                    valid = type(value) in (int, float) and math.isfinite(value)
-                else:
-                    valid = type(value) is type(default)
-                if not valid:
-                    raise ValueError(f'Invalid type for {group}.{key}')
+            node = values
+            for part in parts[:-1]:
+                if part not in node or not isinstance(node[part], dict):
+                    raise ValueError(f'Unknown setting: {dotted}')
+                node = node[part]
+            _merge_settings(node, {parts[-1]: value}, '.'.join(parts[:-1]))
         for key, value in values['paths'].items():
             values['paths'][key] = str((REPO / value).resolve())
         for group, key in [('train', 'resume'), ('eval', 'export_contexts')]:
@@ -112,88 +119,90 @@ class ExperimentConfig:
         return self.values['task']
 
     @property
-    def vlsa_enabled(self):
-        return self.values['vlsa']['enabled']
+    def methods_enabled(self):
+        return any(method['enabled'] for method in self.values['methods'].values())
 
     def validate(self, command=None):
+        """형상·단위·지원 모드를 확인한다. 미지원 설정을 자동 대체하지 않는다."""
         v = self.values
-        model, train, ev, safety = (v[k] for k in ('model', 'train', 'eval', 'vlsa'))
+        model, train, ev = (v[k] for k in ('model', 'train', 'eval'))
+        if v['schema_version'] != 2:
+            raise ValueError('Require schema_version: 2; migrate legacy settings explicitly')
         for group, keys in [('model', ['horizon', 'dim']),
                             ('train', ['steps', 'batch_size', 'log_every', 'val_batches']),
                             ('sample', ['n_windows', 'batch_size']),
-                            ('eval', ['ode_steps', 'execute_steps', 'max_steps', 'n_traj'])]:
-            for key in keys:
-                if v[group][key] <= 0:
-                    raise ValueError(f'{group}.{key} must be positive')
-        if ev['ode_steps'] < 2 or ev['execute_steps'] > model['horizon']:
-            raise ValueError('Require ode_steps >= 2 and execute_steps <= horizon')
+                            ('eval', ['execute_steps', 'max_steps', 'n_traj']),
+                            ('sampling', ['predict_steps']), ('solver', ['max_iter'])]:
+            if any(v[group][key] <= 0 for key in keys):
+                raise ValueError(f'{group}: counts must be positive')
+        if ev['execute_steps'] > model['horizon']:
+            raise ValueError('Require execute_steps <= horizon')
         for group, keys in [('train', ['seed', 'val_seed', 'save_every', 'time_limit_hours']),
                             ('sample', ['seed']), ('eval', ['seed', 'n_contexts', 'check_obs'])]:
             if any(v[group][key] < 0 for key in keys):
-                raise ValueError(f'{group}: counts, seeds and time limits must be nonnegative')
+                raise ValueError(f'{group}: counts and seeds must be nonnegative')
         mults = model['dim_mults']
         if (not mults or any(type(x) is not int or x <= 0 for x in mults)
                 or model['dim'] % 8 or model['horizon'] % (2 ** (len(mults) - 1))):
-            raise ValueError('Invalid U-Net dim/dim_mults/horizon (GroupNorm and downsampling)')
+            raise ValueError('Invalid U-Net dim/dim_mults/horizon')
         if train['lr'] <= 0 or not 0 <= train['ema_decay'] < 1 or train['scheduler'] not in ('none', 'cosine'):
             raise ValueError('Invalid lr, EMA decay or scheduler')
-        if ev['weights'] not in ('ema', 'model') or ev['comparison'] not in ('none', 'stop'):
-            raise ValueError('Invalid weights or comparison')
-        if v['sample']['split'] not in ('train', 'val'):
-            raise ValueError('sample.split must be train or val')
+        if ev['weights'] not in ('ema', 'model') or v['sample']['split'] not in ('train', 'val'):
+            raise ValueError('Invalid weights or split')
         if self.task == 'pushing' and ev['contexts'] not in ('train', 'test'):
             raise ValueError('eval.contexts must be train or test')
         if self.task == 'inserting' and ev['split'] not in ('train', 'val'):
             raise ValueError('eval.split must be train or val')
         if not isinstance(ev['checkpoint'], str) or not ev['checkpoint']:
             raise ValueError('eval.checkpoint must be a nonempty path')
-        if safety['geometry'] not in ('circle', 'rectangle'):
-            raise ValueError('Only circle and rectangle geometry are supported')
-        radius = safety['max_step_displacement_m']
-        if radius is not None and (type(radius) not in (int, float) or not math.isfinite(radius) or radius <= 0):
-            raise ValueError('max_step_displacement_m must be a finite positive length in meters')
-        if safety['action_norm_enabled'] and radius is None:
-            raise ValueError('action_norm_enabled requires max_step_displacement_m')
-        if safety['action_norm_enabled'] and safety['geometry'] != 'rectangle':
-            raise ValueError('Action norm constraint currently requires rectangle geometry')
-        if safety['workspace'] is not None:
-            workspace_limits(safety['workspace'], safety['margin_m'])
-        if safety['geometry'] == 'rectangle' and safety['obstacles']:
-            raise ValueError('Rectangle command fence does not include circular obstacles')
-        ids = set()
-        for obstacle in safety['obstacles']:
-            if not isinstance(obstacle, dict) or set(obstacle) != {'id', 'center_xy_m', 'radius_m', 'height_m'}:
-                raise ValueError('Obstacle requires id, center_xy_m, radius_m, height_m')
-            if not isinstance(obstacle['id'], str) or not obstacle['id'] or obstacle['id'] in ids:
-                raise ValueError('Obstacle IDs must be nonempty and unique')
-            ids.add(obstacle['id'])
-            xy = obstacle['center_xy_m']
-            if not isinstance(xy, list) or len(xy) != 2:
-                raise ValueError('center_xy_m must have two coordinates')
-            for number in [*xy, obstacle['radius_m'], obstacle['height_m']]:
-                if type(number) not in (int, float) or not math.isfinite(number):
-                    raise ValueError('Obstacle geometry must be finite')
-            if obstacle['radius_m'] <= 0 or obstacle['height_m'] <= 0:
-                raise ValueError('Obstacle radius and height must be positive')
-        if self.vlsa_enabled or ev['comparison'] == 'stop':
-            if self.vlsa_enabled and ev['comparison'] != 'none':
-                raise ValueError('vlsa and stop comparison are mutually exclusive')
-            required = ['margin_m', 'command_delta_limit_m']
-            if safety['geometry'] == 'circle':
-                required += ['gamma', 'pusher_radius_m']
-            for key in required:
-                number = safety[key]
-                if type(number) not in (int, float) or not math.isfinite(number) or number < 0 or (key != 'margin_m' and number == 0):
-                    raise ValueError(f'vlsa.{key} must be explicitly set to a valid physical value')
-            if safety['geometry'] == 'circle' and not safety['obstacles']:
-                raise ValueError('An enabled safety experiment requires obstacles')
-            if safety['geometry'] == 'rectangle' and safety['workspace_enabled']:
-                workspace_limits(safety['workspace'], safety['margin_m'])
+        if v['control']['dt_s'] <= 0:
+            raise ValueError('control.dt_s must be positive')
+        # 현재 D3IL은 1ms 내부 스텝 35회로 명령 하나를 실행한다. 다른 dt는 지원하지 않는다.
+        if command == 'eval' and not math.isclose(v['control']['dt_s'], 0.035, abs_tol=1e-12):
+            raise ValueError('D3IL evaluation requires control.dt_s=0.035')
+        proj, vlsa, pc = (v['methods'][k] for k in ('projection', 'vlsa', 'pc'))
+        if proj['mode'] not in ('every', 'final') or proj['scope'] != 'predict' or proj['skip_first'] < 0:
+            raise ValueError('Invalid projection mode/scope/skip_first')
+        if vlsa['scope'] != 'terminal_plan' or not vlsa['invalidate_queue_on_change']:
+            raise ValueError('VLSA requires terminal_plan and queue invalidation on change')
+        if proj['enabled'] and proj['mode'] == 'final' and vlsa['enabled']:
+            raise ValueError('Projection final and terminal VLSA are identical; select one')
+        if pc['correct_steps'] < 1 or pc['alpha'] <= 0 or not 0 < pc['rho'] < 1 or pc['delta'] <= 0:
+            raise ValueError('Invalid PC steps/alpha/rho/delta')
+        if pc['eps'] != 'auto' and (type(pc['eps']) not in (int, float)
+                                   or not math.isfinite(pc['eps']) or pc['eps'] <= 0):
+            raise ValueError('PC eps must be auto or a positive number')
+        ws, acc, obj = (v['constraints'][k] for k in ('workspace', 'acceleration', 'object_envelope'))
+        if ws['geometry'] != 'rectangle' or ws['margin_m'] < 0:
+            raise ValueError('Workspace requires rectangle and nonnegative margin')
+        if any(not isinstance(ws[k], list) or len(ws[k]) != 2 or
+               any(type(x) not in (int, float) or not math.isfinite(x) for x in ws[k])
+               for k in ('low_m', 'high_m')):
+            raise ValueError('Workspace low/high must be finite XY lists')
+        if any(lo + ws['margin_m'] >= hi - ws['margin_m'] for lo, hi in zip(ws['low_m'], ws['high_m'])):
+            raise ValueError('Workspace must have positive width after margin')
+        if acc['approximation'] != 'inscribed_polygon' or acc['polygon_sides'] < 4 or acc['polygon_sides'] % 2:
+            raise ValueError('Acceleration polygon_sides must be even and >=4')
+        limit = acc['max_m_s2']
+        if limit is not None and (type(limit) not in (int, float) or not math.isfinite(limit) or limit <= 0):
+            raise ValueError('Acceleration max_m_s2 must be finite and positive')
+        if acc['enabled'] and limit is None:
+            raise ValueError('Acceleration max_m_s2 must be set explicitly')
+        if (obj['geometry'] != 'regular_polygon' or obj['n_sides'] < 3 or obj['margin_m'] <= 0
+                or obj['center'] != 'mean_blocks' or obj['include'] != 'all_blocks'
+                or obj['footprint'] != 'centers' or obj['update'] != 'per_plan' or obj['auto_expand']):
+            raise ValueError('Object envelope requires a fixed-per-plan regular polygon around all block centers')
+        solver = v['solver']
+        if (solver['backend'] != 'osqp' or solver['dtype'] != 'float64'
+                or solver['formulation'] != 'linear_inequality_qp' or solver['on_failure'] != 'abort_episode'):
+            raise ValueError('Only float64 OSQP linear inequalities with abort_episode are supported')
+        if any(solver[k] <= 0 for k in ('eps_abs', 'eps_rel', 'feasibility_tolerance_m', 'intervention_tolerance_m')):
+            raise ValueError('Solver tolerances must be positive')
         self.require_output(v['paths']['output_root'])
-        if command in ('train', 'sample') and self.vlsa_enabled:
-            raise ValueError('VLSA is an execution filter; use an evaluation entry point')
-        if command in ('train', 'sample') and (ev['comparison'] != 'none' or ev['check_obs'] or ev['export_contexts']):
-            raise ValueError('Comparison, observation checks and context export require evaluation')
+        if command == 'train' and self.methods_enabled:
+            raise ValueError('Training-free methods must be disabled during train')
+        if command in ('train', 'sample') and (ev['check_obs'] or ev['export_contexts']):
+            raise ValueError('Observation checks/context export require evaluation')
         if command == 'train':
             if '/' in train['tag'] or '\\' in train['tag'] or train['tag'] in ('', '.', '..'):
                 raise ValueError('train.tag must be a plain run label')
@@ -209,7 +218,7 @@ class ExperimentConfig:
         if command in ('sample', 'eval'):
             self.check_checkpoint()
             if command == 'sample' and not v['sample']['no_save']:
-                self.require_output(v['paths']['run_dir'])
+                raise ValueError('sample.no_save must be true; input runs are read-only')
         if ev['export_contexts']:
             if self.task != 'inserting':
                 raise ValueError('Context export is only available for inserting')
@@ -255,7 +264,7 @@ class ExperimentConfig:
             options = {**v['sample'], 'run_dir': paths['run_dir'],
                        'hardflow_root': paths['hardflow_root'],
                        'data_dir': str(Path(paths['data_root']) / f'{self.task}_sincos_v1'),
-                       'device': v['device'], 'ode_steps': v['eval']['ode_steps'],
+                       'device': v['device'], 'ode_steps': v['sampling']['predict_steps'],
                        'ckpt': v['eval']['checkpoint'], 'weights': v['eval']['weights']}
         else:
             raise ValueError(f'Unknown baseline command: {command}')
@@ -275,11 +284,13 @@ class ExperimentConfig:
 
 
 def parse_config(command, task=None, argv=None):
+    """세 방법의 CLI 스위치와 임의 깊이의 --set 키를 명시적으로 병합한다."""
     parser = argparse.ArgumentParser(description=f'FM constraint {command}')
     parser.add_argument('--config', required=True)
     parser.add_argument('--set', action='append', default=[], metavar='SECTION.KEY=VALUE')
     parser.add_argument('--device')
-    parser.add_argument('--vlsa', action=argparse.BooleanOptionalAction, default=None)
+    for method in ('projection', 'vlsa', 'pc'):
+        parser.add_argument('--' + method, action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument('--check-obs', type=int)
     parser.add_argument('--export-contexts')
     args = parser.parse_args(argv)
@@ -289,8 +300,10 @@ def parse_config(command, task=None, argv=None):
             parser.error('--set requires SECTION.KEY=VALUE')
         key, value = item.split('=', 1)
         overrides[key] = yaml.safe_load(value)
-    for key, value in [('device', args.device), ('vlsa.enabled', args.vlsa),
-                       ('eval.check_obs', args.check_obs), ('eval.export_contexts', args.export_contexts)]:
+    for key, value in [('device', args.device), ('eval.check_obs', args.check_obs),
+                       ('eval.export_contexts', args.export_contexts),
+                       *[(f'methods.{name}.enabled', getattr(args, name))
+                         for name in ('projection', 'vlsa', 'pc')]]:
         if value is not None:
             overrides[key] = value
     cfg = ExperimentConfig.from_yaml(args.config, overrides)

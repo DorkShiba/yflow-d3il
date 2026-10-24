@@ -1,0 +1,323 @@
+{
+  "date": "2026-10-24",
+  "schema_version": 2,
+  "versions": {
+    "numpy": "1.26.4",
+    "scipy": "1.16.3",
+    "torch": "2.3.1",
+    "osqp": "1.1.3",
+    "mujoco": "2.3.2"
+  },
+  "tests": {
+    "command": "python -m pytest fm_constraint/tests -q",
+    "passed": 55
+  },
+  "baseline_exact": {
+    "tasks": [
+      "pushing",
+      "inserting"
+    ],
+    "seed": 1234,
+    "assertion": "numpy.testing.assert_array_equal against pre-integration plans"
+  },
+  "offline_combinations": {
+    "tasks": [
+      "pushing",
+      "inserting"
+    ],
+    "combinations_per_task": 8,
+    "all_passed": true,
+    "rechecked_after_legacy_removal": true
+  },
+  "d3il_short_runs": [
+    {
+      "task": "pushing",
+      "flags": [
+        false,
+        false,
+        false
+      ],
+      "status": "executed",
+      "model_calls": 20,
+      "qp_calls": 0,
+      "steps": 10,
+      "failures": [
+        null
+      ]
+    },
+    {
+      "task": "pushing",
+      "flags": [
+        false,
+        false,
+        true
+      ],
+      "status": "executed",
+      "model_calls": 38,
+      "qp_calls": 18,
+      "steps": 10,
+      "failures": [
+        null
+      ]
+    },
+    {
+      "task": "pushing",
+      "flags": [
+        false,
+        true,
+        false
+      ],
+      "status": "executed",
+      "model_calls": 20,
+      "qp_calls": 2,
+      "steps": 10,
+      "failures": [
+        null
+      ]
+    },
+    {
+      "task": "pushing",
+      "flags": [
+        false,
+        true,
+        true
+      ],
+      "status": "executed",
+      "model_calls": 38,
+      "qp_calls": 20,
+      "steps": 10,
+      "failures": [
+        null
+      ]
+    },
+    {
+      "task": "pushing",
+      "flags": [
+        true,
+        false,
+        false
+      ],
+      "status": "executed",
+      "model_calls": 20,
+      "qp_calls": 20,
+      "steps": 10,
+      "failures": [
+        null
+      ]
+    },
+    {
+      "task": "pushing",
+      "flags": [
+        true,
+        false,
+        true
+      ],
+      "status": "executed",
+      "model_calls": 38,
+      "qp_calls": 38,
+      "steps": 10,
+      "failures": [
+        null
+      ]
+    },
+    {
+      "task": "pushing",
+      "flags": [
+        true,
+        true,
+        false
+      ],
+      "status": "executed",
+      "model_calls": 20,
+      "qp_calls": 22,
+      "steps": 10,
+      "failures": [
+        null
+      ]
+    },
+    {
+      "task": "pushing",
+      "flags": [
+        true,
+        true,
+        true
+      ],
+      "status": "executed",
+      "model_calls": 38,
+      "qp_calls": 40,
+      "steps": 10,
+      "failures": [
+        null
+      ]
+    },
+    {
+      "task": "inserting",
+      "flags": [
+        false,
+        false,
+        false
+      ],
+      "status": "executed",
+      "model_calls": 20,
+      "qp_calls": 0,
+      "steps": 10,
+      "failures": [
+        null
+      ]
+    },
+    {
+      "task": "inserting",
+      "flags": [
+        false,
+        false,
+        true
+      ],
+      "status": "executed",
+      "model_calls": 38,
+      "qp_calls": 18,
+      "steps": 10,
+      "failures": [
+        null
+      ]
+    },
+    {
+      "task": "inserting",
+      "flags": [
+        false,
+        true,
+        false
+      ],
+      "status": "executed",
+      "model_calls": 20,
+      "qp_calls": 2,
+      "steps": 10,
+      "failures": [
+        null
+      ]
+    },
+    {
+      "task": "inserting",
+      "flags": [
+        false,
+        true,
+        true
+      ],
+      "status": "executed",
+      "model_calls": 38,
+      "qp_calls": 20,
+      "steps": 10,
+      "failures": [
+        null
+      ]
+    },
+    {
+      "task": "inserting",
+      "flags": [
+        true,
+        false,
+        false
+      ],
+      "status": "executed",
+      "model_calls": 20,
+      "qp_calls": 20,
+      "steps": 10,
+      "failures": [
+        null
+      ]
+    },
+    {
+      "task": "inserting",
+      "flags": [
+        true,
+        false,
+        true
+      ],
+      "status": "executed",
+      "model_calls": 38,
+      "qp_calls": 38,
+      "steps": 10,
+      "failures": [
+        null
+      ]
+    },
+    {
+      "task": "inserting",
+      "flags": [
+        true,
+        true,
+        false
+      ],
+      "status": "executed",
+      "model_calls": 20,
+      "qp_calls": 22,
+      "steps": 10,
+      "failures": [
+        null
+      ]
+    },
+    {
+      "task": "inserting",
+      "flags": [
+        true,
+        true,
+        true
+      ],
+      "status": "executed",
+      "model_calls": 38,
+      "qp_calls": 40,
+      "steps": 10,
+      "failures": [
+        null
+      ]
+    }
+  ],
+  "camera_replay": {
+    "pushing": {
+      "result": "fm_constraint/runs/eval_pushing_20261024T005846382111Z/maps/c000_t0_replay_check.json",
+      "command_max_error_m": 0.0,
+      "measured_xy_max_error_m": 6.468212859211953e-07,
+      "within_0_1mm": true
+    },
+    "inserting": {
+      "result": "fm_constraint/runs/eval_inserting_20261024T005857873023Z/maps/c000_t0_replay_check.json",
+      "command_max_error_m": 0.0,
+      "measured_xy_max_error_m": 0.0,
+      "within_0_1mm": true
+    }
+  },
+  "isolated_execution": [
+    {
+      "task": "pushing",
+      "exit_code": 0,
+      "without_packages": [
+        "fm_pc",
+        "fm_projection",
+        "fm_constraint.vlsa"
+      ]
+    },
+    {
+      "task": "inserting",
+      "exit_code": 0,
+      "without_packages": [
+        "fm_pc",
+        "fm_projection",
+        "fm_constraint.vlsa"
+      ]
+    }
+  ],
+  "training_delegation": {
+    "task": "pushing",
+    "updates": 2,
+    "completed": true
+  },
+  "preservation": {
+    "baseline_model_files_unchanged": true,
+    "legacy_result_files_verified": 15,
+    "source_manifest": "integration_source_manifest.json"
+  },
+  "removed_packages": [
+    "fm_pc",
+    "fm_projection"
+  ],
+  "full_success_rate_experiment_performed": false
+}

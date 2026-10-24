@@ -1,84 +1,101 @@
 # FM Constraint
 
-기존 `fm_baseline/`을 수정하지 않고 YAML 설정과 실행 안전 필터 실험을 추가하는 패키지다. VLSA/VSLA/DLSA 표기 중 코드·설정 키는 `vlsa`로 통일한다. 여기의 원형 CBF-QP는 AEGIS 전체 재현이 아니다.
+기존 `fm_baseline`의 모델·정규화·학습·태스크 관측 코드를 import하여 세 training-free 방법을 통합한다. 설정은 schema v2이며, 과거 실행 필터의 YAML을 묵시적으로 변환하지 않는다.
 
-## 현재 구현 범위
+```text
+noise → Euler [Projection 선택] → terminal QP [VLSA 선택]
+      → 모델 + CBF-QP [PC 선택] → 검사 → 앞 K개 실행 → 재계획
+```
 
-| PLAN 단계 | 상태 |
+## 구조
+
+| 파일 | 역할 |
 |---|---|
-| 1. 설정·import 경계 | 구현 및 테스트 완료 |
-| 2. 기존 학습·sampling 재사용 | 구현. 두 실제 baseline EMA의 CPU sampling 및 짧은 학습·재개 확인 |
-| 3. 필터 off 평가 | 공통 루프·진입점 구현. 모의 환경에서 기존 실행 순서 대조; 실제 D3IL 동등성 검증은 대기 |
-| 4. 제어·기하·내부 step 감사 | 원본 커밋의 초기·목표·테이블 형상 확인. 로컬 D3IL과 gym이 없어 실제 운동·접촉 감사는 대기 |
-| 5. 제약 최적화 | 목표 XY 울타리·이동량 원판·축별 한계의 공동 투영 구현. 원형 장애물 CBF는 수치 검증만 완료 |
-| 6. 실제 장애물·접촉 기반 비교 | 명령·제어 시점 실제 손의 울타리 위반 지표 구현. 실제 장애물·내부 step 접촉 비교는 대기 |
+| `policy.py` | 조건부 생성과 세 방법의 순서·on/off·비용·실패 관리 |
+| `constraints.py` | 사각형·가속도·모든 블록을 포함하는 정n각형의 공통 행렬 |
+| `qp.py` | OSQP를 이용한 `min 0.5‖z−z_nom‖², Gz≤d` |
+| `sample.py` | baseline 데이터 도구와 통합 정책을 이용한 오프라인 검사 |
+| `evaluation.py`, `eval_*.py` | 이전 실행 행동·큐·재계획을 관리하는 공통 평가 |
+| `check_constraints.py` | 수치 검사·학습 데이터 기반 설정값 선정 |
+| `compute_metrics.py`, `render_rollouts.py` | 결과 비교와 저장 궤적 지도·카메라 PNG/GIF |
+| `train.py` | baseline trainer 위임; 추론 보정은 학습에서 비활성 |
 
-`--vlsa`의 기본 동작은 **목표 TCP 좌표의 가상 직사각형 울타리 + 한 step의 XY 이동량 12mm 제한 + 축별 10mm 한계**다. 물리 벽은 추가하지 않는다. D3IL 의존성이 준비되면 실행할 수 있다. 실제 외부 장애물을 지정하는 원형 CBF 실험은 제어·기하 감사 전까지 중단한다. 현재 환경에서는 실제 시뮬레이터 검증을 완료하지 않았다.
+공통 QP는 현재 환경에서 검증한 `osqp==1.1.3` 하나를 사용한다. Python API와 상태 반환은 [OSQP 공식 문서](https://osqp.org/docs/interfaces/python.html)를 따른다. solver 미수렴·해 없음·물리 잔차 초과에서는 실행할 행동을 반환하지 않는다.
 
-**데이터 패딩 및 종단 데이터 보완은 구현 금지다.** 기존 구간 추출을 그대로 import한다. 마지막 행동은 학습되지만 시연 마지막 15개 상태는 첫 관측 조건이 되지 않고, 마지막 원본 상태는 현재 로더가 읽지 않는 `next_obs[-1]`에만 있다. 종단 재계획·유지에 미치는 영향은 알려진 미검증 한계로 남긴다.
+## 제약과 기본 수치
 
-## 설정과 실행
+세 방법은 같은 제약·기하를 사용하고 행동 채널만 수정한다. 현재 관측은 매 스텝 고정한다.
 
-저장소 루트에서 실행한다. 기존 `requirements.txt`의 의존성을 사용하며 YAML은 PyYAML로 읽는다. 테스트는 pytest, 독립 QP 교차 검증은 SciPy를 사용한다. 수치 안전 필터 자체는 NumPy만 사용한다. 실제 평가에는 별도 D3IL 설치와 해당 의존성이 필요하다.
+| 제약 | 정의 | Pushing | Inserting |
+|---|---|---|---|
+| workspace | 누적 목표 XY가 margin 적용 사각형 안에 위치 | `[0.21,0.84] × [−0.39,0.49] m` | `[0.01,0.84] × [−0.39,0.74] m` |
+| 가속도 | `‖a_h−a_(h−1)‖₂ / dt² ≤ α_max` | `13.7 m/s²` | `14.2 m/s²` |
+| 물체 영역 | 모든 블록 중심을 포함하는 정n각형 | `n=8`, margin `0.25 m` | `n=8`, margin `0.14 m` |
+
+가속도는 **목표 명령의 이산 가속도**이며 실제 로봇 가속도와 구분한다. 제어 간격은 `0.035 s`다. L2 한계는 32면 내접 다각형으로 보수적으로 근사한다. Object Envelope의 면수 `n_sides`와 가속도 근사의 `polygon_sides`는 별도 설정이다.
+
+가속도 한계는 시연 시작의 이전 행동 0도 포함하여 모든 학습 차분을 허용하는 다각형 한계의 1.05배를 올림한 값이다. 물체 margin은 학습 시연의 모든 초기 목표를 포함하는 최소 필요 margin에 1cm 여유를 주고 올림했다. 근거는 `results/*_calibration.json`이다. 초안의 공통 `0.10 m`는 Pushing의 일부 초기 위치를 제외하여, 고정 가속도 제한과 공동 적용하면 시작부터 infeasible이었다. 현재 margin은 실행 중 자동 확대하지 않는다.
+
+workspace는 연구용 명령 영역이며 로봇 도달 가능성 증명이 아니다. 내부 장벽·블록 충돌·전체 링크 안전을 강제하지 않는다. 접촉 관측이 없으면 `safe_success_rate`는 `null`이다.
+
+## 실행
+
+저장소 루트에서 Python 환경과 HardFlow·D3IL 경로를 맞춘다. 상대 경로는 저장소 기준이며 출력은 `fm_constraint/runs/`에만 쓴다.
 
 ```bash
-python -m fm_constraint.sample --config configs/pushing.yaml --set sample.n_windows=2
-python -m fm_constraint.sample --config configs/inserting.yaml --set sample.n_windows=2
-python -m fm_constraint.train --config configs/pushing.yaml --device cuda:0
-python -m fm_constraint.eval_pushing --config configs/pushing.yaml --no-vlsa
-python -m fm_constraint.eval_inserting --config configs/inserting.yaml --no-vlsa
-python -m fm_constraint.eval_pushing --config configs/pushing.yaml --vlsa
-python -m fm_constraint.eval_inserting --config configs/inserting.yaml --vlsa
-python -m fm_constraint.eval_inserting --config configs/inserting.yaml --check-obs 5
-python -m fm_constraint.eval_inserting --config configs/inserting.yaml \
-  --export-contexts fm_constraint/runs/contexts/inserting_val.pkl
+# 모든 방법 off: 기존 baseline과 같은 정책
+python -m fm_constraint.sample --config configs/pushing.yaml --set sample.n_windows=4
+
+# 세 방법을 독립적으로 선택; 모든 조합 지원
+python -m fm_constraint.sample --config configs/pushing.yaml --projection --vlsa --pc \
+  --set sample.n_windows=4
+python -m fm_constraint.sample --config configs/inserting.yaml --pc --set sample.n_windows=4
+
+# 시뮬레이터 없는 수치·학습 통계 검사
+python -m fm_constraint.check_constraints --config configs/pushing.yaml --n-obs 4
+python -m fm_constraint.check_constraints --config configs/pushing.yaml --calibrate-acceleration
+python -m fm_constraint.check_constraints --config configs/pushing.yaml --calibrate-envelope
+
+# 상태 기반 headless 평가: GPU/디스플레이 없이 MuJoCo의 GL을 비활성화 가능
+MUJOCO_GL=disable python -m fm_constraint.eval_pushing --config configs/pushing.yaml --projection --vlsa --pc
+MUJOCO_GL=disable python -m fm_constraint.eval_inserting --config configs/inserting.yaml --pc
+
+# 중첩 키 변경과 개별 방법 해제
+python -m fm_constraint.sample --config configs/pushing.yaml --vlsa --no-pc \
+  --set constraints.object_envelope.n_sides=12 --set sample.n_windows=4
+
+# 기존 학습 위임: 추론 방법은 모두 off여야 함
+python -m fm_constraint.train --config configs/pushing.yaml
 python -m pytest fm_constraint/tests -q
 ```
 
-기본 YAML은 이식 가능한 확인을 위해 `device: cpu`다. 본 학습 기본값은 **100만 업데이트**이므로 짧은 검사는 `--set train.steps=2 --set train.batch_size=2 --set train.val_batches=1` 등으로 명시한다. `paths.hardflow_root`, `paths.d3il_root`, `paths.raw_root`는 실제 설치 위치에 맞춘다. Pushing 관측 점검의 `raw_root`는 `all_data` 폴더를 가리켜야 한다.
+CLI > YAML > 기본값 순서다. `--no-projection`, `--no-vlsa`, `--no-pc`는 해당 YAML flag보다 우선한다. 수치 통계 명령은 설정을 자동 덮어쓰지 않는다. 면수·법선 각도를 바꾼 실험은 변경된 기하의 타당성·시연 보존율을 다시 확인한다.
 
-설정 우선순위는 명시한 CLI > YAML > 코드의 태스크별 기본값이다. 일반 override는 `--set SECTION.KEY=VALUE`를 반복 사용한다. 값은 YAML 타입으로 해석한다. 알 수 없는 키, 문자열 `"false"`를 boolean에 전달하는 경우, checkpoint 구조 불일치는 오류다. 상대 경로는 YAML 파일 위치·현재 작업 디렉터리가 아닌 저장소 루트 기준이다.
+기본 Predict는 10회이며 PC를 켜면 Correct 9회를 더해 모델 19회다. 동일 호출 예산 비교는 `--set sampling.predict_steps=1 --set methods.pc.correct_steps=9`처럼 명시한다. 생성 1회에서는 Projection도 생성 중 한 번만 적용된다.
 
-```python
-from configs.config import ExperimentConfig
+VLSA는 현재 terminal **전체 계획**의 공동 QP다. `Projection final`과 동일한 최적화이므로 중복 설정을 금지한다. `Projection every`의 마지막 투영 뒤 VLSA는 같은 기하에서 중복 보정일 수 있다. PC 뒤에는 숨은 추가 투영이 없다.
 
-cfg = ExperimentConfig.from_yaml(
-    'configs/pushing.yaml',
-    overrides={'device': 'cpu', 'eval.execute_steps': 8},
-)
-cfg.validate('eval')
-print(cfg.vlsa_enabled)
-print(cfg.values['model'])
+## 실행 경계와 출력
+
+직전 **실제 실행 행동**을 다음 계획의 첫 가속도 제약에 연결한다. episode 시작에서만 0으로 초기화한다. 기본은 전체 16개 생성 후 앞 8개 실행이다.
+
+`--set methods.vlsa.execution_recheck=true`를 명시하면 VLSA on일 때 각 실행 직전 최신 관측으로 H=1 QP를 다시 푼다. 실제 행동이 수정되면 남은 큐를 폐기하고 재계획한다. 기본값은 false다.
+
+- `results.json`: episode별 결과, 성공률·엔트로피·score, 실패율, 모델/QP 호출 수.
+- `rollouts.json`: 실제 실행 행동·이전 행동·최신 물체 기하와 계획별 중간 행동·QP 상태.
+- `resolved_config.yaml`, `model_config.json`: 설정과 checkpoint 구조. 모델·normalizer hash도 결과에 기록한다.
+- sample의 `samples.npz`: 생성 성공 window와 정답·이전 행동. 실패율은 전체 시도 기준, RMSE는 생성 성공 window 기준이다.
+
+```bash
+python -m fm_constraint.compute_metrics --eval-dir fm_constraint/runs/<baseline> \
+  --eval-dir fm_constraint/runs/<experiment> --label baseline --label combined
+python -m fm_constraint.render_rollouts --eval-dir fm_constraint/runs/<evaluation> --episode c000_t0 --gif
+MUJOCO_GL=egl PYOPENGL_PLATFORM=egl python -m fm_constraint.render_rollouts \
+  --eval-dir fm_constraint/runs/<evaluation> --camera --gif
 ```
 
-`--vlsa`와 `--no-vlsa`는 `vlsa.enabled`보다 우선한다. 기본 `geometry: rectangle`은 workspace 네 경계, `margin_m`, `command_delta_limit_m`를 사용한다. Pushing은 `[0.20, 0.85] × [-0.40, 0.50]m`, Inserting은 `[0.00, 0.85] × [-0.40, 0.75]m`이며 margin은 0.01m, 축별 명령 증분 한계는 0.01m다. 이 범위는 원본 형상·학습 데이터 포함 여부를 확인해 정한 연구용 영역이며 원본의 강제 경계나 로봇 도달 가능성 보장이 아니다. 구체적인 근거·범위는 `docs/VLSA_d3il_exp.md`의 0절에 있다.
+집계는 context 단위 bootstrap을 사용한다. checkpoint·task·context가 일치할 때만 paired 차이를 계산한다. 이전 summary-only 결과는 기존 집계값만 표시하고 새 지표나 신뢰구간을 만들어 채우지 않는다. 지도 재생은 저장된 명령·실제 손·당시 기하를 사용한다. `--camera`는 동일 context에서 실제 실행 행동만 MuJoCo에 재입력하고 재생 오차를 JSON으로 저장한다. 두 모드 모두 모델을 다시 실행하지 않는다.
 
-`workspace_enabled: true`, `action_norm_enabled: true`, `max_step_displacement_m: 0.012`가 기본값이다. `--set vlsa.workspace_enabled=false`와 `--set vlsa.action_norm_enabled=false`로 각각 끌 수 있다. 이전 울타리 실험을 재현하려면 norm을 명시적으로 끈다. `--no-vlsa`는 축별 한계를 포함한 VLSA 행동 수정을 모두 건너뛴다.
+## 이관 상태
 
-직사각형은 `low <= 현재 목표 XY + 행동 <= high`, 이동량은 `Δx²+Δy² <= R²`를 부과한다. 실제 속도 모델·gamma·푸셔 반경은 필요하지 않다. 원판이 추가되면 수학적으로는 볼록 QCQP/SOCP이며, box+원판 교집합의 최소 수정 해를 스칼라 KKT 승수 이분법으로 계산한다. 단순 순차 clipping과는 다르다. 체크인된 YAML의 null 값은 후속 원형 CBF 전용 파라미터다. 원형 수치 검증은 `geometry: circle`, `workspace: null`, `action_norm_enabled: false`, gamma·반경·장애물을 지정하며, 실제 장애물 평가는 아직 차단한다. train/sample에서는 VLSA on을 오류로 처리한다.
-
-12mm는 학습 행동 최대 길이(Pushing 10.7932mm, Inserting 10.9675mm)에 여유를 둔 초기값이다. 10mm로 줄이면 학습 행동의 각각 0.4282%, 1.7712%가 초과한다. 실제 성공률·개입률을 보고 validation에서 비교해야 하며 물리적 안전 한계로 간주하지 않는다. 길이 제한은 이전 행동과의 차이·가속도 제한이 아니므로 방향이 갑자기 바뀌는 것까지 막지는 않는다.
-
-모델의 dim, dim_mults, attention, horizon, SN은 **새 학습**에 설정할 수 있다. 기존 가중치 평가에서는 원래 `config.json`과 같은 구조여야 하며 관측·행동 차원, 순서도 고정한다. 재개는 기존 저장 args와 일치하는 설정만 허용하고, `train.resume`은 새 패키지 소유 run만 가리킬 수 있다.
-
-## 재사용과 출력
-
-- `train.py`: `fm_baseline.train.main()` 호출. 데이터 로딩·정규화·구간 추출·CFM·EMA·checkpoint 구현을 복사하지 않는다.
-- `sample.py`: `fm_baseline.sample.main()` 호출. 원래 RMSE·조건 유지 검사를 그대로 실행한다.
-- 평가: 기존 `load_model`, `Policy`, 태스크별 관측·환경·context 함수를 import하고 실행 루프만 공유한다. 실행 직전 `vlsa.enabled`를 확인해 `vlsa_constraint()`를 직접 호출하며, off에서는 VLSA 계산을 건너뛴다. 정지 비교군은 같은 VLSA 위험 판정을 별도로 사용한다.
-- 기존 코드의 절대 import 이름 충돌은 오류로 처리한다. `python -m` 진입점을 사용하고 동일 프로세스에서 다른 `train` 모듈을 먼저 import하지 않는다.
-- PyTorch 2.6 이후의 weights-only loading에는 기존 checkpoint의 `TorchVersion` 메타데이터만 좁은 context로 허용한다. `torch.load`를 monkeypatch하거나 weights-only 제한을 전체 해제하지 않는다.
-
-출력·resume은 symlink를 해석한 `fm_constraint/runs/` 아래로 제한한다. baseline sampling은 `sample.no_save=true`여야 한다. train은 별도 부모 폴더 아래 기존 trainer가 run을 생성한다. 실제 생성 run과 부모에 `resolved_config.yaml`을 저장한다. 평가는 모델 설정 사본·checkpoint SHA-256·결과·step 로그를 새 폴더에 저장한다. 기존 입력 경로에 쓰지 않는다.
-
-평가에서 물리 접촉 계측이 없으면 Safe Success Rate와 금지 접촉 없는 비율은 `null`이다. 울타리는 on/off 모두 `command_workspace_violation_rate`(목표 위반 에피소드 비율), `measured_workspace_violation_rate`(제어 시점 실제 손 위반 비율), `command_workspace_success_rate`(목표 영역을 유지한 작업 성공 비율)를 별도로 기록한다. 초기 reset과 각 제어 step을 검사하므로 내부 미세 step 전체의 안전 지표는 아니다. 로그는 `results.json`, `rollouts.json`이며 step별 경계 여유와 실패 원인을 포함한다.
-
-이동량 로그는 명목/최종 실행 행동의 길이(m), 원판 잔차(m), 한계와 반복 수를 포함한다. `nominal_action_norm_exceed_rate`는 시도한 행동 전체, `executed_action_norm_exceed_rate`·`intervention_rate`는 실제 실행 행동을 분모로 한다. 필터 실패로 실행하지 않은 행동은 실행 통계에서 제외하고, 정지 비교군은 실제 반환한 0 행동을 기준으로 기록한다.
-
-## 수치 안전 필터
-
-`vlsa.py`의 `vlsa_constraint(nominal_delta, measured_xy, command_xy, config)`가 VLSA 계산을 담당한다. `config`는 YAML의 `vlsa` 항목이다. 직사각형에서는 다음 목표 위치의 네 경계·축별 증분 한계·L2 길이 한계 아래 `0.5||delta-delta_nom||²`를 최소화한다. 이동량 원판이 켜져 있으면 스칼라 KKT 승수 이분법으로 계산한다. 원판 off와 원형 수치 모드의 선형 제약 QP는 기존 활성 제약 0·1·2개 후보 열거를 유지한다. box-only clipping 해·원판-only 방사 투영·반공간 해석해·독립 SciPy 최적화와 비교한다.
-
-원형 모드의 기본 수치 모델은 `p_dot=delta/dt`이며, 선택적인 `tracking_gain=k`는 `p_dot=k*(q+delta-p)`다. 두 모델 모두 실제 D3IL 제어기에서 측정·검증되지 않았다. 직사각형은 이 근사를 사용하지 않으며 **목표 좌표만 제한하고 실제 손·로봇 링크·블록·내부 장벽 안전을 보장하지 않는다.** 결과는 action, h, residual, intervention_norm, latency_ms와 상태를 포함한다. invalid_input, initial_unsafe, infeasible은 action=None으로 반환하며 원래 위험 행동으로 fallback하지 않는다.
-
-평가 루프는 VLSA가 켜져 있으면 큐의 **각 행동** 실행 직전에 최신 실제 위치와 현재 목표 위치로 `vlsa_constraint()`를 호출한다. 수정된 목표 위치는 다음 정책 관측에 반영한다. VLSA는 FM 학습 loss나 sampling 내부를 변경하지 않는다. 이 연결은 모의 환경 테스트로 검증했다. 실제 장애물 등록·geometry 쌍·내부 step 접촉 계측·추종 모델 감사가 다음 작업이다.
+기존 결과 15개는 `results/legacy/`에 보존하고 SHA-256을 검증했다. 두 태스크의 실제 8개 조합·카메라 재생·구 패키지가 없는 별도 복사본의 오프라인 실행을 확인한 뒤 `fm_projection/`, `fm_pc/`와 이전 `vlsa.py`를 제거했다. baseline 소스·가중치·데이터는 변경하지 않았다. 이전 소스는 `results/integration_source_manifest.json`의 Git 커밋으로 재현할 수 있다. 단계별 근거는 `docs/PLAN.md`, 추적 가능한 검증 요약은 `results/integration_validation.json`에 기록한다.

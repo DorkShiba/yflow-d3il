@@ -12,3 +12,4 @@ matplotlib
 imageio
 pyyaml
 gin-config
+osqp==1.1.3
