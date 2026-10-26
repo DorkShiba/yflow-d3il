@@ -6,6 +6,7 @@
 
 - 데이터 출처, 전처리, 분할: [`data/README.md`](data/README.md)
 - 베이스라인 학습·평가의 상세 기록과 실패 분석: [`fm_baseline/README.md`](fm_baseline/README.md)
+- 방법 ④ L2C2 기반 정책 정규화의 정의·학습·평가: [`fm_l2c2/README.md`](fm_l2c2/README.md). 학습이 필요한 FM 변형이며 `python -m fm_l2c2.train`으로 실행한다.
 
 ## 1. 저장소 구조
 

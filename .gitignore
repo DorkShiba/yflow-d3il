@@ -7,3 +7,4 @@ fm_baseline/results/*/eval_*/
 *.pt
 *.pth
 !fm_baseline/results/*/baseline_ema.pt
+codex/l2c2/

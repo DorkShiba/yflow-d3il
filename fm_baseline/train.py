@@ -48,7 +48,7 @@ def resolve_d3il(arg=None):
     return first_dir(os.environ.get("D3IL_ROOT"), "/root/d3il-work/d3il", os.path.join(WORK, "d3il"))
 
 
-def parse_args():
+def parse_args(argv=None, configure=None):
     p = argparse.ArgumentParser()
     p.add_argument("--task", choices=sorted(TASK_DIMS), default="pushing")
     p.add_argument("--steps", type=int, default=200)
@@ -75,7 +75,9 @@ def parse_args():
     p.add_argument("--hardflow-root", default=None)
     p.add_argument("--out-root", default=None)
     p.add_argument("--device", default="cuda:0" if torch.cuda.is_available() else "cpu")
-    return p.parse_args()
+    if configure is not None:
+        configure(p)
+    return p.parse_args(argv)
 
 
 def set_seed(seed):
@@ -261,8 +263,8 @@ def save_state(path, model, ema, optimizer, step, config, data_rng, extra=None):
     os.replace(tmp, path)
 
 
-def main():
-    args = parse_args()
+def main(args=None, extension_factory=None):
+    args = parse_args() if args is None else args
     if args.resume:
         with open(os.path.join(args.resume, "config.json"), encoding="utf-8") as f:
             saved = json.load(f)
@@ -270,6 +272,15 @@ def main():
         for k, v in saved["args"].items():
             if k not in keep:
                 setattr(args, k, v)
+
+    # Optional training-only regularizer. Existing CLI and inference are unchanged.
+    if args.resume and saved.get("regularization") and extension_factory is None:
+        raise ValueError("Resume this run through its regularizer training entry point")
+    extension = extension_factory(args) if extension_factory is not None else None
+    if args.resume and extension is not None:
+        if saved.get("regularization") != extension.describe():
+            raise ValueError("Resume requires a matching regularized run; baseline EMA is not a resume checkpoint")
+    extra_columns = extension.columns if extension is not None else []
 
     data_root = args.data_root or first_dir(os.path.join(REPO, "data"), os.path.join(args.work_root, "processed"))
     hardflow_root = args.hardflow_root or first_dir(os.path.join(args.work_root, "HardFlow"), os.path.join(WORK, "HardFlow"))
@@ -362,6 +373,8 @@ def main():
             "created_utc": stamp,
             "args": vars(args),
         }
+        if extension is not None:
+            config["regularization"] = extension.describe()
         with open(os.path.join(run_dir, "config.json"), "w", encoding="utf-8") as f:
             json.dump(config, f, indent=2, ensure_ascii=False)
         for mf in glob(os.path.join(task_dir, "*.json")):
@@ -375,11 +388,11 @@ def main():
             constant=small,
         )
         with open(os.path.join(run_dir, "metrics.csv"), "w", newline="") as f:
-            csv.writer(f).writerow(["step", "lr", "train_loss_mean", "val_loss", "val_loss_ema", "steps_per_sec", "elapsed_sec"])
+            csv.writer(f).writerow(["step", "lr", "train_loss_mean", "val_loss", "val_loss_ema", "steps_per_sec", "elapsed_sec"] + extra_columns)
         v0 = validate(FlowMatcher, model, val_s, args, act_dim)
         print(f"step 0  val {v0:.6f}", flush=True)
         with open(os.path.join(run_dir, "metrics.csv"), "a", newline="") as f:
-            csv.writer(f).writerow([0, f"{args.lr:.3e}", "", f"{v0:.6f}", "", "", "0.0"])
+            csv.writer(f).writerow([0, f"{args.lr:.3e}", "", f"{v0:.6f}", "", "", "0.0"] + [""] * len(extra_columns))
 
     print(f"run_dir: {run_dir}", flush=True)
     metrics_path = os.path.join(run_dir, "metrics.csv")
@@ -388,6 +401,7 @@ def main():
     t_log = t0
     s_log = start_step
     loss_sum = torch.zeros((), device=args.device)
+    extra_sum = np.zeros(len(extra_columns), dtype=np.float64)
     n_sum = 0
     bad = torch.zeros((), dtype=torch.bool, device=args.device)
     step = start_step
@@ -411,6 +425,10 @@ def main():
         rows = torch.from_numpy(data_rng.integers(0, train_s.n, size=args.batch_size)).to(args.device)
         x = train_s.batch(rows)
         loss, _ = flow.loss(x, {0: x[:, 0, act_dim:]})
+        if extension is not None:
+            penalty, metrics = extension(model, x, act_dim, step, loss)
+            loss = loss + penalty
+            extra_sum += np.asarray(metrics, dtype=np.float64)
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
         gnorm = torch.nn.utils.clip_grad_norm_(model.parameters(), float("inf"))
@@ -429,6 +447,8 @@ def main():
             sps = (step - s_log) / max(now - t_log, 1e-9)
             t_log, s_log = now, step
             tr = float(loss_sum.item() / max(n_sum, 1))
+            extra_mean = (extra_sum / max(n_sum, 1)).tolist()
+            extra_sum.fill(0)
             loss_sum = torch.zeros((), device=args.device)
             n_sum = 0
             va = validate(FlowMatcher, model, val_s, args, act_dim)
@@ -440,7 +460,9 @@ def main():
             eta_h = (args.steps - step) / max(sps, 1e-9) / 3600.0
             print(f"step {step}  lr {optimizer.param_groups[0]['lr']:.2e}  train {tr:.6f}  val {va:.6f}  val_ema {va_e or '-'}  {sps:.1f} it/s  elapsed {el / 3600:.2f}h  eta {eta_h:.2f}h", flush=True)
             with open(metrics_path, "a", newline="") as f:
-                csv.writer(f).writerow([step, f"{optimizer.param_groups[0]['lr']:.3e}", f"{tr:.6f}", f"{va:.6f}", va_e, f"{sps:.2f}", f"{el:.1f}"])
+                csv.writer(f).writerow([step, f"{optimizer.param_groups[0]['lr']:.3e}", f"{tr:.6f}", f"{va:.6f}", va_e, f"{sps:.2f}", f"{el:.1f}"] + extra_mean)
+            if extension is not None:
+                print(dict(zip(extra_columns, extra_mean)), flush=True)
         if is_save:
             checkpoint(step, False)
             print(f"saved checkpoint at step {step}", flush=True)
