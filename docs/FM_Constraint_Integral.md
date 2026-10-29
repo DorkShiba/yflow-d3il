@@ -1,6 +1,6 @@
 # FM Constraint 통합 방침
 
-이 문서는 `fm_projection`, `fm_pc`, `fm_constraint`를 통합하기 위한 **설계 명세**다. 아래의 통합 API·설정·새 제약은 구현 예정이며, 현재 코드에서 이미 지원하는 기능과 구분한다. 기존 FM 모델을 고정한 training-free 추론 방법의 통합을 대상으로 한다. 수식은 $$으로 감싸 작성한다. inline은 $으로 감싼다.
+이 문서는 `fm_constraint`의 **설계 명세**다. 2026-10-29 순서 수정에서는 `PLAN.md` 7절에 따라 Projection → PC → VLSA를 적용한다. 기존 FM 모델을 고정한 training-free 추론 방법의 통합을 대상으로 한다. 수식은 $$으로 감싸 작성한다. inline은 $으로 감싼다. 2절의 구 구현 비교는 통합 이전의 이력이며, 현재 구현·검증 상태는 `PLAN.md`와 순서별 검증 요약을 따른다.
 
 ## 1. 통합의 목표와 확정할 원칙
 
@@ -9,18 +9,18 @@
 | 방법 | 통합 후 역할 | 신경망 추가 호출 |
 |---|---|---|
 | Projection | 생성 Euler 스텝 직후의 중간 계획 투영 | 없음 |
-| VLSA | 생성 완료 후, PC 이전에 전체 행동 계획을 모델 없이 보정 | 없음 |
-| Predict-then-Correct(PC) | 앞 단계의 계획을 받아 모델 벡터장과 CBF-QP로 반복 보정 | 보정 횟수만큼 |
+| Predict-then-Correct(PC) | Predict 결과를 받아 모델 벡터장과 CBF-QP로 반복 보정 | 보정 횟수만큼 |
+| VLSA | 활성 PC까지 끝난 전체 행동 계획을 모델 없이 terminal 보정 | 없음 |
 
-통합 기본 순서는 초안대로 다음과 같이 고정한다.
+통합 기본 순서는 다음과 같이 고정한다. 각 방법은 독립적인 on/off를 갖는다.
 
 ```text
 noise + 현재 관측 조건
   → Predict: FM Euler 생성 [Projection on이면 각 갱신 직후 투영]
   → clean plan
-  → VLSA: 전체 행동 계획의 최소 수정 QP [선택]
-  → corrected clean 1
   → PC Correct: 모델 재평가 + CBF-QP [선택]
+  → corrected clean 1
+  → VLSA: 전체 행동 계획의 최소 수정 QP [선택]
   → corrected clean 2
   → 결과 검사·앞 K개 행동 실행·최신 관측으로 재계획
 ```
@@ -43,7 +43,7 @@ noise + 현재 관측 조건
 |---|---|---|
 | Projection | `every` 또는 `final`, 행동·누적 목표에 투영 | 기본은 Predict 내부 `every`; `final`은 별도 비교 모드 |
 | PC | 자체 Predict와 Correct를 모두 수행; 기본 1+9회 모델 호출 | Predict를 공통 생성부로 분리하고 Correct만 뒤에 연결 |
-| VLSA | 각 행동 실행 직전에 최신 관측으로 2차원 행동 보정 | 기본은 PC 이전의 `2H`차원 계획 보정으로 확장 |
+| VLSA | 각 행동 실행 직전에 최신 관측으로 2차원 행동 보정 | 기본은 활성 PC 종료 후의 `2H`차원 계획 보정으로 확장 |
 | 위치 제약 | Projection/PC는 학습 범위, VLSA는 YAML 사각형 | 태스크별 명시적 공통 workspace |
 | 가속도 | 현재는 주로 한 행동의 이동량을 제한 | 행동 차분으로 정의한 목표 명령 가속도 norm을 세 방법에 공통 적용 |
 | Tracking | 계획의 목표 위치를 제한 | 모든 블록을 포함하는 볼록 n각형 영역; n은 config로 지정 |
@@ -121,7 +121,7 @@ $$
 
 - `h=0`의 `a_(−1)`에는 직전에 **실제 실행한** 행동 `a_prev`를 넣는다. 보정 전 명목 행동이나 이전 계획의 미실행 마지막 행동을 사용하지 않는다.
 - 새 계획마다 `a_prev`를 0으로 초기화하지 않는다. 0은 episode 시작에서만 사용한다.
-- 하나의 Predict→VLSA→PC 안에서는 `a_prev`를 고정한다. 실제 행동을 실행한 뒤 갱신한다.
+- 하나의 Predict→PC→VLSA 안에서는 `a_prev`를 고정한다. 실제 행동을 실행한 뒤 갱신한다.
 - 오프라인 검사는 시연의 직전 행동을 함께 읽는다. 시연 첫 상태에서는 0을 사용하고 다른 시연의 마지막 행동을 연결하지 않는다.
 
 L2 가속도 제한도 원판 제약이므로 그대로는 일반 선형 제약 QP가 아니다. **5.1절의 내접 다각형으로 보수적으로 근사**하여 세 방법 모두 같은 QP 면을 사용한다. 이는 L2 norm의 정확한 등가 변환은 아니다.
@@ -174,7 +174,7 @@ $$
 
 - 성공한 블록을 포함하여 모든 블록을 사용한다. 가장 가까운 블록 선택이나 성공 블록 제외는 기본에 넣지 않는다.
 - 모델이 생성한 미래 블록 좌표가 아닌, 재계획 시점의 실제 관측으로 다각형을 만든다.
-- 하나의 Predict→VLSA→PC 안에서는 중심·법선·내접 반경을 고정한다. 다음 재계획에서 새 관측으로 갱신한다.
+- 하나의 Predict→PC→VLSA 안에서는 중심·법선·내접 반경을 고정한다. 다음 재계획에서 새 관측으로 갱신한다.
 - workspace와 다각형의 **교집합**을 사용한다. Object Envelope 자체의 물체 포함과, workspace를 교차한 최종 허용 영역의 물체 포함은 구분한다. workspace 밖의 블록 때문에 workspace를 넓히지 않는다.
 - 현재 목표가 다각형 밖에 있어도 margin을 자동으로 확대하지 않는다. 가속도 제약과 함께 다음 목표가 영역에 들어갈 수 있는지를 공동 feasibility로 판정한다. 불가능하면 `infeasible`로 기록한다.
 
@@ -251,19 +251,11 @@ $$
 
 Projection on이면 raw 행동 부분을 5.3절의 QP로 바꾼다. 수정한 행동을 정규화하여 관측 채널과 다시 결합하고 첫 관측을 재고정한다. off이면 Euler 결과를 그대로 사용한다. 초기 노이즈를 별도 투영하지 않는다.
 
-`scope: predict`로 한정한다. Projection on이라는 이유로 PC 내부에 다시 Projection을 삽입하지 않는다. PC 이후 추가 투영은 알고리즘을 바꾸므로 별도 실험 옵션으로만 허용한다.
+`scope: predict`로 한정한다. Projection on이라는 이유로 PC 내부에 다시 Projection을 삽입하지 않는다. PC 이후의 계획 투영은 `vlsa.enabled=true`일 때만 실행한다. `mode=final`도 Predict 종료 직후이며 PC 뒤로 이동하지 않는다.
 
-### 6.2. VLSA: 모델 없는 terminal 계획 보정
+### 6.2. PC Correct: 모델을 사용하는 보정
 
-Predict가 반환한 행동 `A_pred`를 명목 계획으로 하여 5.3절의 QP를 한 번 푼다. 현재 VLSA의 한 행동 필터를 단순히 H번 순서대로 호출하지 않고, **누적 목표 제약을 포함한 전체 horizon을 공동 보정**한다.
-
-이 변경은 `vlsa.scope: terminal_plan`으로 기록한다. 기존 `execution_step` 방식의 결과와 같은 알고리즘으로 취급하지 않는다. 또한 같은 집합·목적함수를 쓰면 통합 VLSA의 이 단계는 수학적으로 **Projection의 `final` 모드와 동일하다.** 두 이름을 별개의 새 최적화 알고리즘으로 해석하지 않는다.
-
-따라서 `every`가 마지막 생성 스텝까지 성공적으로 투영했고 중간에 기하가 바뀌지 않았다면, 뒤의 VLSA는 이론적으로 같은 계획을 반환한다. 이 조합은 구조상 허용하지만 수치 허용 오차 밖의 변화가 크면 구현 불일치를 의심해야 한다.
-
-### 6.3. PC Correct: 모델을 사용하는 보정
-
-입력은 앞 단계의 최종 계획이며 새 노이즈를 생성하거나 Predict를 다시 수행하지 않는다. 보정 시간만 0으로 초기화하고 `N_c`회 반복한다.
+입력은 Predict 종료 계획이며 VLSA 선행 투영을 하지 않는다. 새 노이즈를 생성하거나 Predict를 다시 수행하지 않는다. 보정 시간만 0으로 초기화하고 `N_c`회 반복한다.
 
 $$
 \widetilde v_\tau=\alpha(1-\tau)v_\theta(X^c_\tau,\tau).
@@ -303,7 +295,15 @@ b_*={\delta\over1-\rho},\qquad
 \varepsilon={0.9\over\Delta\tau}{b_*\over(b_*-\delta)^\rho}.
 $$
 
-`0<rho<1`, `delta>0`를 검사한다. 이 설정은 feasible한 선형 장벽의 Euler 경계 통과를 막기 위한 조건이다. 서로 충돌하는 CBF 요구, QP 오차, 처음부터 infeasible한 계획의 유한 횟수 복구까지 보장하지 않는다. 매 갱신 잔차와 최종 feasible 여부를 검사하고 실패를 반환한다. **마지막에 숨은 Projection이나 VLSA를 붙이지 않는다.**
+`0<rho<1`, `delta>0`를 검사한다. 이 설정은 feasible한 선형 장벽의 Euler 경계 통과를 막기 위한 조건이다. 서로 충돌하는 CBF 요구, QP 오차, 처음부터 infeasible한 계획의 유한 횟수 복구까지 보장하지 않는다. PC 종료 잔차를 기록하고, VLSA off이면 최종 위반을 실패로 반환한다. VLSA on이면 아래의 명시적 terminal 보정 후 최종 검사한다. PC QP 실패·비유한 출력은 즉시 실패하며 VLSA로 복구하지 않는다.
+
+### 6.3. VLSA: 모델 없는 terminal 계획 보정
+
+PC on이면 PC 종료 행동을, off이면 Predict 종료 행동을 명목 계획으로 하여 5.3절의 QP를 한 번 푼다. **누적 목표와 가속도 제약을 포함한 전체 horizon을 공동 보정**하며 모델을 추가 호출하지 않는다. 관측 채널은 유지하고, 반환 dtype으로 복귀한 행동 잔차도 검사한다.
+
+`vlsa.scope: terminal_plan`은 모든 활성 생성·PC 보정이 끝난 계획을 뜻한다. PC의 모든 QP가 성공하고 계획이 유한하면 남은 행동 잔차를 보정할 수 있다. 앞 단계의 solver 실패·비유한 출력을 숨기거나 실패 iterate를 사용하지 않는다. 실행 직전 H=1 재검사는 별도 옵션이다.
+
+계획 VLSA와 `Projection final`은 같은 QP를 사용하지만, **PC on이면 두 단계의 입력이 달라질 수 있다.** PC off에서만 두 단독 방법의 동일성과 `Projection every → VLSA`의 멱등성을 요구한다. `every`는 마지막 생성 스텝까지 투영한 경우에 한한다. PC가 사이에 있으면 VLSA의 수정이 허용되며, 항상 수정된다는 보장도 없다.
 
 ### 6.4. 실행 시점 VLSA 재검사
 
@@ -315,18 +315,18 @@ $$
 
 ## 7. 독립적인 on/off와 호출 예산
 
-기본 플래그는 `methods.projection.enabled`, `methods.vlsa.enabled`, `methods.pc.enabled`다. 순서는 config로 재배열하지 않고 고정한다.
+기본 플래그는 `methods.projection.enabled`, `methods.pc.enabled`, `methods.vlsa.enabled`다. 서로를 자동으로 켜지 않으며 순서는 config로 재배열하지 않고 고정한다.
 
-| Projection | VLSA | PC | 경로 |
+| Projection | PC | VLSA | 경로 |
 |---|---|---|---|
 | off | off | off | Euler → 실행 |
 | on | off | off | 투영 Euler → 실행 |
-| off | on | off | Euler → terminal QP → 실행 |
-| off | off | on | Euler → PC Correct → 실행 |
-| on | on | off | 투영 Euler → terminal QP → 실행 |
-| on | off | on | 투영 Euler → PC Correct → 실행 |
-| off | on | on | Euler → terminal QP → PC Correct → 실행 |
-| on | on | on | 투영 Euler → terminal QP → PC Correct → 실행 |
+| off | on | off | Euler → PC Correct → 실행 |
+| off | off | on | Euler → terminal QP → 실행 |
+| on | on | off | 투영 Euler → PC Correct → 실행 |
+| on | off | on | 투영 Euler → terminal QP → 실행 |
+| off | on | on | Euler → PC Correct → terminal QP → 실행 |
+| on | on | on | 투영 Euler → PC Correct → terminal QP → 실행 |
 
 ### 7.1. 기본 비교: 생성 품질 유지
 
@@ -357,11 +357,6 @@ methods:
     mode: every
     scope: predict
     skip_first: 0
-  vlsa:
-    enabled: false
-    scope: terminal_plan
-    execution_recheck: false
-    invalidate_queue_on_change: true
   pc:
     enabled: false
     correct_steps: 9
@@ -369,6 +364,11 @@ methods:
     rho: 0.9
     delta: 0.01
     eps: auto
+  vlsa:
+    enabled: false
+    scope: terminal_plan
+    execution_recheck: false
+    invalidate_queue_on_change: true
 constraints:
   workspace:
     enabled: true
@@ -411,7 +411,7 @@ workspace는 `geometry: rectangle`과 `low_m/high_m`만 허용한다. Object Env
 - 모든 방법 off면 제약은 측정용으로만 사용한다. 제약 위반 때문에 baseline 행동을 거부하지 않는다.
 - `N_p≥1`, 활성 PC의 `N_c≥1`, `1≤execute_steps≤H`, Object Envelope의 정수 `n_sides≥3`, 가속도 근사의 짝수 정수 `polygon_sides≥4`를 검사한다.
 - workspace margin 적용 후 양의 폭, Object Envelope의 양의 margin, 유한한 시작각, 양의 `dt_s`, `max_m_s2`와 장벽 scale을 요구한다. 활성 옵션의 `null` 값은 오류다. 실제 제어 간격과 `dt_s`가 일치하는지 확인한다.
-- `projection.mode=final`은 비교 전용이다. 동일 terminal QP를 중복 실행하는 `vlsa.scope=terminal_plan`과 함께 켜면 설정 오류로 처리한다.
+- `projection.mode=final`은 비교 전용이다. VLSA와 함께 켜는 설정은 PC off일 때만 중복으로 거부하고, PC on이면 허용한다.
 - 단일 스텝 Predict를 지원하도록 기존 `len(t_span)>1` 가정을 수정해야 한다. baseline의 다중 스텝 경로 동등성은 유지한다.
 
 QP 잔차 허용 오차는 raw 거리(m)로 검증한다. 가속도는 `max(‖a_h−a_(h−1)‖−α_max Δt²,0)`도 m 단위로 검사하고, 이를 `Δt²`로 나눈 초과량을 m/s²로 보고한다. 따라서 같은 `1e−7`을 m와 m/s²에 그대로 재사용하지 않는다. 모델 float32 복귀 오차를 고려한 초기 거리 기준은 `1e−7 m`이며, solver 내부 중단 기준은 그보다 엄격하게 정한다.
@@ -426,7 +426,7 @@ fm_constraint/
   sample.py                 # baseline 데이터 도구 + 통합 정책
   eval_pushing.py            # Pushing 평가 진입점
   eval_inserting.py         # Inserting 평가 진입점
-  policy.py                 # Predict → Projection → VLSA → PC 전체 순서
+  policy.py                 # Predict[Projection] → PC → VLSA 전체 순서
   constraints.py            # 세 제약의 공통 행렬·장벽 scale·위반 검사
   qp.py                     # OSQP 기반 공통 선형 부등식 QP
   evaluation.py             # 공통 실행·이전 행동·큐·로그
@@ -441,12 +441,12 @@ fm_constraint/
 context = build_context(observation, task_geometry, previous_executed_action, dt_s)
 constraints = compile_constraints(context, horizon, constraint_config)
 plan = predict(model, noise, observation, projection=optional_projector)
-plan = terminal_correct(plan, constraints) if vlsa_enabled else plan
 plan = pc_correct(model, plan, observation, constraints) if pc_enabled else plan
+plan = terminal_correct(plan, constraints) if vlsa_enabled else plan
 report = validate_plan(plan, constraints)
 ```
 
-각 보정은 `value`, `status`, `max_residual`, `intervention_norm`, `iterations`, `latency_ms`를 반환한다. `constraints`는 한 계획의 모든 단계가 같은 객체·기하를 공유한다. 모델 호출 계측은 solver 호출과 분리한다.
+각 보정은 `value`, `status`, `max_residual`, `intervention_norm`, `iterations`, `latency_ms`를 반환한다. `constraints`는 한 계획의 모든 단계가 같은 객체·기하를 공유한다. 모델 호출 계측은 solver 호출과 분리한다. 위 API는 논리적 표현이며 실제 Policy는 실패 시 `None`과 `last_report`를 제공한다. 로그·sample·평가 결과에는 `pipeline_order: [projection, pc, vlsa]`를 남긴다. 필드가 없는 과거 결과는 순서 미상으로 표시하고 새 순서로 추정하지 않는다.
 
 `fm_baseline`의 모델 로딩·정규화·데이터 로더·관측 구성·학습을 재사용한다. 새 학습, terminal 데이터 추가, padding, checkpoint 재저장을 통합의 전제로 삼지 않는다. `fm_pc`, `fm_projection`은 이관·검증 중에만 유지한다. 결과·설정·Git 커밋을 보존하고 PLAN의 삭제 조건을 충족하면 제거한다. 통합 코드는 구 패키지를 import하지 않으며 삭제 후 호환 wrapper도 남기지 않는다.
 
@@ -510,7 +510,7 @@ report = validate_plan(plan, constraints)
 |---|---|
 | 과제 | 성공률, 모드 엔트로피, D3IL score, 물체별 성공·최종 거리 |
 | 제약 | 사각형·물체 다각형 위반(m), 가속도 L2 값·초과량(m/s²), QP 면 잔차(m), 목표/실제 손 지표 구분 |
-| 단계 | Predict 종료·VLSA 종료·PC 종료의 행동과 위반량·수정량 |
+| 단계 | Predict 종료·PC 종료·VLSA 종료의 행동과 위반량·직전 활성 단계 대비 수정량 |
 | 기하 | 재계획별 물체 좌표, 다각형 중심·법선·내접 반경·n·margin, 가속도 근사의 m·한계·제어 간격 |
 | 비용 | 모델 호출 수, QP 호출 수, 단계별/전체 지연, 재계획 횟수 |
 | 실패 | infeasible, solver failure, 최종 위반, 초기 영역 밖, 중단 비율 |
@@ -525,7 +525,7 @@ report = validate_plan(plan, constraints)
 2. 세 방법이 동일 context에서 동일한 `G,d`와 원래 제약 정의를 사용한다. 원점·단위·부등식 방향·물체 누락을 검사한다.
 3. Object Envelope의 n개 반공간이 모든 블록 중심을 포함하고 정n각형을 이루는지 확인한다. 중복·공선 블록과 재계획에 따른 영역 이동을 검사한다. 가속도 근사의 꼭짓점은 정확한 L2 가속도 원판 안에 있어야 한다.
 4. QP 해를 독립적인 수치 기준과 비교하고, feasible/infeasible·경계·모델 dtype 복귀를 확인한다.
-5. VLSA 보정의 멱등성, `Projection final`과의 동일성, `every` 뒤 VLSA의 중복성을 확인한다.
+5. PC off에서 VLSA 보정의 멱등성, `Projection final`과의 동일성, 마지막까지 적용한 `every` 뒤 VLSA의 중복성을 확인한다. PC on에서는 수치 기준으로 PC→VLSA 순서와 terminal 잔차를 검사한다.
 6. PC가 공통 가속도 면까지 반영하고, 첫 관측을 유지하며, 예상한 모델 호출 횟수만 사용하는지 확인한다. 첫 계획·재계획 경계·오프라인 시연 경계에서 올바른 이전 행동과 `Δt²`를 사용하는지도 검증한다.
 7. 동적 Tracking의 계획 중 고정·재계획 시 갱신, 실행 재검사 후 큐 폐기를 확인한다.
 8. 실패 결과가 실행되지 않고 모든 실패가 통계에 포함되는지 확인한다.
@@ -534,7 +534,7 @@ report = validate_plan(plan, constraints)
 ## 13. 구현 순서
 
 1. **공통 제약부터 구현:** context, 물체 포괄 정n각형, 가속도 차분·내접 근사, 위반 함수, 일반 QP adapter를 만든다.
-2. **통합 정책에 연결:** 공통 Predict와 Projection, terminal VLSA, PC Correct를 순서대로 연결한다. 기존 PC의 중복 Predict 호출을 제거한다.
+2. **통합 정책에 연결:** 공통 Predict와 Projection, PC Correct, terminal VLSA를 순서대로 연결한다. PC에 별도 Predict나 선행 VLSA를 추가하지 않는다.
 3. **설정·실행을 통일:** 새 schema와 공통 평가 루프를 연결하고 실패·단계 로그를 추가한다. 실행 재검사는 기본 off로 유지한다.
 4. **재현과 ablation:** legacy 결과를 보존한 상태에서 off 동등성, 8개 조합, 동일 호출 예산 비교를 수행한다.
 

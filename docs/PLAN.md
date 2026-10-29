@@ -1,6 +1,16 @@
 # FM Constraint 단계별 통합 구현 계획
 
-## 진행 현황 (2026-10-24)
+## 순서 수정 완료 (2026-10-29)
+
+제약 적용 순서를 **Projection → PC → VLSA**로 수정한다. Projection은 Predict 내부에서, PC는 Predict 결과에서, VLSA는 PC까지 끝난 최종 계획에서 독립적으로 활성화한다. 이번 수정의 단계별 작업과 완료 조건은 **7절**을 따른다.
+
+아래 2026-10-24 완료 기록과 1~6절은 기존 **Projection → VLSA → PC** 구현의 이력이다. 현재 코드와 `FM_Constraint_Integral.md`는 7절의 새 순서를 따른다. 충돌하는 순서·중복성·실패 처리 규칙은 7절을 우선한다. 구 순서를 실행하는 호환 분기는 남기지 않았다.
+
+R0~R5를 완료했다. **81개 테스트 통과**, 두 실제 checkpoint의 8개 조합·단일 Predict 스텝·sample 진입점 검사, 두 D3IL 태스크 × 8개 조합의 각각 10스텝·2회 계획 생성, 최종 활성 단계 행동의 실행과 지도·카메라 재생을 확인했다. 카메라 재생의 최대 실제 손 XY 오차는 두 태스크 모두 `6.5e−7 m` 이내다. 모델·normalizer·데이터는 변경하지 않았다. 전체 성공률 실험은 별도다.
+
+비교 기준과 로그·검증 스크립트는 `fm_constraint/runs/order_projection_pc_vlsa/`, 추적 가능한 요약은 [`order_projection_pc_vlsa_validation.json`](../fm_constraint/results/order_projection_pc_vlsa_validation.json)에 저장했다. 같은 실행 환경에서 all-off는 baseline과 정확히 일치하고, PC 또는 VLSA가 off인 6개 조합도 변경 전과 배열·상태·호출 수가 일치한다. 2026-10-24 저장 배열과의 작은 수치 차이는 요약에 별도로 기록했으며 현재 환경의 변경 전후 비교와 구분했다.
+
+## 기존 구현 진행 현황 (2026-10-24, 구 순서 기준)
 
 | 단계 | 상태 | 확인 내용 |
 |---|---|---|
@@ -22,7 +32,7 @@
 
 [`FM_Constraint_Integral.md`](FM_Constraint_Integral.md)의 수학적 방침을 `fm_constraint/`에 구현한다. 최종 실행 패키지는 `fm_baseline/`과 `fm_constraint/`만 남기고, 검증과 결과 이관을 마친 뒤 `fm_projection/`, `fm_pc/`를 삭제할 수 있게 한다. 이 문서는 **구현 계획과 진행 기록**이며, 실제 완료 여부는 위 진행 현황과 검증 근거를 기준으로 한다.
 
-확정한 생성 흐름은 다음과 같다.
+기존 구현에서 확정했던 생성 흐름은 다음과 같다. 새 목표 흐름은 7.1절을 따른다.
 
 ```text
 조건부 noise
@@ -345,3 +355,127 @@ acceleration = (action - previous_action) / control_dt**2
 긴 학습이나 전체 성능 실험을 단순 리팩터링 검증에 반복 사용하지 않는다. 반대로 실제 환경 검증을 오프라인 통과만으로 대체하지 않는다. 단계별 변경에 필요한 검사를 수행하고, 새 변경이나 실패 원인이 없으면 같은 검사를 불필요하게 반복하지 않는다.
 
 최종 완료 상태는 **통합 policy·sample·eval·후처리가 하나의 패키지에서 동작하고, 세 제약과 세 방법의 조합이 검증되며, 이전 두 패키지를 제거해도 실행 가능함**이다. 성능 향상 여부는 별도 실험 결과로 판단한다.
+
+## 7. Projection → PC → VLSA 순서 수정
+
+### 7.1. 수정 목표와 고정할 의미
+
+```text
+조건부 noise
+  → Predict Euler [Projection 선택: every 또는 비교용 final]
+  → 모델 재평가 + CBF-QP [PC Correct 선택]
+  → terminal 계획 QP [VLSA 선택]
+  → 최종 검사
+  → 앞 K개 실행 → 재계획
+```
+
+세 플래그는 서로를 자동으로 켜거나 끄지 않는다. PC는 VLSA의 선행 투영 없이 Predict 결과를 직접 받는다. VLSA는 PC가 켜져 있으면 PC 결과를, 꺼져 있으면 Predict 결과를 받으며, 전체 H개 행동을 한 번에 공동 보정한다. 실행 직전 H=1 재검사는 기존의 별도 옵션으로 유지하고 기본 비교에서는 끈다.
+
+세 방법은 한 계획에서 같은 `PlanConstraints`의 `G,d`, 장벽 scale, 물체 기하, `a_prev`, `dt_s`를 사용한다. 순서 수정으로 제약 정의·QP 목적·모델·정규화·학습 데이터·태스크별 한계값을 바꾸지 않는다. 새 noise나 두 번째 Predict를 추가하지 않는다.
+
+아래 표의 모든 경로 뒤에는 같은 최종 검사가 붙는다. 기본 `projection.mode=every`, `execution_recheck=false` 기준이다.
+
+| Projection | PC | VLSA | 목표 경로 |
+|---|---|---|---|
+| off | off | off | Euler → 실행 |
+| on | off | off | 투영 Euler → 실행 |
+| off | on | off | Euler → PC → 실행 |
+| off | off | on | Euler → terminal QP → 실행 |
+| on | on | off | 투영 Euler → PC → 실행 |
+| on | off | on | 투영 Euler → terminal QP → 실행 |
+| off | on | on | Euler → PC → terminal QP → 실행 |
+| on | on | on | 투영 Euler → PC → terminal QP → 실행 |
+
+### 7.2. 수정 단계 R0 — 변경 전 기준과 영향 범위 고정
+
+**대상:** `policy.py`, 설정 검증, 정책·평가 테스트, `sample.py`, 집계·시각화, 기존 검증 자료의 조사와 새 기준 저장.
+
+작업:
+
+1. 현재 커밋·작업 트리 차이, 두 checkpoint·normalizer hash, resolved config, 실행 환경을 기록한다. 기존 변경은 보존한다.
+2. 고정 관측·이전 행동·noise로 두 태스크의 8개 조합을 저장한다. 최종 계획뿐 아니라 `last_report`의 단계별 행동·위반량·상태·모델/QP 호출 수도 확보한다.
+3. 현재 `policy.py`의 VLSA 선행 블록, `configs/config.py`의 `Projection final + VLSA` 무조건 금지, `test_policy.py`의 플래그 순서와 멱등성 가정, 문서의 구 순서를 수정 대상으로 명시한다.
+4. `integration_reference/`, `integration_validation.json`, legacy 결과는 구 순서의 근거로 보존한다. 새 산출물은 예를 들어 `runs/order_projection_pc_vlsa/`, `results/order_projection_pc_vlsa_validation.json`처럼 별도 경로에 저장한다.
+
+**완료 조건:** 새 결과와 비교할 수 있는 구 순서의 재현 기준과 영향 파일 목록이 있다. 기존 55개 테스트 통과 기록을 새 순서의 검증으로 재사용하지 않는다.
+
+### 7.3. 수정 단계 R1 — 명세·설정·로그의 순서 의미 정리
+
+**대상:** `FM_Constraint_Integral.md`, `configs/config.py`, 태스크 YAML의 설명, `test_config.py`, `README.md`, 결과 메타데이터.
+
+작업:
+
+1. 설계 문서의 방법 역할·전체 흐름·기하 고정 구간·6절 보정 설명·7절 조합표·8절 중복 규칙·9절 API·12절 검사·13절 구현 순서를 새 순서에 맞춘다. 특히 `terminal_correct`를 `pc_correct` 다음으로 이동한다.
+2. 기존 `methods.*` 키·CLI·수치 기본값은 유지한다. `terminal_plan`은 **활성 PC까지 끝난 계획**을 뜻하도록 설명하고, 순서 선택 옵션이나 구 순서 실행 분기를 새로 만들지 않는다.
+3. `Projection final + VLSA`는 **PC off일 때만** 같은 입력에 대한 연속 투영이므로 기존 중복 금지를 유지한다. PC on이면 두 투영 사이에 PC가 있으므로 허용한다. 해당 설정의 허용·거부를 각각 검사한다.
+4. `Projection final` 단독과 VLSA 단독의 동일성, `Projection every → VLSA`의 멱등성은 **PC off 조건**으로 한정한다. PC가 개입한 조합의 VLSA를 무조건 중복으로 간주하지 않는다.
+5. `last_report`, 오프라인 sample, 평가 결과와 검증 요약에 고정 순서를 식별할 메타데이터를 남긴다. 예: `pipeline_order: [projection, pc, vlsa]`. 활성 플래그와 별도로 저장하여 같은 schema v2 설정이라도 구 실행과 구별한다. 이 필드가 없는 과거 결과는 새 순서로 추정하지 않고 커밋·manifest를 참고하거나 순서 미상으로 표시한다.
+
+**완료 조건:** 문서·설정 검증·로그가 같은 순서를 설명한다. 설정 키 나열 순서나 CLI 인자 순서가 실행 순서를 결정하지 않는다.
+
+### 7.4. 수정 단계 R2 — Policy를 Predict → PC → VLSA로 변경
+
+**대상:** `fm_constraint/policy.py`와 직접 관련된 정책 검사.
+
+작업:
+
+1. `plan()`의 기존 VLSA 블록을 PC 블록 뒤·최종 검사 앞으로 이동한다. 공통 `_project()`를 재사용하고, PC 수식과 QP backend는 유지한다. 모듈 docstring·한글 단계 주석·최종 검사 주석도 수정한다.
+2. PC는 Predict가 반환한 동일 `x`에서 시작한다. 첫 관측 조건을 유지하며, 모델·행동 벡터장의 raw 변환과 고정 기하·이전 행동 규칙을 유지한다.
+3. 성공한 활성 단계의 행동·위반량은 `predict → pc → vlsa` 순서로 기록한다. 비활성 단계의 결과를 복제하여 실행한 것처럼 기록하지 않는다. VLSA 수정량은 PC on이면 PC 종료 행동에 대한 값으로 해석한다.
+4. PC QP의 infeasible·미수렴, 비유한 출력 등으로 유효한 계획이 없으면 즉시 실패한다. 뒤의 VLSA가 solver 실패를 덮거나 마지막 iterate를 되살리지 않는다. Predict/Projection 실패 역시 뒤 단계로 넘기지 않는다.
+5. PC가 정상적으로 유한 계획을 반환했지만 행동 잔차가 허용 오차를 넘는 경우, PC 단계 잔차를 로그에 남긴다. VLSA on이면 명시적인 terminal QP를 적용한 뒤 최종 판정하고, off이면 최종 검사에서 실패시킨다. PC의 유한 반복만으로 초기 infeasible 계획의 복구를 보장하지 않는다.
+6. VLSA 자체의 QP 실패·dtype 복귀 후 잔차 실패는 `failure_stage=vlsa`로 전달한다. 이후 추가 보정 없이 반환 dtype의 최종 행동을 검사한다. VLSA off일 때 숨은 terminal 투영을 붙이지 않는다.
+
+**완료 조건:** PC와 VLSA를 함께 켜면 VLSA가 실제 PC 출력 전체를 받는다. PC 단독의 실패 판정과 VLSA를 명시적으로 켠 최종 보정을 구분하며, 실패 계획은 실행하지 않는다.
+
+### 7.5. 수정 단계 R3 — 순서를 구별하는 회귀 검사
+
+**대상:** `test_policy.py`, `test_config.py`, 필요한 `test_constraints.py`·`test_evaluation.py` 검사.
+
+작업:
+
+1. 조합 테스트의 표기 순서를 `(projection, pc, vlsa)`로 통일하거나 이름으로 참조한다. 기존 `flags[1]`, `flags[2]`를 그대로 사용하여 호출 수 기대값을 뒤바꾸지 않는다.
+2. 고정 noise와 입력 계획에 따라 출력이 달라지는 모델을 사용해 **PC와 투영의 순서를 바꾸면 결과가 달라지는 수치 사례**를 만든다. 공통 제약·QP로 계산한 `VLSA(PC(Predict(...)))`와 실제 결과를 비교하고, 구 순서로 되돌리면 실패하는지 확인한다. 호출 목록만 검사하는 테스트로 대체하지 않는다.
+3. 중간 행동 기록으로 PC 입력이 Predict 종료값이고 VLSA 입력이 PC 종료값임을 확인한다. 관측 채널 유지·동일 제약 기하·이전 행동·가속도 면·dtype 복귀 검사를 함께 유지한다.
+4. PC의 정상 종료 후 잔차를 VLSA가 수정하는 사례와, 같은 조건에서 VLSA off이면 최종 위반으로 실패하는 사례를 검사한다. PC solver 실패 시 VLSA 미실행, VLSA 실패 시 실행 차단도 검사한다.
+5. all-off의 baseline 배열·RNG 동등성을 유지한다. 같은 입력에서 **PC 또는 VLSA 중 하나라도 off인 6개 조합**은 구 순서와 같은 결과·상태·호출 수여야 한다. 두 방법을 함께 켠 2개 조합은 새 순서의 수치 기준으로 판정한다.
+6. PC off에서만 기존 투영 동일성·멱등성을 요구한다. PC on에서 VLSA가 수정할 수 있음을 검사하고, 항상 수정해야 한다는 기대는 두지 않는다.
+7. 정상 종료 기준 모델 호출 수는 `N_p + I_pc N_c`, QP 호출 수는 `Q_projection + I_pc N_c + I_vlsa`다. `every`의 `Q_projection=max(N_p-skip_first,0)`, `final`의 값은 1이며 Projection off이면 0이다. 기본 10/19회와 별도 1+9·5+5 예산을 확인하고, 실패 시에는 실제 수행한 호출까지만 센다. 실행 재검사 QP는 별도로 집계한다.
+8. 전체 설정·제약·정책·평가 테스트를 실행한다. 실행 재검사 off에서 최종 VLSA 결과가 큐에 들어가는지, on에서 실제 수정 행동으로 이전 행동을 갱신하고 큐를 폐기하는지도 확인한다.
+
+**완료 조건:** 단순 블록 이동 실수·숨은 선행 VLSA·중복성 오판을 잡는 검사가 통과한다. 새 테스트 통과 수와 명령을 새 검증 요약에 기록한다.
+
+### 7.6. 수정 단계 R4 — 두 실제 모델·평가·후처리 확인
+
+**대상:** 두 태스크의 `sample`·`eval` 진입점, `evaluation.py`, `compute_metrics.py`, `render_rollouts.py`, 새 검증 자료.
+
+작업:
+
+1. 두 실제 checkpoint에서 같은 관측·이전 행동·seed 또는 noise로 8개 조합의 오프라인 검사를 수행한다. R0의 6개 불변 조합은 배열·상태·호출 수를 비교하고, PC+VLSA 2개 조합은 단계 순서·terminal 잔차·실패 전달을 확인한다. `predict_steps=1`도 별도 확인한다.
+2. `sample.py`와 공통 평가 루프가 새 Policy 결과와 단계 로그를 그대로 사용하는지 확인한다. 집계·시각화에 단계 순서 가정이 있으면 수정하고, 과거 로그의 읽기 호환성을 유지한다.
+3. 동일 플래그여도 구 순서와 새 순서의 결과가 구분되도록 집계 표·그림의 메타데이터 또는 라벨에 순서를 표시한다. 순서가 다른 비교는 변경 효과 비교라고 명시하고 하나의 동일 방법 결과로 합치지 않는다.
+4. 실제 D3IL에서 두 태스크 × 8개 조합을 짧게 실행한다. 기존 기준처럼 최대 10스텝·`execute_steps=8`로 재계획 경계를 포함하고, 실행된 행동이 terminal 결과에서 왔는지와 실패 계획이 실행되지 않는지 확인한다. 재현 가능한 실패도 숨기지 않고 단계·원인을 기록하며, 예상하지 못한 실패는 수정 후 재검사한다.
+5. 각 태스크의 새 로그로 집계·지도 및 카메라 재생 산출물을 확인한다. 기준 경로·명령·환경·hash·단계 잔차·호출 수·실패 사례를 새 검증 요약에 저장한다. 실제 환경 검증이 불가능하면 해당 항목을 미완료로 둔다.
+
+**완료 조건:** 실제 모델과 두 태스크의 실행·재계획·실패 처리·후처리까지 새 순서로 확인했다. 짧은 실행 결과를 전체 성공률 검증으로 해석하지 않는다.
+
+### 7.7. 수정 단계 R5 — 문서 완료 기록과 실험 기준 갱신
+
+**대상:** 이 문서의 수정 진행 상태, `FM_Constraint_Integral.md`, `fm_constraint/README.md`, 새 검증 요약과 실행 예시.
+
+작업:
+
+1. 순서·8개 조합·중복 설정 규칙·PC 종료 잔차 처리·호출 예산을 문서와 코드에서 대조한다. 기존 1~6절은 구 순서의 이력으로 유지하고, 새 사용자가 따라야 할 기준은 7절과 갱신된 명세임을 명시한다.
+2. R0~R4의 근거 경로와 완료 여부를 기록한다. 구 `integration_validation.json`을 새 순서 통과 기록으로 덮어쓰지 않는다.
+3. 본 실험은 새 순서와 동일 checkpoint·context·seed·제약값·호출 예산으로 별도 수행한다. PC+VLSA 두 조합의 과거 성능을 새 순서의 성능으로 재사용하지 않는다. 이번 수정 완료 조건은 기능 검증까지이며 전체 성능 실험은 별도 기록한다.
+
+수정 진행 체크리스트:
+
+- [x] R0: 구 순서의 재현 기준과 영향 범위 확보 (`runs/order_projection_pc_vlsa/before/`)
+- [x] R1: 명세·설정·로그 의미 동기화 (`pipeline_order`와 PC 조건부 중복 검증)
+- [x] R2: Policy를 Projection → PC → VLSA로 변경 (구 순서 실행 분기 없음)
+- [x] R3: 수치 순서 검사·회귀 검사 통과 (81개 테스트)
+- [x] R4: 두 실제 모델·D3IL·후처리 확인 (`after/`, `d3il_validation.json` 및 요약의 산출물 경로)
+- [x] R5: 완료 근거·사용 문서·실험 기준 갱신 (`results/order_projection_pc_vlsa_validation.json`)
+
+**최종 완료 조건:** 독립적인 세 플래그가 고정된 **Projection → PC → VLSA** 순서로 동작하고, 최종 검사·실행 큐·로그가 그 결과를 사용하며, 구 순서 결과와 구별되는 검증 근거가 남아 있다.

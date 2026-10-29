@@ -13,7 +13,7 @@ import numpy as np
 
 from . import checkpoint_reads, import_baseline
 from .constraints import PlanConstraints
-from .policy import Policy
+from .policy import PIPELINE_ORDER, Policy
 from .qp import solve_qp
 
 
@@ -162,7 +162,8 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
     entropy = float(np.mean(entropies)) if task == 'pushing' or settings['n_traj'] > 1 else None
     success_rate = float(np.mean([e['success'] for e in episodes]))
     distances = [e['mean_distance'] for e in episodes if e['mean_distance'] is not None]
-    results = {'schema_version': 2, 'task': task, 'n_contexts': len(contexts), 'n_traj': settings['n_traj'],
+    results = {'schema_version': 2, 'pipeline_order': list(PIPELINE_ORDER),
+               'task': task, 'n_contexts': len(contexts), 'n_traj': settings['n_traj'],
                'methods': {name: m['enabled'] for name, m in methods.items()},
                'execution_recheck': bool(recheck), 'success_rate': success_rate, 'entropy': entropy,
                'score': 0.5 * (success_rate + entropy) if entropy is not None else None,

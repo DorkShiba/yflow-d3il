@@ -9,3 +9,5 @@ fm_baseline/results/*/eval_*/
 !fm_baseline/results/*/baseline_ema.pt
 
 fm_constraint/runs/
+
+docs/report.md

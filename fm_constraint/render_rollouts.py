@@ -80,6 +80,12 @@ def main():
     from PIL import Image
 
     directory = Path(args.eval_dir).resolve()
+    # 영상은 실제 실행 행동만 재생한다. 제목의 순서는 결과 메타데이터에서 읽고,
+    # 필드가 없는 과거 파일에 현재 정책의 순서를 임의로 붙이지 않는다.
+    result_path = directory / 'results.json'
+    result = json.loads(result_path.read_text()) if result_path.exists() else {}
+    order = result.get('pipeline_order')
+    order_label = ' → '.join(order) if order else 'unknown order'
     if (directory / 'rollouts.json').exists():
         rows = json.loads((directory / 'rollouts.json').read_text())[args.episode]
     elif (directory / 'rollouts.npz').exists():
@@ -125,7 +131,7 @@ def main():
         if geo.get('blocks_xy_m'):
             blocks = np.asarray(geo['blocks_xy_m'])
             ax.scatter(blocks[:, 0], blocks[:, 1], c='seagreen', marker='s', label='blocks')
-        ax.set(xlabel='x (m)', ylabel='y (m)', title=f'{args.episode}: step {end + 1}')
+        ax.set(xlabel='x (m)', ylabel='y (m)', title=f'{args.episode}: step {end + 1}\n{order_label}')
         ax.set_aspect('equal', adjustable='datalim')
         ax.legend(loc='best')
         fig.tight_layout()

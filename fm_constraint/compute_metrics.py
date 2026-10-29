@@ -46,7 +46,15 @@ def main():
     rng = np.random.default_rng(args.seed)
     rows = []
     for i, (path, result, contexts) in enumerate(records):
+        # 순서 변경 전후 비교도 가능하되 같은 알고리즘의 반복 실험과 구별한다.
+        # 필드가 없는 과거 결과를 현재 정책의 순서로 추정하지 않는다.
+        order, baseline_order = result.get('pipeline_order'), baseline[1].get('pipeline_order')
+        if order is None or baseline_order is None:
+            comparison = 'unknown_order'
+        else:
+            comparison = 'same_order' if order == baseline_order else 'order_change'
         row = {'label': args.label[i] if args.label else path.name, 'directory': str(path),
+               'pipeline_order': order, 'pipeline_comparison': comparison,
                **{key: result.get(key) for key in ('task', 'success_rate', 'entropy', 'score',
                                                   'plan_ms', 'model_calls', 'qp_calls', 'filter_abort_rate',
                                                   'executed_acceleration_qp_exceed_rate')}}
@@ -84,9 +92,10 @@ def main():
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
         writer.writeheader()
         writer.writerows(rows)
-    lines = ['| label | success | entropy | score | plan ms | filter abort |', '|---|---:|---:|---:|---:|---:|']
+    lines = ['| label | pipeline | success | entropy | score | plan ms | filter abort |', '|---|---|---:|---:|---:|---:|---:|']
     for row in rows:
-        values = [row[key] for key in ('label', 'success_rate', 'entropy', 'score', 'plan_ms', 'filter_abort_rate')]
+        order = ' → '.join(row['pipeline_order']) if row['pipeline_order'] else 'unknown'
+        values = [row['label'], order, *[row[key] for key in ('success_rate', 'entropy', 'score', 'plan_ms', 'filter_abort_rate')]]
         lines.append('| ' + ' | '.join('—' if x is None else str(x) if isinstance(x, str) else f'{x:.5f}' for x in values) + ' |')
     (output / 'summary.md').write_text('\n'.join(lines) + '\n')
     if not args.no_plot:
@@ -98,7 +107,8 @@ def main():
         for i, metric in enumerate(('success_rate', 'entropy', 'score')):
             ax.bar(positions + (i - 1) * .25, [r[metric] if r[metric] is not None else np.nan for r in rows],
                    width=.25, label=metric)
-        ax.set_xticks(positions, [r['label'] for r in rows], rotation=20)
+        ax.set_xticks(positions, [r['label'] + '\n' + (' → '.join(r['pipeline_order']) if r['pipeline_order'] else 'unknown order')
+                                 for r in rows], rotation=20)
         ax.set_ylim(0, 1.05)
         ax.legend()
         fig.tight_layout()

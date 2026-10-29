@@ -57,16 +57,12 @@ control:
 sampling:
   predict_steps: 10
 methods:
+  # 고정 순서: Predict 내부 Projection → PC → 최종 계획 VLSA.
   projection:
     enabled: false
     mode: every
     scope: predict
     skip_first: 0
-  vlsa:
-    enabled: false
-    scope: terminal_plan
-    execution_recheck: false
-    invalidate_queue_on_change: true
   pc:
     enabled: false
     correct_steps: 9
@@ -74,6 +70,11 @@ methods:
     rho: 0.9
     delta: 0.01
     eps: auto
+  vlsa:
+    enabled: false
+    scope: terminal_plan
+    execution_recheck: false
+    invalidate_queue_on_change: true
 constraints:
   workspace:
     enabled: true

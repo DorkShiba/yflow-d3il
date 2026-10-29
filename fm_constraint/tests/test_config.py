@@ -37,6 +37,14 @@ def test_invalid_configuration_is_rejected(overrides):
         ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml', overrides).validate('sample')
 
 
+def test_final_projection_and_terminal_vlsa_allow_pc_between_them():
+    # PC가 사이에 있으면 두 투영의 명목 계획이 달라지므로 중복 설정이 아니다.
+    cfg = ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml', {
+        'methods.projection.enabled': True, 'methods.projection.mode': 'final',
+        'methods.pc.enabled': True, 'methods.vlsa.enabled': True})
+    cfg.validate('sample')
+
+
 def test_model_mismatch_and_training_free_flags():
     with pytest.raises(ValueError, match='Checkpoint model'):
         ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml', {'model.dim': 64}).validate('sample')

@@ -73,6 +73,28 @@ def test_failed_plan_is_not_executed_and_counts_as_failure(config):
     assert logs['c000_t0'][0]['safe_action'] is None
 
 
+def test_queue_executes_terminal_vlsa_actions_after_pc(config):
+    from fm_constraint.policy import Policy
+    from fm_constraint.tests.test_policy import baseline
+    import torch
+
+    config['methods']['pc']['enabled'] = config['methods']['vlsa']['enabled'] = True
+    torch.manual_seed(19)
+    env, policy = FakeEnv(), Policy(baseline(), config)
+    result, logs = run_evaluation(env, policy, CONTEXTS, read_state, build_obs, None,
+                                  'pushing', SETTINGS, config)
+    assert result['pipeline_order'] == ['projection', 'pc', 'vlsa']
+    assert result['executed_actions'] == 5
+    terminal, offset = None, 0
+    for row in logs['c000_t0']:
+        if row['plan_report'] is not None:
+            stages = row['plan_report']['stages']
+            assert list(stages) == ['predict', 'pc', 'vlsa']
+            terminal, offset = stages['vlsa']['actions_m'], 0
+        np.testing.assert_array_equal(row['safe_action'], terminal[offset])
+        offset += 1
+
+
 def test_execution_recheck_invalidates_queue_and_uses_executed_previous(config):
     config['methods']['vlsa'].update(enabled=True, execution_recheck=True)
     config['constraints']['acceleration']['max_m_s2'] = .8
@@ -134,7 +156,36 @@ def test_reporting_keeps_context_pairing_and_renders_saved_geometry(config, tmp_
     summary = json.loads((tmp_path / 'summary/summary.json').read_text())[0]
     assert summary['paired_success_difference'] == 0
     assert summary['pairing_status'] == 'matched_contexts_and_checkpoint'
+    assert summary['pipeline_order'] == ['projection', 'pc', 'vlsa']
+    assert summary['pipeline_comparison'] == 'same_order'
     monkeypatch.setattr(sys, 'argv', ['render', '--eval-dir', str(directory), '--gif'])
     render()
     assert (directory / 'maps/c000_t0.png').stat().st_size > 0
     assert (directory / 'maps/c000_t0.gif').stat().st_size > 0
+
+
+def test_summary_distinguishes_changed_and_unknown_order(config, tmp_path, monkeypatch):
+    import json
+    import sys
+    from fm_constraint.compute_metrics import main
+    result, _ = run_evaluation(FakeEnv(), FakePolicy(), CONTEXTS, read_state, build_obs,
+                               None, 'pushing', SETTINGS, config)
+    result['checkpoint_sha256'] = 'same-model'
+    argv = ['compute']
+    for name, order in [('new', ['projection', 'pc', 'vlsa']),
+                        ('old', ['projection', 'vlsa', 'pc']), ('unknown', None)]:
+        directory = tmp_path / name
+        directory.mkdir()
+        value = {**result, 'pipeline_order': order}
+        if order is None:
+            value.pop('pipeline_order')
+        (directory / 'results.json').write_text(json.dumps(value))
+        argv.extend(['--eval-dir', str(directory)])
+    output = tmp_path / 'summary'
+    monkeypatch.setattr(sys, 'argv', argv + ['--out-dir', str(output), '--n-boot', '30', '--no-plot'])
+    main()
+    rows = json.loads((output / 'summary.json').read_text())
+    assert [r['pipeline_comparison'] for r in rows] == ['same_order', 'order_change', 'unknown_order']
+    assert rows[2]['pipeline_order'] is None
+    assert 'projection → pc → vlsa' in (output / 'summary.md').read_text()
+    assert 'projection → vlsa → pc' in (output / 'summary.md').read_text()

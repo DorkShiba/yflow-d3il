@@ -3,8 +3,8 @@
 기존 `fm_baseline`의 모델·정규화·학습·태스크 관측 코드를 import하여 세 training-free 방법을 통합한다. 설정은 schema v2이며, 과거 실행 필터의 YAML을 묵시적으로 변환하지 않는다.
 
 ```text
-noise → Euler [Projection 선택] → terminal QP [VLSA 선택]
-      → 모델 + CBF-QP [PC 선택] → 검사 → 앞 K개 실행 → 재계획
+noise → Euler [Projection 선택] → 모델 + CBF-QP [PC 선택]
+      → terminal QP [VLSA 선택] → 검사 → 앞 K개 실행 → 재계획
 ```
 
 ## 구조
@@ -47,7 +47,7 @@ workspace는 연구용 명령 영역이며 로봇 도달 가능성 증명이 아
 python -m fm_constraint.sample --config configs/pushing.yaml --set sample.n_windows=4
 
 # 세 방법을 독립적으로 선택; 모든 조합 지원
-python -m fm_constraint.sample --config configs/pushing.yaml --projection --vlsa --pc \
+python -m fm_constraint.sample --config configs/pushing.yaml --projection --pc --vlsa \
   --set sample.n_windows=4
 python -m fm_constraint.sample --config configs/inserting.yaml --pc --set sample.n_windows=4
 
@@ -57,7 +57,7 @@ python -m fm_constraint.check_constraints --config configs/pushing.yaml --calibr
 python -m fm_constraint.check_constraints --config configs/pushing.yaml --calibrate-envelope
 
 # 상태 기반 headless 평가: GPU/디스플레이 없이 MuJoCo의 GL을 비활성화 가능
-MUJOCO_GL=disable python -m fm_constraint.eval_pushing --config configs/pushing.yaml --projection --vlsa --pc
+MUJOCO_GL=disable python -m fm_constraint.eval_pushing --config configs/pushing.yaml --projection --pc --vlsa
 MUJOCO_GL=disable python -m fm_constraint.eval_inserting --config configs/inserting.yaml --pc
 
 # 중첩 키 변경과 개별 방법 해제
@@ -73,7 +73,9 @@ CLI > YAML > 기본값 순서다. `--no-projection`, `--no-vlsa`, `--no-pc`는 �
 
 기본 Predict는 10회이며 PC를 켜면 Correct 9회를 더해 모델 19회다. 동일 호출 예산 비교는 `--set sampling.predict_steps=1 --set methods.pc.correct_steps=9`처럼 명시한다. 생성 1회에서는 Projection도 생성 중 한 번만 적용된다.
 
-VLSA는 현재 terminal **전체 계획**의 공동 QP다. `Projection final`과 동일한 최적화이므로 중복 설정을 금지한다. `Projection every`의 마지막 투영 뒤 VLSA는 같은 기하에서 중복 보정일 수 있다. PC 뒤에는 숨은 추가 투영이 없다.
+세 방법은 **Projection → PC → VLSA** 순서로 독립적으로 켜고 끈다. PC는 선행 VLSA 없이 Predict 결과를 받는다. VLSA는 PC on이면 PC 종료값, off이면 Predict 종료값의 **전체 계획**을 공동 QP로 보정한다. `Projection final + VLSA`는 PC off일 때만 중복 설정으로 금지한다. PC on이면 두 투영 사이에 계획이 바뀌므로 허용한다. `Projection every → VLSA`의 멱등성도 PC off이며 마지막 생성 스텝까지 투영한 경우에만 요구한다.
+
+PC의 모든 QP가 성공하고 결과가 유한하면 남은 행동 잔차는 명시적으로 켠 VLSA가 보정할 수 있다. PC solver 실패·비유한 출력은 즉시 실패하며 VLSA로 복구하지 않는다. VLSA off이면 PC 종료 후 위반은 최종 검사에서 실패한다.
 
 ## 실행 경계와 출력
 
@@ -81,7 +83,7 @@ VLSA는 현재 terminal **전체 계획**의 공동 QP다. `Projection final`과
 
 `--set methods.vlsa.execution_recheck=true`를 명시하면 VLSA on일 때 각 실행 직전 최신 관측으로 H=1 QP를 다시 푼다. 실제 행동이 수정되면 남은 큐를 폐기하고 재계획한다. 기본값은 false다.
 
-- `results.json`: episode별 결과, 성공률·엔트로피·score, 실패율, 모델/QP 호출 수.
+- `results.json`: episode별 결과, 성공률·엔트로피·score, 실패율, 모델/QP 호출 수와 `pipeline_order: [projection, pc, vlsa]`.
 - `rollouts.json`: 실제 실행 행동·이전 행동·최신 물체 기하와 계획별 중간 행동·QP 상태.
 - `resolved_config.yaml`, `model_config.json`: 설정과 checkpoint 구조. 모델·normalizer hash도 결과에 기록한다.
 - sample의 `samples.npz`: 생성 성공 window와 정답·이전 행동. 실패율은 전체 시도 기준, RMSE는 생성 성공 window 기준이다.
@@ -96,6 +98,10 @@ MUJOCO_GL=egl PYOPENGL_PLATFORM=egl python -m fm_constraint.render_rollouts \
 
 집계는 context 단위 bootstrap을 사용한다. checkpoint·task·context가 일치할 때만 paired 차이를 계산한다. 이전 summary-only 결과는 기존 집계값만 표시하고 새 지표나 신뢰구간을 만들어 채우지 않는다. 지도 재생은 저장된 명령·실제 손·당시 기하를 사용한다. `--camera`는 동일 context에서 실제 실행 행동만 MuJoCo에 재입력하고 재생 오차를 JSON으로 저장한다. 두 모드 모두 모델을 다시 실행하지 않는다.
 
+단계 기록은 `predict → pc → vlsa` 중 활성 단계만 포함한다. PC·VLSA의 `intervention_norm_m`는 직전 활성 단계와의 행동 차이다. 집계 표·그림과 재생 제목에는 결과에 저장된 순서를 표시하며, 메타데이터가 없는 과거 결과는 순서 미상으로 취급한다. 다른 순서의 paired 비교는 순서 변경 효과 비교이며 같은 방법 결과로 합치지 않는다.
+
 ## 이관 상태
+
+2026-10-29에는 `docs/PLAN.md` 7절에 따라 Projection → PC → VLSA로 변경했다. 81개 테스트, 두 실제 checkpoint의 8개 조합·단일 Predict 스텝·sample, 두 태스크 × 8개 조합의 각각 10스텝·2회 계획 생성과 지도·카메라 재생을 확인했다. 새 검증 근거는 [`results/order_projection_pc_vlsa_validation.json`](results/order_projection_pc_vlsa_validation.json), 상세 산출물은 `runs/order_projection_pc_vlsa/`다. 짧은 실행 검증이며 전체 성공률 실험은 별도다. 구 순서 실행 분기는 유지하지 않는다.
 
 기존 결과 15개는 `results/legacy/`에 보존하고 SHA-256을 검증했다. 두 태스크의 실제 8개 조합·카메라 재생·구 패키지가 없는 별도 복사본의 오프라인 실행을 확인한 뒤 `fm_projection/`, `fm_pc/`와 이전 `vlsa.py`를 제거했다. baseline 소스·가중치·데이터는 변경하지 않았다. 이전 소스는 `results/integration_source_manifest.json`의 Git 커밋으로 재현할 수 있다. 단계별 근거는 `docs/PLAN.md`, 추적 가능한 검증 요약은 `results/integration_validation.json`에 기록한다.

@@ -11,7 +11,7 @@ import torch
 
 from configs.config import parse_config
 from . import checkpoint_reads, import_baseline
-from .policy import Policy
+from .policy import PIPELINE_ORDER, Policy
 
 
 def main():
@@ -50,7 +50,9 @@ def main():
             first_previous.append(previous)
     elapsed = perf_counter() - started
     checkpoint = Path(paths['run_dir']) / v['eval']['checkpoint']
-    result = {'schema_version': 2, 'task': cfg.task, 'attempts': len(rows),
+    result = {'schema_version': 2, 'pipeline_order': list(PIPELINE_ORDER),
+              'methods': {name: v['methods'][name]['enabled'] for name in PIPELINE_ORDER},
+              'task': cfg.task, 'attempts': len(rows),
               'generated': len(generated), 'failures': len(rows) - len(generated),
               'failure_rate': (len(rows) - len(generated)) / len(rows),
               'checkpoint_step': checkpoint_step, 'weights': v['eval']['weights'],

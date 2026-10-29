@@ -1,0 +1,367 @@
+{
+  "date": "2026-10-29",
+  "schema_version": 2,
+  "pipeline_order": [
+    "projection",
+    "pc",
+    "vlsa"
+  ],
+  "flag_order": [
+    "projection",
+    "pc",
+    "vlsa"
+  ],
+  "status": "complete",
+  "commit_before_changes": "010a25cf35bc6096d20d818830aa5b68bb12f99d",
+  "working_tree_changes": true,
+  "versions": {
+    "python": "3.11.16",
+    "torch": "2.3.1+cu121",
+    "numpy": "1.26.4",
+    "scipy": "1.16.3",
+    "osqp": "1.1.3",
+    "mujoco": "2.3.2"
+  },
+  "tests": {
+    "command": "OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 MPLCONFIGDIR=/tmp/yflow-matplotlib /home/hyeon/miniconda3/envs/yflow/bin/python -m pytest fm_constraint/tests -q",
+    "passed": 81,
+    "elapsed_s": 7.44
+  },
+  "reference": "fm_constraint/runs/order_projection_pc_vlsa",
+  "seed": 1234,
+  "offline": {
+    "pushing": {
+      "combinations_passed": 8,
+      "unchanged_combinations_exact": [
+        "000",
+        "001",
+        "010",
+        "100",
+        "101",
+        "110"
+      ],
+      "same_environment_baseline_exact": true,
+      "single_predict_step_all_on_passed": true,
+      "max_terminal_residual_m": 0.0,
+      "historical_reference_max_abs_error": 4.6193599700927734e-07,
+      "changed_combinations_max_abs_difference": {
+        "011": 1.7881393432617188e-07,
+        "111": 0.0
+      }
+    },
+    "inserting": {
+      "combinations_passed": 8,
+      "unchanged_combinations_exact": [
+        "000",
+        "001",
+        "010",
+        "100",
+        "101",
+        "110"
+      ],
+      "same_environment_baseline_exact": true,
+      "single_predict_step_all_on_passed": true,
+      "max_terminal_residual_m": 0.0,
+      "historical_reference_max_abs_error": 5.364418029785156e-07,
+      "changed_combinations_max_abs_difference": {
+        "011": 0.0,
+        "111": 0.0
+      }
+    }
+  },
+  "sample_entrypoints": {
+    "pushing": {
+      "directory": "fm_constraint/runs/sample_pushing_20261029T043338596496Z",
+      "windows": 2,
+      "failures": 0,
+      "condition_max_error": 2.9802322387695312e-08
+    },
+    "inserting": {
+      "directory": "fm_constraint/runs/sample_inserting_20261029T043943399217Z",
+      "windows": 2,
+      "failures": 0,
+      "condition_max_error": 0.0
+    }
+  },
+  "d3il_short_runs": [
+    {
+      "task": "pushing",
+      "flags": [
+        false,
+        false,
+        false
+      ],
+      "directory": "fm_constraint/runs/eval_pushing_20261029T043923992556Z",
+      "steps": 10,
+      "plans": 2,
+      "model_calls": 20,
+      "qp_calls": 0,
+      "filter_abort_rate": 0.0
+    },
+    {
+      "task": "pushing",
+      "flags": [
+        false,
+        false,
+        true
+      ],
+      "directory": "fm_constraint/runs/eval_pushing_20261029T043928857498Z",
+      "steps": 10,
+      "plans": 2,
+      "model_calls": 20,
+      "qp_calls": 2,
+      "filter_abort_rate": 0.0
+    },
+    {
+      "task": "pushing",
+      "flags": [
+        false,
+        true,
+        false
+      ],
+      "directory": "fm_constraint/runs/eval_pushing_20261029T043934940553Z",
+      "steps": 10,
+      "plans": 2,
+      "model_calls": 38,
+      "qp_calls": 18,
+      "filter_abort_rate": 0.0
+    },
+    {
+      "task": "pushing",
+      "flags": [
+        false,
+        true,
+        true
+      ],
+      "directory": "fm_constraint/runs/eval_pushing_20261029T043941686587Z",
+      "steps": 10,
+      "plans": 2,
+      "model_calls": 38,
+      "qp_calls": 20,
+      "filter_abort_rate": 0.0
+    },
+    {
+      "task": "pushing",
+      "flags": [
+        true,
+        false,
+        false
+      ],
+      "directory": "fm_constraint/runs/eval_pushing_20261029T043949010300Z",
+      "steps": 10,
+      "plans": 2,
+      "model_calls": 20,
+      "qp_calls": 20,
+      "filter_abort_rate": 0.0
+    },
+    {
+      "task": "pushing",
+      "flags": [
+        true,
+        false,
+        true
+      ],
+      "directory": "fm_constraint/runs/eval_pushing_20261029T043955235188Z",
+      "steps": 10,
+      "plans": 2,
+      "model_calls": 20,
+      "qp_calls": 22,
+      "filter_abort_rate": 0.0
+    },
+    {
+      "task": "pushing",
+      "flags": [
+        true,
+        true,
+        false
+      ],
+      "directory": "fm_constraint/runs/eval_pushing_20261029T044000277935Z",
+      "steps": 10,
+      "plans": 2,
+      "model_calls": 38,
+      "qp_calls": 38,
+      "filter_abort_rate": 0.0
+    },
+    {
+      "task": "pushing",
+      "flags": [
+        true,
+        true,
+        true
+      ],
+      "directory": "fm_constraint/runs/eval_pushing_20261029T044007013277Z",
+      "steps": 10,
+      "plans": 2,
+      "model_calls": 38,
+      "qp_calls": 40,
+      "filter_abort_rate": 0.0
+    },
+    {
+      "task": "inserting",
+      "flags": [
+        false,
+        false,
+        false
+      ],
+      "directory": "fm_constraint/runs/eval_inserting_20261029T044023489310Z",
+      "steps": 10,
+      "plans": 2,
+      "model_calls": 20,
+      "qp_calls": 0,
+      "filter_abort_rate": 0.0
+    },
+    {
+      "task": "inserting",
+      "flags": [
+        false,
+        false,
+        true
+      ],
+      "directory": "fm_constraint/runs/eval_inserting_20261029T044030532037Z",
+      "steps": 10,
+      "plans": 2,
+      "model_calls": 20,
+      "qp_calls": 2,
+      "filter_abort_rate": 0.0
+    },
+    {
+      "task": "inserting",
+      "flags": [
+        false,
+        true,
+        false
+      ],
+      "directory": "fm_constraint/runs/eval_inserting_20261029T044038744445Z",
+      "steps": 10,
+      "plans": 2,
+      "model_calls": 38,
+      "qp_calls": 18,
+      "filter_abort_rate": 0.0
+    },
+    {
+      "task": "inserting",
+      "flags": [
+        false,
+        true,
+        true
+      ],
+      "directory": "fm_constraint/runs/eval_inserting_20261029T044046467199Z",
+      "steps": 10,
+      "plans": 2,
+      "model_calls": 38,
+      "qp_calls": 20,
+      "filter_abort_rate": 0.0
+    },
+    {
+      "task": "inserting",
+      "flags": [
+        true,
+        false,
+        false
+      ],
+      "directory": "fm_constraint/runs/eval_inserting_20261029T044053592013Z",
+      "steps": 10,
+      "plans": 2,
+      "model_calls": 20,
+      "qp_calls": 20,
+      "filter_abort_rate": 0.0
+    },
+    {
+      "task": "inserting",
+      "flags": [
+        true,
+        false,
+        true
+      ],
+      "directory": "fm_constraint/runs/eval_inserting_20261029T044100410637Z",
+      "steps": 10,
+      "plans": 2,
+      "model_calls": 20,
+      "qp_calls": 22,
+      "filter_abort_rate": 0.0
+    },
+    {
+      "task": "inserting",
+      "flags": [
+        true,
+        true,
+        false
+      ],
+      "directory": "fm_constraint/runs/eval_inserting_20261029T044111199214Z",
+      "steps": 10,
+      "plans": 2,
+      "model_calls": 38,
+      "qp_calls": 38,
+      "filter_abort_rate": 0.0
+    },
+    {
+      "task": "inserting",
+      "flags": [
+        true,
+        true,
+        true
+      ],
+      "directory": "fm_constraint/runs/eval_inserting_20261029T044120069101Z",
+      "steps": 10,
+      "plans": 2,
+      "model_calls": 38,
+      "qp_calls": 40,
+      "filter_abort_rate": 0.0
+    }
+  ],
+  "postprocessing": {
+    "pushing": {
+      "summary": "fm_constraint/runs/order_projection_pc_vlsa/summary_pushing",
+      "map": "fm_constraint/runs/eval_pushing_20261029T044007013277Z/maps",
+      "camera": "fm_constraint/runs/eval_pushing_20261029T044007013277Z/camera",
+      "replay": {
+        "command_max_error_m": 0.0,
+        "measured_xy_max_error_m": 6.46821096794703e-07,
+        "within_0_1mm": true
+      }
+    },
+    "inserting": {
+      "summary": "fm_constraint/runs/order_projection_pc_vlsa/summary_inserting",
+      "map": "fm_constraint/runs/eval_inserting_20261029T044120069101Z/maps",
+      "camera": "fm_constraint/runs/eval_inserting_20261029T044120069101Z/camera",
+      "replay": {
+        "command_max_error_m": 0.0,
+        "measured_xy_max_error_m": 6.255298443669233e-07,
+        "within_0_1mm": true
+      }
+    }
+  },
+  "model_files_unchanged": {
+    "fm_baseline/results/pushing_baseline/baseline_ema.pt": "e79b67ce3926691014676e67dab1795ef35a14f77ccdbcab16153fea6b886059",
+    "fm_baseline/results/pushing_baseline/normalizer.npz": "d38a5508d93e6c6a24ce93d7656606293caabf6ae1e5f7992a3169f0745aa922",
+    "fm_baseline/results/pushing_baseline/config.json": "6d87e981ecd947286a35913660565a8512ed9a39a3a97044033f22118a3a54f4",
+    "fm_baseline/results/inserting_baseline/baseline_ema.pt": "312144c0d3c3f569a0e07fdd4f6a13f9d085183b4e105ed5bf78f839e7082640",
+    "fm_baseline/results/inserting_baseline/normalizer.npz": "2a254daee11ac83a9640d3d58bb6cca79c1650f58b9f4e70e93c93d01107eb9a",
+    "fm_baseline/results/inserting_baseline/config.json": "9319293c80d9cc66f4351410728ee812c55e16d3249f3a19b6969f6c01506028"
+  },
+  "source_sha256": {
+    "configs/config.py": "f95c270c6869ac692c8944caa6a5d6412fe537f5d99df438267ede064a76f5d1",
+    "configs/inserting.yaml": "308b53299ca7466f679c6854700b5c4644cfaf25ee6a1b1f93a89d4a11362790",
+    "configs/pushing.yaml": "31f862284f5573715e535826cf3881c5cfff37619c84e87113b994c98693e813",
+    "fm_constraint/compute_metrics.py": "b20a7298e5a9eba93c2d7280d746b5eee3405d623f025f9457521806b254e9ca",
+    "fm_constraint/evaluation.py": "01d37f68ebcf601dc301e92e820b3ca903404176605aa6eb3a6b3873b8244d16",
+    "fm_constraint/policy.py": "2a9f28511e37c2eda5ca53b7457254a7bf6afa3f9efbbdc24f02e16475866b3b",
+    "fm_constraint/render_rollouts.py": "247bb2b9b3be4ec60afc7957c70e4a3412bfcf20ae646a92ff35b1b57e7d3add",
+    "fm_constraint/sample.py": "6bdbc618c0bf6e1995f433b805771911eaee3112ee6af1cc4a8977cafdcc6826",
+    "fm_constraint/tests/test_config.py": "e6bb35d4cd64d23dbadb216c2860e672ef32325018c4d497273827444cf24beb",
+    "fm_constraint/tests/test_evaluation.py": "9218d7fe243b8d24d5a60f2b59aacb6768df940ab18204f56bb92442f396aec4",
+    "fm_constraint/tests/test_policy.py": "af88cba760d4aec7663a1970e858e9a4399afb0332023c2b09d786b4cb1dea9c"
+  },
+  "commands": [
+    "python /tmp/yflow_order_reference.py before  # before editing policy.py",
+    "python /tmp/yflow_order_reference.py after",
+    "python /tmp/yflow_order_d3il.py",
+    "python -m fm_constraint.sample --config configs/{task}.yaml --projection --pc --vlsa --set sample.n_windows=2"
+  ],
+  "limitations": [
+    "D3IL checks use one context and one trajectory per combination, at most 10 steps; no full success-rate experiment.",
+    "Historical 2026-10-24 arrays have small numeric differences in this run; exact baseline equality is checked against baseline and pre-change policy in the same environment."
+  ],
+  "legacy_order_runtime_retained": false,
+  "full_success_rate_experiment_performed": false
+}

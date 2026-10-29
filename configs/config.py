@@ -70,12 +70,13 @@ class ExperimentConfig:
                      **({'split': 'val'} if inserting else {'contexts': 'test'})},
             'control': {'dt_s': 0.035},
             'sampling': {'predict_steps': 10},
+            # 가독성을 위해 실행 순서로 나열한다. 순서를 선택하는 설정은 아니다.
             'methods': {
                 'projection': {'enabled': False, 'mode': 'every', 'scope': 'predict', 'skip_first': 0},
-                'vlsa': {'enabled': False, 'scope': 'terminal_plan', 'execution_recheck': False,
-                         'invalidate_queue_on_change': True},
                 'pc': {'enabled': False, 'correct_steps': 9, 'alpha': 2.0,
                        'rho': 0.9, 'delta': 0.01, 'eps': 'auto'},
+                'vlsa': {'enabled': False, 'scope': 'terminal_plan', 'execution_recheck': False,
+                         'invalidate_queue_on_change': True},
             },
             'constraints': {
                 'workspace': {'enabled': True, 'geometry': 'rectangle', 'source': 'research_bounds',
@@ -165,8 +166,10 @@ class ExperimentConfig:
             raise ValueError('Invalid projection mode/scope/skip_first')
         if vlsa['scope'] != 'terminal_plan' or not vlsa['invalidate_queue_on_change']:
             raise ValueError('VLSA requires terminal_plan and queue invalidation on change')
-        if proj['enabled'] and proj['mode'] == 'final' and vlsa['enabled']:
-            raise ValueError('Projection final and terminal VLSA are identical; select one')
+        # PC off일 때만 두 투영이 연속해서 같은 계획에 적용된다.
+        # PC on에서는 중간에 계획이 바뀌므로 final Projection과 VLSA를 함께 허용한다.
+        if proj['enabled'] and proj['mode'] == 'final' and vlsa['enabled'] and not pc['enabled']:
+            raise ValueError('Projection final and terminal VLSA are identical when PC is off; select one')
         if pc['correct_steps'] < 1 or pc['alpha'] <= 0 or not 0 < pc['rho'] < 1 or pc['delta'] <= 0:
             raise ValueError('Invalid PC steps/alpha/rho/delta')
         if pc['eps'] != 'auto' and (type(pc['eps']) not in (int, float)
