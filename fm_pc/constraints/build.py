@@ -9,6 +9,11 @@
     --sampler euler|pc               pc = method ② Predict-then-Correct (CBF)
     --pc-constraints a,b             barrier sets for ② (default: same as --constraints)
     --pc-params JSON                 alpha, eps, rho, delta, tp, tc (see constraints/pc.py)
+    --acg-scale λ                    temporal-mixing perturbation guidance (constraints/acg.py);
+                                     0 = off.  Works with --sampler euler and pc.
+    --acg-sites a,b                  U-Net levels to perturb: down0..,mid,up0..,final (default mid)
+    --acg-mode center|skip           centre-tap kernels (ACG analogue) or skip blocks (STG-R)
+    --acg-t-range t0,t1              flow times where guidance is applied (default 0,0.5; see check_acg.py)
 
 Default parameters are derived from the run's ``normalizer.npz`` so they are
 never 'magic numbers': ``a_max`` is the per-axis action range seen in training
@@ -23,6 +28,7 @@ import json
 import numpy as np
 import torch
 
+from .acg import MODES, ACGModel, TemporalPerturbation
 from .inject import ConstrainedPolicy, Injector, RawSpace
 from .pc import PCSampler
 from .sets import ActionBox, Intersection, StepNorm, TrackingBox, WorkspaceBox
@@ -38,7 +44,21 @@ def add_constraint_args(p):
                    help="pc: method ② Predict-then-Correct with a finite-time CBF")
     p.add_argument("--pc-constraints", default=None, help="barrier sets for ② (default: --constraints)")
     p.add_argument("--pc-params", default="{}", help='JSON, e.g. \'{"alpha": 2.0, "rho": 0.9, "delta": 0.01, "tp": 1}\'')
+    p.add_argument("--acg-scale", type=float, default=0.0,
+                   help="λ of v=(1+λ)v_θ−λv_θ^IC (temporal-mixing perturbation guidance); 0 = off")
+    p.add_argument("--acg-sites", default="mid", help="comma-separated U-Net levels to perturb")
+    p.add_argument("--acg-mode", choices=list(MODES), default="center")
+    p.add_argument("--acg-t-range", default="0,0.5", help="t0,t1: apply guidance for flow time t0 <= t < t1")
     return p
+
+
+def build_acg(args, model):
+    """ACG field from CLI options, or None when --acg-scale is 0."""
+    if not getattr(args, "acg_scale", 0.0):
+        return None
+    t0, t1 = (float(v) for v in args.acg_t_range.split(","))
+    pert = TemporalPerturbation(model, _names(args.acg_sites), args.acg_mode)
+    return ACGModel(model, pert, args.acg_scale, t0, t1)
 
 
 def default_params(norm, act_dim=2):
@@ -95,18 +115,24 @@ def build_policy_from_args(args, policy):
     params = default_params(policy.norm, policy.act_dim)
     params.update(json.loads(args.constraint_params))
     names = _names(args.constraints)
-    if args.sampler != "pc":
+    acg = build_acg(args, policy.model)
+    if args.sampler != "pc" and acg is None:
         return policy, {"name": "none"}
-    pc_names = _names(args.pc_constraints) if args.pc_constraints else names
-    sampler = build_pc_sampler(pc_names, params, json.loads(args.pc_params), policy.norm, policy.act_dim, policy.device)
-    wrapped = ConstrainedPolicy(policy, Injector(), sampler)
+    sampler = None
+    if args.sampler == "pc":
+        pc_names = _names(args.pc_constraints) if args.pc_constraints else names
+        sampler = build_pc_sampler(pc_names, params, json.loads(args.pc_params), policy.norm, policy.act_dim, policy.device)
+    wrapped = ConstrainedPolicy(policy, Injector(), sampler, field=acg)
     return wrapped, wrapped.describe()
 
 
 def tag_suffix(args):
-    if args.sampler != "pc":
-        return ""
-    tag = "_pc_" + args.constraints.replace(",", "+")
-    if args.pc_constraints:
-        tag += "_pcC-" + args.pc_constraints.replace(",", "+")
+    tag = ""
+    if args.sampler == "pc":
+        tag += "_pc_" + args.constraints.replace(",", "+")
+        if args.pc_constraints:
+            tag += "_pcC-" + args.pc_constraints.replace(",", "+")
+    if getattr(args, "acg_scale", 0.0):
+        tag += f"_acg{args.acg_scale:g}_{args.acg_mode}_" + args.acg_sites.replace(",", "+")
+        tag += "_t" + args.acg_t_range.replace(",", "-")
     return tag
