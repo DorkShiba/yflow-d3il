@@ -7,3 +7,12 @@ fm_baseline/results/*/eval_*/
 *.pt
 *.pth
 !fm_baseline/results/*/baseline_ema.pt
+
+experiments/lipo_pushing_20261104/artifacts/
+
+experiments/lipo_inserting_20261104/artifacts/
+
+.playwright-mcp/
+.visualizer/
+.venv-visualizer/
+.local-runtime/

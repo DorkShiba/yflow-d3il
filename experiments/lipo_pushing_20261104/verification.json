@@ -1,0 +1,12 @@
+{
+  "raw_rollouts_checked": 360,
+  "lipo_qps_checked": 3507,
+  "max_independent_jerk_rms_error": 7.247535904753022e-13,
+  "artifact_hashes_verified": 9,
+  "protocol_source_and_checkpoint_match": true,
+  "serial_smoke_vs_sharded_max_position_difference_m": {
+    "none": 0.0,
+    "blend": 0.0,
+    "lipo": 0.0
+  }
+}

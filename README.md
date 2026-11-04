@@ -181,3 +181,7 @@ python eval_inserting.py --run-dir $I --ckpt baseline_ema.pt --n-traj 2 --seed 1
 ```
 
 평가 결과는 `--run-dir` 아래 `eval_*` 폴더에, 새로 학습한 실행 폴더는 `fm_baseline/runs/`에 저장되며 둘 다 git에서 제외된다. 평가 시간은 Pushing 120회 약 25분, Inserting 82 × 2회 약 3.3시간(시드 두 개를 동시에 실행)이다. 학습 명령과 옵션은 `fm_baseline/README.md` 7절에 있다.
+
+## LiPo smoothness and rollout viewer
+
+Training-free Baseline / Blending / LiPo comparisons for Pushing and Inserting: [implementation and evaluation](fm_baseline/LIPO.md). Run `./visualizer/run.sh` for the [local 3D viewer](visualizer/README.md), including verified sample replays, live XY jerk plots and video export. Full evaluation summaries are under `experiments/lipo_pushing_20261104` and `experiments/lipo_inserting_20261104`.
