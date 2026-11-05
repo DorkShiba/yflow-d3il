@@ -13,13 +13,18 @@ import time
 import numpy as np
 
 
-def run_task_episode(env, policy, spec, ood, ctx, ci, ti, execute_steps):
+def run_task_episode(env, policy, spec, ood, ctx, ci, ti, execute_steps, name=None):
     ood.start_episode(ci, ti)
+    if ood.kind == "file":                       # precomputed test condition (make_ood_dataset.py)
+        ctx = ood.episode_context(name, ctx)
     if ood.kind == "shift":
         spec.reset(env, ctx)
         s0 = spec.read(env)
         ctx = ood.initial_context(ctx, spec.hand_xy(s0)) if spec.n_boxes else spec.shift_start(env, ctx, ood)
     spec.reset(env, ctx)
+    q = ood.robot_start()
+    if q is not None:                            # OOD-B: robot starts away from the fixed demo start
+        spec.move_hand(env, q)
     s = spec.read(env)
     des, fixed = spec.init_des(env, s)
     done, info, step = False, {}, 0

@@ -16,6 +16,8 @@
 #   JOBS      evaluations in parallel (default 1)
 #   CONDS     space-separated subset of condition names below (default: all)
 #   SEED      policy seed (default 0); the OOD draws use --ood-seed 0
+#   OODSET=1  evaluate the precomputed test sets fm_baseline/ood_benchmark/<task>/*.pkl
+#             (make_ood_dataset.py: id, A/B/C x weak/mid/strong, AB/AC/BC/ABC mid); or a directory
 set -euo pipefail
 TASK=${1:?usage: run_ood_benchmark.sh <task> [method flags...]}
 shift
@@ -36,7 +38,8 @@ case $TASK in
   *) echo "unknown task $TASK" >&2; exit 1 ;;
 esac
 [[ ${QUICK:-0} == 1 ]] && SIZE=(--n-contexts 4 --n-traj 1)
-if [[ $TASK == inserting ]]; then
+OODSET=${OODSET:-}          # dir of make_ood_dataset.py files -> evaluate those conditions instead
+if [[ $TASK == inserting && -z $OODSET ]]; then
   EVAL=(python "$REPO/fm_pc/eval_inserting.py")
 else
   EVAL=(python "$REPO/fm_pc/eval_task.py" --task "$TASK")
@@ -57,6 +60,14 @@ declare -A COND=(
   [delay4]="--ood delay --ood-delay 4"
 )
 ORDER=(id shift2cm shift4cm noise5mm noise10mm push3cm push5cm delay1 delay2 delay4)
+if [[ -n $OODSET ]]; then                 # precomputed test conditions: id, A/B/C weak..strong, 2^3 combos
+  [[ $OODSET == 1 ]] && OODSET=$REPO/fm_baseline/ood_benchmark/$TASK
+  COND=()
+  ORDER=()
+  for f in id A_weak A_mid A_strong B_weak B_mid B_strong C_weak C_mid C_strong AB_mid AC_mid BC_mid ABC_mid; do
+    [[ -f $OODSET/$f.pkl ]] && { COND[$f]="--ood-file $OODSET/$f.pkl"; ORDER+=("$f"); }
+  done
+fi
 [[ -n ${CONDS:-} ]] && read -r -a ORDER <<< "$CONDS"
 
 LOG=$RUN/ood_logs_${TAG}_$(date -u +%Y%m%dT%H%M%SZ)

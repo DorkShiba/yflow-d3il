@@ -135,6 +135,14 @@ class TaskSpec:
     def walls(self, env):
         return []
 
+    HAND_QUAT = [0.0, 1.0, 0.0, 0.0]               # rod pointing down (all rod tasks)
+
+    def move_hand(self, env, xy, duration=2.0):
+        """OOD-B: drive the hand (same height and orientation) to xy before the episode starts
+        (2 s: the impedance controller settles within ~3 mm for a 10 cm move; 1 s leaves up to 2 cm)."""
+        z = float(np.asarray(env.robot.current_c_pos)[2])
+        env.robot.gotoCartPositionAndQuat(desiredPos=[float(xy[0]), float(xy[1]), z], desiredQuat=self.HAND_QUAT, duration=duration)
+
     def pushable(self, boxes, hand_xy):
         """Indices of the blocks OOD-3 may teleport (default: all)."""
         return list(range(len(boxes)))
@@ -296,9 +304,7 @@ class Avoiding(TaskSpec):
     def reset(self, env, ctx):
         env.reset()
         if isinstance(ctx, dict) and "start" in ctx:
-            z = float(env.robot.current_c_pos[2])
-            env.robot.gotoCartPositionAndQuat(desiredPos=[ctx["start"][0], ctx["start"][1], z],
-                                              desiredQuat=[0, 1, 0, 0], duration=0.5)
+            self.move_hand(env, ctx["start"], duration=0.5)
 
     def walls(self, env):
         return [(np.asarray(c, dtype=float), np.array([r, r])) for c, r in self.OBSTACLES]
@@ -508,6 +514,9 @@ class Stacking(TaskSpec):
 
     def block_radii(self):
         return [float(np.hypot(*h)) for h in self.HALF]
+
+    def move_hand(self, env, xy, duration=1.0):
+        raise NotImplementedError("Stacking OOD-B needs the gripper orientation / IK; not implemented yet")
 
     def hand_clear(self, xy, old_xy, yaw, hand_xy, r, clear):
         if self._hand_z is not None and self._hand_z > self.HAND_HIGH:

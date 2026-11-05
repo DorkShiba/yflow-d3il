@@ -74,6 +74,16 @@ def main():
     spec.setup(args.d3il_root)
     env = spec.make_env(max_steps)
     contexts = spec.contexts(args, cfg)
+    if args.ood_file:                            # evaluate exactly the episodes of the OOD test set
+        from ood import load_ood_file
+        eps = load_ood_file(args.ood_file)["episodes"]
+        if args.n_contexts:
+            eps = eps[:args.n_contexts]
+        by_name = dict(spec.contexts(argparse.Namespace(**{**vars(args), "n_contexts": 0}), cfg))
+        missing = [e["name"] for e in eps if e["name"] not in by_name]
+        if missing:
+            raise SystemExit(f"OOD file episodes not in the task's contexts: {missing[:3]} ...")
+        contexts = [(e["name"], by_name[e["name"]]) for e in eps]
     n_ctx = len(contexts)
 
     policy = Policy(model, norm, cfg, apply_conditioning, Solver, args.ode_steps, args.device)
@@ -92,7 +102,7 @@ def main():
     t0, plan_time, n_plans = time.time(), 0.0, 0
     for ci, (cname, ctx) in enumerate(contexts):
         for ti in range(args.n_traj):
-            info, step, log, ps, npl, ev = run_task_episode(env, policy, spec, ood, ctx, ci, ti, args.execute_steps)
+            info, step, log, ps, npl, ev = run_task_episode(env, policy, spec, ood, ctx, ci, ti, args.execute_steps, cname)
             plan_time += ps
             n_plans += npl
             o = spec.outcome(info)

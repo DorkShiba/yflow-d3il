@@ -39,6 +39,8 @@ from __future__ import annotations
 
 import copy
 import json
+import os
+import pickle
 import time
 
 import numpy as np
@@ -49,6 +51,13 @@ BLOCK_HALF = 0.025
 BLOCK_R = BLOCK_HALF * np.sqrt(2.0)        # any yaw
 CLEAR = 0.01                               # free gap between bodies
 HAND_R = 0.02                              # pusher rod radius (conservative)
+
+
+def load_ood_file(path, _cache={}):
+    if path not in _cache:
+        with open(path, "rb") as fh:
+            _cache[path] = pickle.load(fh)
+    return _cache[path]
 
 
 def add_ood_args(p):
@@ -62,10 +71,14 @@ def add_ood_args(p):
     g.add_argument("--ood-push-phase", choices=["seam", "mid"], default="seam")
     g.add_argument("--ood-delay", type=int, default=2, help="OOD-4: inference delay in control steps")
     g.add_argument("--ood-seed", type=int, default=0)
+    g.add_argument("--ood-file", default=None,
+                   help="precomputed OOD test conditions from make_ood_dataset.py (overrides --ood; eval_task.py only)")
     return p
 
 
 def ood_tag(args):
+    if getattr(args, "ood_file", None):
+        return "_oodset-" + load_ood_file(args.ood_file)["cond"]
     k = args.ood
     if k == "none":
         return ""
@@ -82,6 +95,15 @@ class OOD:
     def __init__(self, args, spec, env, execute_steps, horizon):
         """``spec``: tasks.TaskSpec (blocks, demo init ranges, workspace, walls)."""
         self.kind, self.spec, self.task, self.env = args.ood, spec, spec.name, env
+        self.file = load_ood_file(args.ood_file) if getattr(args, "ood_file", None) else None
+        self.noise_pos, self.noise_yaw = (args.ood_noise_pos, args.ood_noise_yaw) if self.kind == "obsnoise" else (0.0, 0.0)
+        self.ep = None
+        if self.file is not None:
+            if self.file["task"] != spec.name:
+                raise SystemExit(f"OOD file is for '{self.file['task']}', not '{spec.name}'")
+            self.kind = "file"
+            c = self.file["factors"].get("C")
+            self.noise_pos, self.noise_yaw = (c["pos_m"], c["yaw_deg"]) if c else (0.0, 0.0)
         self.args, self.n_boxes, self.exe, self.horizon = args, spec.n_boxes, execute_steps, horizon
         self.push_step = args.ood_push_step if args.ood_push_step is not None else spec.push_step
         self.delay = args.ood_delay if self.kind == "delay" else 0
@@ -119,6 +141,9 @@ class OOD:
     def start_episode(self, ci, ti):
         self.rng = np.random.default_rng([self.args.ood_seed, ci, ti, 7])
         self.key = f"c{ci:03d}_t{ti}"
+        if self.file is not None:
+            self.ep = self.file["episodes"][ci]
+            self.rng = np.random.default_rng([int(self.ep["noise_seed"]), ti])
         self.pushed = False
         self.event_step = -1
 
@@ -157,26 +182,38 @@ class OOD:
 
     def observe_boxes(self, boxes):
         """OOD-2: noisy copy of the block poses for the policy (true state untouched)."""
-        if self.kind != "obsnoise":
+        if not self.noise_pos and not self.noise_yaw:
             return boxes
-        a, out = self.args, []
+        out = []
         for pos, quat, yaw in boxes:
             p = np.asarray(pos, dtype=float).copy()
-            p[:2] += self.rng.normal(0.0, a.ood_noise_pos, 2)
-            out.append((p, quat, float(yaw + np.deg2rad(self.rng.normal(0.0, a.ood_noise_yaw)))))
+            p[:2] += self.rng.normal(0.0, self.noise_pos, 2)
+            out.append((p, quat, float(yaw + np.deg2rad(self.rng.normal(0.0, self.noise_yaw)))))
         return out
 
     def observe_state(self, st):
         """OOD-2 on a tasks.State: noisy blocks, or the measured hand when the task has no blocks."""
-        if self.kind != "obsnoise":
+        if not self.noise_pos and not self.noise_yaw:
             return st
         st = copy.copy(st)
         if st.boxes:
             st.boxes = self.observe_boxes(st.boxes)
         else:
             st.c = np.asarray(st.c, dtype=float).copy()
-            st.c[:2] += self.rng.normal(0.0, self.args.ood_noise_pos, 2)
+            st.c[:2] += self.rng.normal(0.0, self.noise_pos, 2)
         return st
+
+    # ---- precomputed test conditions (make_ood_dataset.py) ---------------------
+    def episode_context(self, name, ctx):
+        """File mode: the stored (possibly shifted) context of this episode."""
+        if self.ep is None:
+            return ctx
+        if self.ep["name"] != name:
+            raise SystemExit(f"OOD file episode '{self.ep['name']}' != evaluated context '{name}'")
+        return copy.deepcopy(self.ep["context"])
+
+    def robot_start(self):
+        return None if self.ep is None or self.ep.get("robot_start") is None else np.asarray(self.ep["robot_start"], dtype=float)
 
     def push_hand(self, step, des, hand_xy):
         """OOD-3 for tasks without blocks: displace the desired hand by ``--ood-push-dist``
@@ -247,12 +284,18 @@ class OOD:
             d.update(push_dist_m=a.ood_push_dist, push_step=self.push_step, phase=a.ood_push_phase)
         elif self.kind == "delay":
             d.update(delay_steps=self.delay)
+        elif self.kind == "file":
+            f = self.file
+            d.update(file=os.path.abspath(self.args.ood_file), cond=f["cond"], factors=f["factors"], dataset_seed=f["seed"],
+                     version=f.get("version"))
         d["events"] = self.events
         return json.loads(json.dumps(d, default=float))
 
 
 def run_episode(env, policy, ood, ctx, ci, ti, read_state, build_obs, box_objs, execute_steps, log_boxes):
     """One rollout.  With ``ood.kind == 'none'`` this is the original evaluation loop, call for call."""
+    if ood.kind == "file":
+        raise SystemExit("--ood-file is supported by fm_pc/eval_task.py only")
     ood.start_episode(ci, ti)
     if ood.kind == "shift":
         env.reset(random=False, context=copy.deepcopy(ctx))
