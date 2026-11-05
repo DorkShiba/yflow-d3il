@@ -90,6 +90,7 @@ class OOD:
             raise SystemExit(f"--ood-delay must be in 1..{d_max} (horizon {horizon}, execute {execute_steps})")
         self.walls = self._walls()
         self.block_r = spec.block_half * np.sqrt(2.0)        # circumscribed radius, any yaw
+        self.radii = list(spec.block_radii()) if spec.n_boxes else []
         self.events = {}
         self.rng = None
 
@@ -97,13 +98,14 @@ class OOD:
     def _walls(self):
         return self.spec.walls(self.env)
 
-    def free(self, xy, others, hand_xy, old_xy=None, yaw=0.0):
+    def free(self, xy, others, hand_xy, old_xy=None, yaw=0.0, r=None):
+        """others: [(xy, radius)] of the other blocks; r: radius of the block being placed."""
         (x0, x1), (y0, y1) = self.spec.workspace
-        r = self.block_r
+        r = self.block_r if r is None else r
         if not (x0 + r <= xy[0] <= x1 - r and y0 + r <= xy[1] <= y1 - r):
             return False
-        for o in others:
-            if np.linalg.norm(xy - o) < 2 * r + CLEAR:
+        for o, ro in others:
+            if np.linalg.norm(xy - o) < r + ro + CLEAR:
                 return False
         if hand_xy is not None and not self.spec.hand_clear(xy, old_xy, yaw, np.asarray(hand_xy, dtype=float), r, CLEAR):
             return False
@@ -134,7 +136,7 @@ class OOD:
             cands = [(p[0] - x0, np.array([x0 - d, p[1]]), "x-"), (x1 - p[0], np.array([x1 + d, p[1]]), "x+"),
                      (p[1] - y0, np.array([p[0], y0 - d]), "y-"), (y1 - p[1], np.array([p[0], y1 + d]), "y+")]
             cands.sort(key=lambda c: c[0])
-            others = [pos[j] for j in range(self.n_boxes) if j != i]
+            others = [(pos[j], self.radii[j]) for j in range(self.n_boxes) if j != i]
             own = self.spec.INIT_RANGE[i]
             other_ranges = [self.spec.INIT_RANGE[j] for j in range(self.n_boxes) if j != i and self.spec.INIT_RANGE[j] != own]
             for _, q, face in cands:
@@ -142,7 +144,7 @@ class OOD:
                 # in-distribution situation (e.g. green where red usually starts), not "outside the demos"
                 near_other = any(np.hypot(max(rx[0] - q[0], 0.0, q[0] - rx[1]), max(ry[0] - q[1], 0.0, q[1] - ry[1])) < d
                                  for rx, ry in other_ranges)
-                if not near_other and self.free(q, others, hand_xy):
+                if not near_other and self.free(q, others, hand_xy, r=self.radii[i]):
                     pos[i] = q
                     applied.append({"box": i, "face": face, "from": p.tolist(), "to": q.tolist()})
                     break
@@ -217,12 +219,12 @@ class OOD:
         rec = None
         # nearest block first; if it has no free direction (walls, hand, other blocks), try the next one
         for i in sorted(cand, key=lambda j: np.linalg.norm(xy[j] - hand_xy)):
-            others = [xy[j] for j in range(len(xy)) if j != i]
+            others = [(xy[j], self.radii[j]) for j in range(len(xy)) if j != i]
             r = {"step": step, "box": i, "from": xy[i].tolist(), "to": None}
             rec = rec or r
             for th in self.rng.uniform(0, 2 * np.pi, 64):
                 q = xy[i] + dist * np.array([np.cos(th), np.sin(th)])
-                if self.free(q, others, hand_xy, xy[i], float(boxes[i][2])):
+                if self.free(q, others, hand_xy, xy[i], float(boxes[i][2]), r=self.radii[i]):
                     z = float(boxes[i][0][2])
                     self.env.scene.set_obj_pos_and_quat([q[0], q[1], z], np.asarray(boxes[i][1], dtype=float), sim_obj=box_objs[i])
                     r["to"] = q.tolist()

@@ -139,6 +139,10 @@ class TaskSpec:
         """Indices of the blocks OOD-3 may teleport (default: all)."""
         return list(range(len(boxes)))
 
+    def block_radii(self):
+        """Circumscribed radius of each block (any yaw), in obs order."""
+        return [self.block_half * np.sqrt(2.0)] * self.n_boxes
+
     def hand_clear(self, xy, old_xy, yaw, hand_xy, r, clear):
         """May a block (bounding radius r) be placed at xy, given the hand?  Default: no overlap."""
         return np.linalg.norm(xy - hand_xy) >= r + self.hand_r + clear
@@ -466,8 +470,10 @@ class Stacking(TaskSpec):
     INIT_RANGE = [((0.35, 0.45), (-0.25, -0.15)), ((0.35, 0.45), (-0.10, 0.00)), ((0.55, 0.60), (-0.20, 0.00))]
     TARGET = ((0.5, 0.2), (0.05, 0.05))
     workspace = ((0.25, 0.75), (-0.35, 0.35))
-    block_half = 0.05                     # blue is 6 x 10 cm; use the long half side for all
+    block_half = 0.05                     # blue is 6 x 10 cm (radii per block below)
+    HALF = [(0.03, 0.03), (0.03, 0.03), (0.03, 0.05)]   # stacking_objects.py: red, green 6 cm cubes, blue 6 x 10 cm
     hand_r = 0.06                         # gripper fingers
+    HAND_HIGH = 0.12                      # tcp above this clears any block resting on the table (6 cm tall)
     ON_TABLE_Z = 0.045                    # resting centre z ~0.03; above this a block is held or stacked
     max_steps, push_step = 1000, 150
     motion_dims, dt = 7, 0.030            # jerk metrics on the 7 joints; n_substeps 30 x 1 ms
@@ -500,8 +506,19 @@ class Stacking(TaskSpec):
         return [i for i, (p, _q, _y) in enumerate(boxes)
                 if p[2] < self.ON_TABLE_Z and np.linalg.norm(np.asarray(p[:2]) - hand_xy) > self.hand_r + 0.02]
 
+    def block_radii(self):
+        return [float(np.hypot(*h)) for h in self.HALF]
+
+    def hand_clear(self, xy, old_xy, yaw, hand_xy, r, clear):
+        if self._hand_z is not None and self._hand_z > self.HAND_HIGH:
+            return True
+        return super().hand_clear(xy, old_xy, yaw, hand_xy, r, clear)
+
+    _hand_z = None
+
     def read(self, env):
         s = super().read(env)
+        self._hand_z = float(s.c[2])
         env.robot.receiveState()
         s.extra["j"] = np.asarray(env.robot.current_j_pos, dtype=np.float64).copy()
         s.extra["g"] = float(env.robot.gripper_width)
