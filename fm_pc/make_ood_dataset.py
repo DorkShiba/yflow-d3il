@@ -39,11 +39,12 @@ from train import resolve_d3il
 
 VERSION = "v1"
 # (weak, mid, strong).  A, B in metres; C = (sigma_pos m, sigma_yaw deg).
-# A = 0.5b / 1b / 2b (b = block edge; capped at the largest feasible shift), C = 5 / 10 / 20 % of b.
+# A = 0.5b / 1b / 2b (b = block edge; capped at the largest shift feasible for every context:
+# Aligning 12 cm -- from 13 cm the target cannot leave its range in 59/60 contexts), C = 5 / 10 / 20 % of b.
 LEVELS = {
     "pushing":   {"A": (0.025, 0.05, 0.10), "B": (0.02, 0.05, 0.10), "C": ((0.0025, 2.5), (0.005, 5.0), (0.010, 10.0))},
     "inserting": {"A": (0.025, 0.05, 0.10), "B": (0.02, 0.05, 0.10), "C": ((0.0025, 2.5), (0.005, 5.0), (0.010, 10.0))},
-    "aligning":  {"A": (0.05, 0.10, 0.15),  "B": (0.02, 0.05, 0.10), "C": ((0.005, 2.5), (0.010, 5.0), (0.020, 10.0))},
+    "aligning":  {"A": (0.05, 0.10, 0.12),  "B": (0.02, 0.05, 0.10), "C": ((0.005, 2.5), (0.010, 5.0), (0.020, 10.0))},
 }
 NAMES = ("weak", "mid", "strong")
 HAND_TOL = 0.005          # m: reached start must be within this of the target
@@ -73,12 +74,16 @@ def factor_values(task, sel):
 
 
 def path_clear(spec, a, b, blocks, radii, walls):
+    """Straight hand path a -> b keeps clear of blocks and walls.  A block that is already
+    closer to the demo start than the (conservative, circumscribed) clearance only must not
+    get any closer; the simulator check afterwards confirms that nothing was touched."""
     (x0, x1), (y0, y1) = spec.workspace
     if not (x0 + spec.hand_r <= b[0] <= x1 - spec.hand_r and y0 + spec.hand_r <= b[1] <= y1 - spec.hand_r):
         return False
+    need = [min(r + spec.hand_r + CLEAR, np.linalg.norm(a - q)) for q, r in zip(blocks, radii)]
     for u in np.linspace(0.0, 1.0, 21):
         p = a + u * (b - a)
-        if any(np.linalg.norm(p - q) < r + spec.hand_r + CLEAR for q, r in zip(blocks, radii)):
+        if any(np.linalg.norm(p - q) < n - 1e-9 for q, n in zip(blocks, need)):
             return False
         if any(np.linalg.norm(np.maximum(np.abs(p - c) - h, 0.0)) < spec.hand_r + CLEAR for c, h in walls):
             return False

@@ -57,6 +57,8 @@ def parse_args():
 
 def main():
     args = parse_args()
+    if args.ood_file:                            # the D3IL setup changes the working directory
+        args.ood_file = os.path.abspath(args.ood_file)
     run_dir = os.path.abspath(args.run_dir)
     with open(os.path.join(run_dir, "config.json"), encoding="utf-8") as f:
         cfg0 = json.load(f)
