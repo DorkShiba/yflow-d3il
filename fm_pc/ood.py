@@ -205,24 +205,31 @@ class OOD:
         return n_queued == want
 
     def push(self, step, box_objs, boxes, hand_xy):
-        """OOD-3: teleport the block nearest the hand by ``--ood-push-dist`` (random feasible direction)."""
+        """OOD-3: teleport the block nearest the hand by ``--ood-push-dist`` (random feasible direction;
+        falls back to the next-nearest block when the nearest one has none)."""
         self.pushed = True
         xy = [np.asarray(b[0][:2], dtype=float) for b in boxes]
         cand = self.spec.pushable(boxes, hand_xy)
         if not cand:
             self.events.setdefault(self.key, {})["push"] = {"step": step, "box": None, "from": None, "to": None}
             return False
-        i = min(cand, key=lambda j: np.linalg.norm(xy[j] - hand_xy))
-        others = [xy[j] for j in range(len(xy)) if j != i]
         dist = self.args.ood_push_dist
-        rec = {"step": step, "box": i, "from": xy[i].tolist(), "to": None}
-        for th in self.rng.uniform(0, 2 * np.pi, 64):
-            q = xy[i] + dist * np.array([np.cos(th), np.sin(th)])
-            if self.free(q, others, hand_xy, xy[i], float(boxes[i][2])):
-                z = float(boxes[i][0][2])
-                self.env.scene.set_obj_pos_and_quat([q[0], q[1], z], np.asarray(boxes[i][1], dtype=float), sim_obj=box_objs[i])
-                rec["to"] = q.tolist()
-                self.event_step = step
+        rec = None
+        # nearest block first; if it has no free direction (walls, hand, other blocks), try the next one
+        for i in sorted(cand, key=lambda j: np.linalg.norm(xy[j] - hand_xy)):
+            others = [xy[j] for j in range(len(xy)) if j != i]
+            r = {"step": step, "box": i, "from": xy[i].tolist(), "to": None}
+            rec = rec or r
+            for th in self.rng.uniform(0, 2 * np.pi, 64):
+                q = xy[i] + dist * np.array([np.cos(th), np.sin(th)])
+                if self.free(q, others, hand_xy, xy[i], float(boxes[i][2])):
+                    z = float(boxes[i][0][2])
+                    self.env.scene.set_obj_pos_and_quat([q[0], q[1], z], np.asarray(boxes[i][1], dtype=float), sim_obj=box_objs[i])
+                    r["to"] = q.tolist()
+                    self.event_step = step
+                    rec = r
+                    break
+            if rec["to"] is not None:
                 break
         self.events.setdefault(self.key, {})["push"] = rec
         return rec["to"] is not None
