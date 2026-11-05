@@ -45,21 +45,10 @@ import numpy as np
 
 KINDS = ("none", "shift", "obsnoise", "push", "delay")
 
-# demo range of INITIAL block positions (D3IL context samplers; confirmed on our data)
-INIT_RANGE = {
-    "pushing": [((0.40, 0.50), (-0.15, 0.00)),            # red
-                ((0.55, 0.65), (-0.15, 0.00))],           # green
-    "inserting": [((0.35, 0.50), (-0.20, -0.15)),         # box 1
-                  ((0.55, 0.70), (-0.10, -0.05)),         # box 2
-                  ((0.35, 0.50), (0.00, 0.05))],          # box 3
-}
-# research workspace for the desired hand (fm_constraint / VLSA doc), used as the table area
-WORKSPACE = {"pushing": ((0.21, 0.84), (-0.39, 0.49)), "inserting": ((0.01, 0.84), (-0.39, 0.74))}
 BLOCK_HALF = 0.025
 BLOCK_R = BLOCK_HALF * np.sqrt(2.0)        # any yaw
 CLEAR = 0.01                               # free gap between bodies
 HAND_R = 0.02                              # pusher rod radius (conservative)
-DEFAULT_PUSH_STEP = {"pushing": 80, "inserting": 300}
 
 
 def add_ood_args(p):
@@ -69,7 +58,7 @@ def add_ood_args(p):
     g.add_argument("--ood-noise-pos", type=float, default=0.005, help="OOD-2: std of block x, y noise (m)")
     g.add_argument("--ood-noise-yaw", type=float, default=5.0, help="OOD-2: std of block yaw noise (deg)")
     g.add_argument("--ood-push-dist", type=float, default=0.04, help="OOD-3: teleport distance (m)")
-    g.add_argument("--ood-push-step", type=int, default=None, help="OOD-3: earliest step (default 80 pushing, 300 inserting)")
+    g.add_argument("--ood-push-step", type=int, default=None, help="OOD-3: earliest step (default: the task's push_step)")
     g.add_argument("--ood-push-phase", choices=["seam", "mid"], default="seam")
     g.add_argument("--ood-delay", type=int, default=2, help="OOD-4: inference delay in control steps")
     g.add_argument("--ood-seed", type=int, default=0)
@@ -90,10 +79,11 @@ def ood_tag(args):
 
 
 class OOD:
-    def __init__(self, args, task, env, n_boxes, execute_steps, horizon):
-        self.kind, self.task, self.env = args.ood, task, env
-        self.args, self.n_boxes, self.exe, self.horizon = args, n_boxes, execute_steps, horizon
-        self.push_step = args.ood_push_step if args.ood_push_step is not None else DEFAULT_PUSH_STEP[task]
+    def __init__(self, args, spec, env, execute_steps, horizon):
+        """``spec``: tasks.TaskSpec (blocks, demo init ranges, workspace, walls)."""
+        self.kind, self.spec, self.task, self.env = args.ood, spec, spec.name, env
+        self.args, self.n_boxes, self.exe, self.horizon = args, spec.n_boxes, execute_steps, horizon
+        self.push_step = args.ood_push_step if args.ood_push_step is not None else spec.push_step
         self.delay = args.ood_delay if self.kind == "delay" else 0
         d_max = min(horizon - execute_steps, execute_steps - 1)
         if self.kind == "delay" and not 0 < self.delay <= d_max:
@@ -104,21 +94,10 @@ class OOD:
 
     # ---- geometry -------------------------------------------------------------
     def _walls(self):
-        out = []
-        for i in range(1, 40):
-            obj = getattr(self.env, f"maze_{i}", None)
-            if obj is None:
-                continue
-            try:
-                pos = np.asarray(self.env.scene.get_obj_pos(obj), dtype=float)   # only walls present in the scene
-            except Exception:
-                continue
-            half = np.asarray(obj.size, dtype=float)[:2]
-            out.append((pos[:2], half))
-        return out
+        return self.spec.walls(self.env)
 
     def free(self, xy, others, hand_xy):
-        (x0, x1), (y0, y1) = WORKSPACE[self.task]
+        (x0, x1), (y0, y1) = self.spec.workspace
         if not (x0 + BLOCK_R <= xy[0] <= x1 - BLOCK_R and y0 + BLOCK_R <= xy[1] <= y1 - BLOCK_R):
             return False
         for o in others:
@@ -145,16 +124,16 @@ class OOD:
             return ctx
         d = self.args.ood_shift
         ctx = copy.deepcopy(ctx)
-        pos = [np.asarray(ctx[2 * i][:2], dtype=float).copy() for i in range(self.n_boxes)]
+        pos = [np.asarray(self.spec.ctx_box_xy(ctx, i), dtype=float).copy() for i in range(self.n_boxes)]
         applied = []
         for i in range(self.n_boxes):
-            (x0, x1), (y0, y1) = INIT_RANGE[self.task][i]
+            (x0, x1), (y0, y1) = self.spec.INIT_RANGE[i]
             p = pos[i]
             cands = [(p[0] - x0, np.array([x0 - d, p[1]]), "x-"), (x1 - p[0], np.array([x1 + d, p[1]]), "x+"),
                      (p[1] - y0, np.array([p[0], y0 - d]), "y-"), (y1 - p[1], np.array([p[0], y1 + d]), "y+")]
             cands.sort(key=lambda c: c[0])
             others = [pos[j] for j in range(self.n_boxes) if j != i]
-            other_ranges = [INIT_RANGE[self.task][j] for j in range(self.n_boxes) if j != i]
+            other_ranges = [self.spec.INIT_RANGE[j] for j in range(self.n_boxes) if j != i]
             for _, q, face in cands:
                 # do not move a block towards another block's start region: that is a different
                 # in-distribution situation (e.g. green where red usually starts), not "outside the demos"
@@ -167,7 +146,7 @@ class OOD:
             else:
                 applied.append({"box": i, "face": None, "from": p.tolist(), "to": p.tolist()})
         for i in range(self.n_boxes):
-            ctx[2 * i] = np.array([pos[i][0], pos[i][1], ctx[2 * i][2]])
+            ctx = self.spec.ctx_set_box_xy(ctx, i, pos[i])
         self.events[self.key] = {"shift": applied}
         return ctx
 
@@ -181,6 +160,40 @@ class OOD:
             p[:2] += self.rng.normal(0.0, a.ood_noise_pos, 2)
             out.append((p, quat, float(yaw + np.deg2rad(self.rng.normal(0.0, a.ood_noise_yaw)))))
         return out
+
+    def observe_state(self, st):
+        """OOD-2 on a tasks.State: noisy blocks, or the measured hand when the task has no blocks."""
+        if self.kind != "obsnoise":
+            return st
+        st = copy.copy(st)
+        if st.boxes:
+            st.boxes = self.observe_boxes(st.boxes)
+        else:
+            st.c = np.asarray(st.c, dtype=float).copy()
+            st.c[:2] += self.rng.normal(0.0, self.args.ood_noise_pos, 2)
+        return st
+
+    def push_hand(self, step, des, hand_xy):
+        """OOD-3 for tasks without blocks: displace the desired hand by ``--ood-push-dist``
+        (random direction that stays in the workspace and clear of the obstacles)."""
+        self.pushed = True
+        dist = self.args.ood_push_dist
+        rec = {"step": step, "hand_from": np.asarray(des[:2]).tolist(), "hand_to": None}
+        (x0, x1), (y0, y1) = self.spec.workspace
+        for th in self.rng.uniform(0, 2 * np.pi, 64):
+            q = np.asarray(des[:2], dtype=float) + dist * np.array([np.cos(th), np.sin(th)])
+            ok = x0 <= q[0] <= x1 and y0 <= q[1] <= y1
+            for c, h in self.walls:
+                if np.linalg.norm(np.maximum(np.abs(q - c) - h, 0.0)) < self.spec.hand_r + CLEAR:
+                    ok = False
+            if ok:
+                des = np.asarray(des, dtype=float).copy()
+                des[:2] = q
+                rec["hand_to"] = q.tolist()
+                self.event_step = step
+                break
+        self.events.setdefault(self.key, {})["push"] = rec
+        return des
 
     def push_due(self, step, n_queued):
         if self.kind != "push" or self.pushed or step < self.push_step:
@@ -211,7 +224,7 @@ class OOD:
         a = self.args
         d = {"kind": self.kind, "seed": a.ood_seed}
         if self.kind == "shift":
-            d.update(shift_m=a.ood_shift, init_range=INIT_RANGE[self.task])
+            d.update(shift_m=a.ood_shift, init_range=self.spec.INIT_RANGE)
         elif self.kind == "obsnoise":
             d.update(noise_pos_m=a.ood_noise_pos, noise_yaw_deg=a.ood_noise_yaw)
         elif self.kind == "push":

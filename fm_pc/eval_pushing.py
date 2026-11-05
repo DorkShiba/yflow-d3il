@@ -16,6 +16,7 @@ sys.path.insert(0, BASE)
 sys.path.insert(0, HERE)
 from constraints import add_constraint_args, build_policy_from_args, tag_suffix
 from ood import OOD, add_ood_args, ood_tag, pack_rollout, run_episode
+from tasks import get_task
 from train import Normalizer, add_spectral_norm, resolve_d3il, resolve_data_dir, resolve_hardflow
 
 
@@ -179,7 +180,7 @@ def main():
     policy, constraint_info = build_policy_from_args(args, policy)
     args.tag = (args.tag or '') + tag_suffix(args) + ood_tag(args)
     print('constraint injection:', json.dumps(constraint_info), flush=True)
-    ood = OOD(args, 'pushing', env, 2, args.execute_steps, cfg['horizon'])
+    ood = OOD(args, get_task('pushing'), env, args.execute_steps, cfg['horizon'])
     print('ood:', json.dumps(ood.describe()), flush=True)
 
     torch.manual_seed(args.seed)
