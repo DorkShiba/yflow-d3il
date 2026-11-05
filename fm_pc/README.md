@@ -123,6 +123,26 @@ python fm_pc/eval_pushing.py --run-dir $R --ckpt baseline_ema.pt --n-traj 4 --ex
 
 rollout에는 기존 키에 더해 `<ep>_seams`(새 청크가 실행을 시작한 step), `<ep>_pobs`(각 청크를 계획한 관측), `<ep>_event`(밀기 step, 없으면 −1)를 저장한다.
 
+### 고정 OOD 테스트 세트 (`make_ood_dataset.py` → `fm_baseline/ood_benchmark/<task>/`)
+
+학습 없이 만드는 **평가 조건 데이터셋**이다. context마다 OOD가 바꾸는 값을 파일에 고정해 두므로, 어떤 정책·방법이든 같은 조건에서 비교된다(현재 Pushing 60, Aligning 60, Inserting 82 context).
+
+| 요인 | 내용 | 약 / 중 / 강 (Pushing·Inserting) | Aligning |
+|---|---|---|---|
+| A 초기 블록 위치 | 모든 블록이 데모 초기 범위 경계 밖 d (가장 가까운 가능한 면) | 2.5 / 5 / 10 cm ($0.5b/1b/2b$, $b$ = 블록 한 변) | 5 / 10 / 15 cm (상자·목표, 15는 작업공간 상한) |
+| B 로봇 시작 | 손이 고정 시작점 (0.525, −0.28)에서 d만큼 떨어져 시작. 무작위 방향, 경로·끝점이 블록·벽과 안 겹침. 시뮬레이터에서 실제로 이동시켜 확인(블록 이동 < 1 mm, 손 오차 < 5 mm, 실측 최대 ≈ 3 mm) | 2 / 5 / 10 cm | 2 / 5 / 10 cm (시작점 (0.525, −0.349)) |
+| C 관측 노이즈 | 재계획마다 블록 x, y, yaw에 가우시안 (σ 고정 + 에피소드별 seed) | 2.5 / 5 / 10 mm, 2.5 / 5 / 10° (블록 한 변의 5/10/20 %) | 5 / 10 / 20 mm, 2.5 / 5 / 10° |
+
+조건 14개: `id`, `{A,B,C}_{weak,mid,strong}`, `AB_mid`, `AC_mid`, `BC_mid`, `ABC_mid` (2³ 요인 설계). 요인마다 context별 난수열이 따로 있어서(공통 난수), 조합 조건은 단일 요인 조건과 같은 배치·방향·노이즈 draw를 재사용한다. 초기 yaw OOD는 없다: D3IL이 모든 블록의 yaw를 ±90°에서 뽑아 대칭 주기를 이미 다 덮는다.
+
+```bash
+python fm_pc/make_ood_dataset.py --task pushing aligning inserting      # 재생성 (seed 0, 결과 동일)
+python fm_pc/eval_task.py --task pushing --run-dir <run> --n-traj 4 --ood-file fm_baseline/ood_benchmark/pushing/AB_mid.pkl
+OODSET=1 RUN=<run> bash fm_pc/run_ood_benchmark.sh aligning              # 14개 조건 전부 + ood_metrics 요약
+```
+
+`id.pkl`로 돌린 결과는 `--ood none`과 비트 단위로 같다. 파일 형식: `{task, cond, version, seed, factors, episodes: [{name, context, robot_start, hand_actual, noise_seed, shift, robot}]}`, 조건별 적용 통계는 `manifest.json`. Inserting은 `--ood-file`일 때 `eval_task.py`로 평가한다(`eval_inserting.py`는 미지원).
+
 ### VESSL에서 돌리는 순서
 
 ```bash
