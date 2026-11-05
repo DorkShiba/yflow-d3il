@@ -139,6 +139,10 @@ class TaskSpec:
         """Indices of the blocks OOD-3 may teleport (default: all)."""
         return list(range(len(boxes)))
 
+    def hand_clear(self, xy, old_xy, yaw, hand_xy, r, clear):
+        """May a block (bounding radius r) be placed at xy, given the hand?  Default: no overlap."""
+        return np.linalg.norm(xy - hand_xy) >= r + self.hand_r + clear
+
     # ---- state / observation / command ---------------------------------------
     def read(self, env):
         env.robot.receiveState()
@@ -345,6 +349,19 @@ class Aligning(TaskSpec):
 
     def pushable(self, boxes, hand_xy):
         return [0]
+
+    # the push box is open (walls 5 mm thick, inner half 4.5 cm); the rod (r 1 cm) works inside it
+    OUTER, INNER, ROD_R = 0.05, 0.045, 0.01
+
+    def hand_clear(self, xy, old_xy, yaw, hand_xy, r, clear):
+        """Rod inside the box: the box may move only so that the rod stays inside (5 mm from the walls)."""
+        def rel(c):
+            c_, s_ = np.cos(yaw), np.sin(yaw)
+            d = hand_xy - np.asarray(c, dtype=float)
+            return np.abs(np.array([c_ * d[0] + s_ * d[1], -s_ * d[0] + c_ * d[1]]))
+        if old_xy is not None and rel(old_xy).max() < self.OUTER:
+            return rel(xy).max() <= self.INNER - self.ROD_R - 0.005
+        return super().hand_clear(xy, old_xy, yaw, hand_xy, r, clear)
 
     def init_des(self, env, s):
         return s.c[:3].copy(), np.zeros(0)

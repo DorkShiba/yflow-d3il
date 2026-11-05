@@ -112,7 +112,7 @@ python fm_pc/eval_pushing.py --run-dir $R --ckpt baseline_ema.pt --n-traj 4 --ex
 | pushing | 12 / 2 | Δ 목표 손 xy | 빨강·초록 | D3IL test 60 | 30 × 4 | 80 | success, mode |
 | inserting | 16 / 2 | Δ 목표 손 xy | box 1–3 (미로 벽 회피) | `fm_baseline/contexts/inserting_val.pkl` | 전체 × 4 | 300 | success, boxes |
 | avoiding | 4 / 2 | Δ 목표 손 xy | 없음 (손) | 고정 시작 (rollout index) | 100 × 1 | 24 | success, 경로 mode 엔트로피(24), score 0.8s+0.2e |
-| aligning | 14 / 3 | Δ 목표 손 xyz | push box만 (target은 고정) | D3IL test 60 | 60 × 4 | 80 | success, mode 엔트로피 |
+| aligning | 14 / 3 | Δ 목표 손 xyz | OOD-1: push box·target 둘 다, OOD-3: push box만 (상자는 위가 열려 있고 막대가 안에서 민다 → 막대가 안쪽 벽에서 5 mm 이상 떨어진 채 남는 방향으로만 이동) | D3IL test 60 | 60 × 4 | 80 | success, mode 엔트로피 |
 | sorting_2/4/6 | 4+4n / 2 | Δ 목표 손 xy | 빨강 k, 파랑 k (공통 시작 범위, 목표 영역 벽 회피) | `fm_baseline/contexts/sorting_{n}_test_contexts.pkl` | 30 × 4 | 100 / 150 / 250 | success, 순서 mode 엔트로피 |
 | stacking | 23 / 8 | Δ 목표 관절 7 + 그리퍼 폭(절대값) | 테이블 위에 있고 손가락 사이가 아닌 블록 | D3IL test 100 | 30 × 4 | 150 | success 1/2/3단, 쌓는 순서 엔트로피(6) |
 

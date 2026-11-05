@@ -97,7 +97,7 @@ class OOD:
     def _walls(self):
         return self.spec.walls(self.env)
 
-    def free(self, xy, others, hand_xy):
+    def free(self, xy, others, hand_xy, old_xy=None, yaw=0.0):
         (x0, x1), (y0, y1) = self.spec.workspace
         r = self.block_r
         if not (x0 + r <= xy[0] <= x1 - r and y0 + r <= xy[1] <= y1 - r):
@@ -105,7 +105,7 @@ class OOD:
         for o in others:
             if np.linalg.norm(xy - o) < 2 * r + CLEAR:
                 return False
-        if hand_xy is not None and np.linalg.norm(xy - hand_xy) < r + self.spec.hand_r + CLEAR:
+        if hand_xy is not None and not self.spec.hand_clear(xy, old_xy, yaw, np.asarray(hand_xy, dtype=float), r, CLEAR):
             return False
         for c, h in self.walls:          # circle vs axis-aligned box
             d = np.maximum(np.abs(xy - c) - h, 0.0)
@@ -218,7 +218,7 @@ class OOD:
         rec = {"step": step, "box": i, "from": xy[i].tolist(), "to": None}
         for th in self.rng.uniform(0, 2 * np.pi, 64):
             q = xy[i] + dist * np.array([np.cos(th), np.sin(th)])
-            if self.free(q, others, hand_xy):
+            if self.free(q, others, hand_xy, xy[i], float(boxes[i][2])):
                 z = float(boxes[i][0][2])
                 self.env.scene.set_obj_pos_and_quat([q[0], q[1], z], np.asarray(boxes[i][1], dtype=float), sim_obj=box_objs[i])
                 rec["to"] = q.tolist()
