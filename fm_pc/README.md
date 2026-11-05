@@ -92,3 +92,38 @@ python fm_pc/eval_pushing.py --run-dir $R --ckpt baseline_ema.pt --n-traj 4 --ex
 - **그러나 guidance는 jitter를 줄이지 못한다.** 전 구간·후반($t\ge0.5$)에 걸면 모든 site·λ에서 jerk가 늘고 `>amax`가 크게 오른다(외삽이 action 크기를 데이터 범위 밖으로 키움). 초반($t<0.5$)에만 걸면 jerk가 최대 4~6% 줄지만 샘플 다양성이 15% 줄고 `>amax`가 늘어, 의미 있는 이득으로 보기 어렵다.
 - 원인 추정: 데모 action이 축마다 $\{-a_{\max},0,+a_{\max}\}$의 bang-bang이라, 계획 안의 부호 반전은 거의 없고(청크당 0.002회) jerk 대부분은 0↔$a_{\max}$ 전환이다. ACG가 겨냥하는 "사람 데모의 고주파 떨림"이 이 데이터에는 거의 없다.
 - **관측을 분포 밖으로 밀면**(정규화 공간 noise σ=0.1, 0.3) 베이스라인의 `bJerk`가 0.383 → 1.012 → 1.411로 2.6~3.7배가 되는 반면 청크 내부 `jerk`는 0.221 → 0.320 → 0.333(+45~50%)이다. OOD에서 늘어나는 jerk는 주로 **청크 경계**에 있고, 이때도 ACG는 효과가 없다(±3% 이내). 단 `bJerk`는 오프라인에서 데모 이력과 비교한 값이라, 폐루프에서는 직전 계획을 이력으로 다시 재야 한다.
+
+## OOD 벤치마크 (`ood.py`, `ood_metrics.py`, `run_ood_benchmark.sh`)
+
+정책·체크포인트·실행 방식(16 생성, 앞 8 실행, Euler 10)은 그대로 두고 **테스트 상황만** 데모 분포 밖으로 옮긴다. 한 실행에 조건 하나(`--ood`)만 켠다. `--ood none`이면 기존 평가 루프와 호출 순서까지 같다(OOD 난수는 전용 Generator를 쓰므로 정책의 torch/numpy 난수열을 건드리지 않는다).
+
+| 조건 | 옵션 | 상황 |
+|---|---|---|
+| ID | `--ood none` | 기준 |
+| OOD-1 초기 이동 | `--ood shift --ood-shift 0.02` | 모든 블록이 데모 초기 범위 밖 d m에서 시작. 가장 가까운 면부터, 다른 블록·손·벽·작업공간과 겹치지 않는 면을 고른다 |
+| OOD-2 관측 노이즈 | `--ood obsnoise --ood-noise-pos 0.005 --ood-noise-yaw 5` | 재계획마다 정책이 보는 블록 x, y, yaw에 가우시안 노이즈. 실제 상태는 그대로 |
+| OOD-3 중간 밀기 | `--ood push --ood-push-dist 0.04` | `--ood-push-step` 이후 첫 재계획 직전에 손에 가장 가까운 블록을 d m 순간이동(무작위 방향, 충돌 없는 방향만). `--ood-push-phase mid`면 청크 중간에 밀어 남은 4 step을 틀린 계획으로 실행 |
+| OOD-4 추론 지연 | `--ood delay --ood-delay 2` | 다음 청크를 d step 전 관측으로 계획하고, 새 청크의 d번째 action부터 실행(naive async) |
+
+데모 초기 범위: Pushing 빨강 x 0.40–0.50, 초록 x 0.55–0.65, y −0.15–0 m; Inserting box1 [0.35,0.50]×[−0.20,−0.15], box2 [0.55,0.70]×[−0.10,−0.05], box3 [0.35,0.50]×[0,0.05] (D3IL context sampler). 적용된 이동·밀기 기록은 `results.json`의 `ood.events`에 남는다.
+
+rollout에는 기존 키에 더해 `<ep>_seams`(새 청크가 실행을 시작한 step), `<ep>_pobs`(각 청크를 계획한 관측), `<ep>_event`(밀기 step, 없으면 −1)를 저장한다.
+
+```bash
+bash fm_pc/run_ood_benchmark.sh pushing                     # ID + 9개 OOD 조건 → <run>/ood_logs_base_<stamp>/summary
+TAG=pc JOBS=2 bash fm_pc/run_ood_benchmark.sh pushing --sampler pc --constraints action_box,tracking
+QUICK=1 bash fm_pc/run_ood_benchmark.sh inserting           # 빠른 점검 (4 context x 1)
+python fm_pc/ood_metrics.py --eval-dir <ID 폴더> --label id --eval-dir <OOD 폴더> --label push5cm
+```
+
+`ood_metrics.py` 지표 (단위 $a_{\max}$, Δ = 같은 context에서 ID 대비 차이, 95% CI는 context bootstrap):
+
+| 지표 | 정의 |
+|---|---|
+| `J_seam` | 청크 경계 $s$에서 $\lVert a_s - 2a_{s-1} + a_{s-2}\rVert / a_{\max}$ (목표 손 위치의 3차 차분) |
+| `J_in` | $t, t-1$이 경계가 아닌 step의 같은 값 (청크 내부) |
+| `jump` | 경계에서 $\lVert a_s - a_{s-1}\rVert / a_{\max}$ |
+| `JerkRMS` | 목표 손 위치의 $\sqrt{\mathrm{mean}\lVert \Delta^3 d / \Delta t^3\rVert^2}$ (m/s³, $\Delta t$ = 0.035 s) |
+| `ATV` | $\mathrm{mean}\lVert a_t - a_{t-1}\rVert / a_{\max}$ |
+| `J_event` | 밀기 직후 첫 경계의 jerk (OOD-3) |
+| `OOD dist` | 계획에 쓴 관측과 가장 가까운 학습 관측 사이 거리(정규화 공간). 조건이 실제로 분포 밖이었는지 확인용 |
