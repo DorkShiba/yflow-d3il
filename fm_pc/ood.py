@@ -89,6 +89,7 @@ class OOD:
         if self.kind == "delay" and not 0 < self.delay <= d_max:
             raise SystemExit(f"--ood-delay must be in 1..{d_max} (horizon {horizon}, execute {execute_steps})")
         self.walls = self._walls()
+        self.block_r = spec.block_half * np.sqrt(2.0)        # circumscribed radius, any yaw
         self.events = {}
         self.rng = None
 
@@ -98,16 +99,17 @@ class OOD:
 
     def free(self, xy, others, hand_xy):
         (x0, x1), (y0, y1) = self.spec.workspace
-        if not (x0 + BLOCK_R <= xy[0] <= x1 - BLOCK_R and y0 + BLOCK_R <= xy[1] <= y1 - BLOCK_R):
+        r = self.block_r
+        if not (x0 + r <= xy[0] <= x1 - r and y0 + r <= xy[1] <= y1 - r):
             return False
         for o in others:
-            if np.linalg.norm(xy - o) < 2 * BLOCK_R + CLEAR:
+            if np.linalg.norm(xy - o) < 2 * r + CLEAR:
                 return False
-        if hand_xy is not None and np.linalg.norm(xy - hand_xy) < BLOCK_R + HAND_R + CLEAR:
+        if hand_xy is not None and np.linalg.norm(xy - hand_xy) < r + self.spec.hand_r + CLEAR:
             return False
         for c, h in self.walls:          # circle vs axis-aligned box
             d = np.maximum(np.abs(xy - c) - h, 0.0)
-            if np.linalg.norm(d) < BLOCK_R + CLEAR:
+            if np.linalg.norm(d) < r + CLEAR:
                 return False
         return True
 
@@ -133,7 +135,8 @@ class OOD:
                      (p[1] - y0, np.array([p[0], y0 - d]), "y-"), (y1 - p[1], np.array([p[0], y1 + d]), "y+")]
             cands.sort(key=lambda c: c[0])
             others = [pos[j] for j in range(self.n_boxes) if j != i]
-            other_ranges = [self.spec.INIT_RANGE[j] for j in range(self.n_boxes) if j != i]
+            own = self.spec.INIT_RANGE[i]
+            other_ranges = [self.spec.INIT_RANGE[j] for j in range(self.n_boxes) if j != i and self.spec.INIT_RANGE[j] != own]
             for _, q, face in cands:
                 # do not move a block towards another block's start region: that is a different
                 # in-distribution situation (e.g. green where red usually starts), not "outside the demos"
@@ -205,7 +208,11 @@ class OOD:
         """OOD-3: teleport the block nearest the hand by ``--ood-push-dist`` (random feasible direction)."""
         self.pushed = True
         xy = [np.asarray(b[0][:2], dtype=float) for b in boxes]
-        i = int(np.argmin([np.linalg.norm(p - hand_xy) for p in xy]))
+        cand = self.spec.pushable(boxes, hand_xy)
+        if not cand:
+            self.events.setdefault(self.key, {})["push"] = {"step": step, "box": None, "from": None, "to": None}
+            return False
+        i = min(cand, key=lambda j: np.linalg.norm(xy[j] - hand_xy))
         others = [xy[j] for j in range(len(xy)) if j != i]
         dist = self.args.ood_push_dist
         rec = {"step": step, "box": i, "from": xy[i].tolist(), "to": None}

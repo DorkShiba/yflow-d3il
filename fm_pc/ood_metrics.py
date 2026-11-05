@@ -35,6 +35,8 @@ import numpy as np
 from scipy.spatial import cKDTree
 
 DT = 0.035
+# tasks whose action is not a pure position increment: (number of motion dims, control period)
+MOTION = {"stacking": (7, 0.030)}        # 7 joint increments (+ absolute gripper width, excluded)
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -42,7 +44,7 @@ def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument("--eval-dir", action="append", required=True)
     p.add_argument("--label", action="append", default=None)
-    p.add_argument("--data-dir", default=None, help="processed data dir (default: <repo>/data/<task>_sincos_v1)")
+    p.add_argument("--data-dir", default=None, help="processed data dir (default: the run's config data_dir, else <repo>/data/<task>_sincos_v1)")
     p.add_argument("--n-train", type=int, default=200000, help="train observations used for the OOD distance")
     p.add_argument("--n-boot", type=int, default=5000)
     p.add_argument("--out", default=None)
@@ -57,8 +59,10 @@ def load_eval(d):
     return res, roll
 
 
-def train_tree(task, data_dir, center, scale, n, rng):
-    data_dir = data_dir or os.path.join(REPO, "data", f"{task}_sincos_v1")
+def train_tree(task, data_dir, center, scale, n, rng, saved=None):
+    if not data_dir:
+        cands = [saved, os.path.join(REPO, "data", f"{task}_sincos_v1")]
+        data_dir = next((c for c in cands if c and os.path.isdir(os.path.join(c, "train"))), cands[-1])
     files = sorted(glob.glob(os.path.join(data_dir, "train", "*.npz")))
     if not files:
         raise SystemExit(f"no training data under {data_dir}/train")
@@ -68,9 +72,9 @@ def train_tree(task, data_dir, center, scale, n, rng):
     return cKDTree((obs - center) / scale)
 
 
-def rollout_metrics(roll, key, a_max, exe, tree, center, scale):
-    a = roll[key + "_act"].astype(np.float64)
-    des = roll[key + "_des"].astype(np.float64)
+def rollout_metrics(roll, key, a_max, exe, tree, center, scale, md=None, dt=DT):
+    a = roll[key + "_act"].astype(np.float64)[:, :md]
+    des = roll[key + "_des"].astype(np.float64)[:, :md]
     T = len(a)
     seams = roll[key + "_seams"].astype(int) if key + "_seams" in roll else np.arange(0, T, exe)
     S = set(int(s) for s in seams)
@@ -80,7 +84,7 @@ def rollout_metrics(roll, key, a_max, exe, tree, center, scale):
     j_seam = [j3[s] for s in seams if 2 <= s < T]
     jump = [np.linalg.norm(a[s] - a[s - 1]) / a_max for s in seams if 1 <= s < T]
     j_in = [j3[t] for t in range(2, T) if t not in S and (t - 1) not in S]
-    jr = np.diff(des, n=3, axis=0) / DT ** 3 if T > 3 else np.zeros((1, 2))
+    jr = np.diff(des, n=3, axis=0) / dt ** 3 if T > 3 else np.zeros((1, a.shape[1]))
     out = {
         "J_seam": np.mean(j_seam) if j_seam else np.nan,
         "jump": np.mean(jump) if jump else np.nan,
@@ -105,7 +109,7 @@ def rollout_metrics(roll, key, a_max, exe, tree, center, scale):
     return out
 
 
-def per_context(res, roll, a_max, exe, tree, center, scale):
+def per_context(res, roll, a_max, exe, tree, center, scale, md=None, dt=DT):
     n_ctx, n_traj = int(res["n_contexts"]), int(res["n_traj"])
     keys = ["J_seam", "jump", "J_in", "JerkRMS", "ATV", "J_event", "OOD", "OOD_event"]
     m = {k: np.full((n_ctx, n_traj), np.nan) for k in keys}
@@ -114,7 +118,7 @@ def per_context(res, roll, a_max, exe, tree, center, scale):
             key = f"c{ci:03d}_t{ti}"
             if key + "_act" not in roll:
                 continue
-            r = rollout_metrics(roll, key, a_max, exe, tree, center, scale)
+            r = rollout_metrics(roll, key, a_max, exe, tree, center, scale, md, dt)
             for k in keys:
                 m[k][ci, ti] = r[k]
     m["success"] = roll["successes"].astype(float)
@@ -145,14 +149,15 @@ def main():
         cfg = json.load(f)
     task, act_dim = cfg["task"], cfg["act_dim"]
     nz = np.load(os.path.join(run_dir, "normalizer.npz"))
-    a_max = float(np.asarray(nz["scale"])[:act_dim].max())
+    md, dt = MOTION.get(task, (act_dim, DT))
+    a_max = float(np.asarray(nz["scale"])[:md].max())
     center, scale = np.asarray(nz["center"])[act_dim:], np.asarray(nz["scale"])[act_dim:]
-    tree = train_tree(task, args.data_dir, center, scale, args.n_train, rng)
+    tree = train_tree(task, args.data_dir, center, scale, args.n_train, rng, cfg.get("data_dir"))
 
     metrics = []
     for res, roll in runs:
         exe = int(res.get("execute_steps", 8))
-        metrics.append(per_context(res, roll, a_max, exe, tree, center, scale))
+        metrics.append(per_context(res, roll, a_max, exe, tree, center, scale, md, dt))
     n_ctx = min(m["success"].shape[0] for m in metrics)
     idx = rng.integers(0, n_ctx, size=(args.n_boot, n_ctx))
 
@@ -188,9 +193,10 @@ def main():
             s += f" ({100 * r[dk]:+.1f} [{100 * lo:+.1f},{100 * hi:+.1f}])" if pct else f" ({r[dk]:+.{d}f} [{lo:+.{d}f},{hi:+.{d}f}])"
         return s
 
-    head = f"# {task}: {n_ctx} contexts x {res0['n_traj']} rollouts, a_max {a_max:.5f} m; (Δ [95% CI]) = paired vs '{labels[0]}', bootstrap over contexts"
+    unit = "rad (joints)" if task in MOTION else "m"
+    head = f"# {task}: {n_ctx} contexts x {res0['n_traj']} rollouts, a_max {a_max:.5f} {unit}; (Δ [95% CI]) = paired vs '{labels[0]}', bootstrap over contexts"
     lines = [head, "",
-             "| run | OOD kind | success % | entropy | J_seam | J_in | seam/in | jump | JerkRMS (m/s³) | ATV | J_event | OOD dist | OOD at event |",
+             "| run | OOD kind | success % | entropy | J_seam | J_in | seam/in | jump | JerkRMS (unit/s³) | ATV | J_event | OOD dist | OOD at event |",
              "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in rows:
         ent = "–" if r["entropy"] is None else f"{r['entropy']:.3f}"

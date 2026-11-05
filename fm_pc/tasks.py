@@ -135,6 +135,10 @@ class TaskSpec:
     def walls(self, env):
         return []
 
+    def pushable(self, boxes, hand_xy):
+        """Indices of the blocks OOD-3 may teleport (default: all)."""
+        return list(range(len(boxes)))
+
     # ---- state / observation / command ---------------------------------------
     def read(self, env):
         env.robot.receiveState()
@@ -257,7 +261,270 @@ class Inserting(TaskSpec):
                 "three_box_rate": float((nb >= 3).mean())}
 
 
-TASKS = {"pushing": Pushing, "inserting": Inserting}
+# ======================================================================================
+class Avoiding(TaskSpec):
+    """No movable objects; the start pose is fixed and nothing is randomised at reset.
+    A 'context' is one rollout index (None), or ``{"start": [x, y]}`` for OOD-1.
+    OOD on the hand: shift = start pose moved d away from the demo start,
+    obsnoise = noise on the measured hand xy, push = desired hand displaced by d."""
+    name, obs_dim, act_dim, n_boxes = "avoiding", 4, 2, 0
+    START = (0.525, -0.28)
+    # six static cylinders (centre, AABB half-extent = radius)
+    OBSTACLES = [((0.50, -0.10), 0.03), ((0.425, 0.08), 0.025), ((0.575, 0.08), 0.025),
+                 ((0.35, 0.26), 0.025), ((0.50, 0.26), 0.025), ((0.65, 0.26), 0.025)]
+    workspace = ((0.25, 0.80), (-0.35, 0.33))          # below the finish line y = 0.35
+    max_steps, push_step = 250, 24
+
+    def make_env(self, max_steps):
+        from envs.gym_avoiding_env.gym_avoiding.envs.avoiding import ObstacleAvoidanceEnv
+        env = ObstacleAvoidanceEnv(render=False, n_substeps=35, max_steps_per_episode=max_steps)
+        env.start()
+        return env
+
+    def contexts(self, args, cfg):
+        n = args.n_contexts or 100
+        return [(f"rollout_{i:03d}", None) for i in range(n)]
+
+    def reset(self, env, ctx):
+        env.reset()
+        if isinstance(ctx, dict) and "start" in ctx:
+            z = float(env.robot.current_c_pos[2])
+            env.robot.gotoCartPositionAndQuat(desiredPos=[ctx["start"][0], ctx["start"][1], z],
+                                              desiredQuat=[0, 1, 0, 0], duration=0.5)
+
+    def walls(self, env):
+        return [(np.asarray(c, dtype=float), np.array([r, r])) for c, r in self.OBSTACLES]
+
+    def shift_start(self, env, ctx, ood):
+        """OOD-1: start d away from the (fixed) demo start, sideways or backwards (seeded)."""
+        d = ood.args.ood_shift
+        dirs = [("x-", (-1.0, 0.0)), ("x+", (1.0, 0.0)), ("y-", (0.0, -1.0))]
+        name, v = dirs[int(ood.rng.integers(len(dirs)))]
+        start = [self.START[0] + d * v[0], self.START[1] + d * v[1]]
+        ood.events[ood.key] = {"shift": [{"face": name, "from": list(self.START), "to": start}]}
+        return {"start": start}
+
+    def outcome(self, info):
+        enc, succ = info if isinstance(info, tuple) else (np.zeros(9), False)
+        enc = np.asarray(enc).astype(int)
+        return {"success": float(bool(succ)), "mode": int(enc.dot(1 << np.arange(len(enc))))}
+
+    def summarize(self, out):
+        s, m = out["success"].ravel(), out["mode"].ravel()
+        r = {"success_rate": float(s.mean()), "entropy": None}
+        ok = m[s == 1]
+        if len(ok):
+            _, cnt = np.unique(ok, return_counts=True)
+            p = cnt / cnt.sum()
+            r["entropy"] = float(-(p * np.log(p)).sum() / np.log(24))
+            r["score"] = 0.8 * r["success_rate"] + 0.2 * r["entropy"]
+        return r
+
+
+class Aligning(TaskSpec):
+    """Push a 10 cm open box onto a target pose.  Block 0 = push box, block 1 = target
+    (visual only: part of the context and the observation, never teleported)."""
+    name, obs_dim, act_dim, n_boxes = "aligning", 14, 3, 2
+    box_attrs = ("push_box", "target_box")
+    INIT_RANGE = [((0.40, 0.60), (-0.25, -0.10)), ((0.40, 0.60), (0.20, 0.35))]
+    workspace = ((0.25, 0.80), (-0.40, 0.50))
+    block_half = 0.055
+    max_steps, push_step = 400, 80
+
+    def make_env(self, max_steps):
+        from envs.gym_aligning_env.gym_aligning.envs.aligning import Robot_Push_Env
+        env = Robot_Push_Env(render=False, n_substeps=35, max_steps_per_episode=max_steps, if_vision=False)
+        env.start()
+        return env
+
+    def contexts(self, args, cfg):
+        f = args.contexts_file or os.path.join(args.d3il_root, "environments/dataset/data/aligning", f"{args.contexts}_contexts.pkl")
+        ctx = np.load(f, allow_pickle=True)
+        n = len(ctx) if not args.n_contexts else min(args.n_contexts, len(ctx))
+        return [(f"{args.contexts}_{i:03d}", ctx[i]) for i in range(n)]
+
+    def pushable(self, boxes, hand_xy):
+        return [0]
+
+    def init_des(self, env, s):
+        return s.c[:3].copy(), np.zeros(0)
+
+    def obs(self, des, s):
+        return np.concatenate([np.asarray(des[:3]), s.c[:3], box_feats(s.boxes)]).astype(np.float32)
+
+    def command(self, des, fixed):
+        return np.concatenate([des, [0.0, 1.0, 0.0, 0.0]])
+
+    def summarize(self, out):
+        s, m = out["success"], out["mode"]
+        ent = mode_entropy(m, s, range(2))
+        r = {"success_rate": float(s.mean()), "entropy": ent, "mean_distance": float(np.nanmean(out["mean_distance"]))}
+        if ent is not None:
+            r["score"] = 0.5 * (r["success_rate"] + ent)
+        return r
+
+
+class Sorting(TaskSpec):
+    """Sort k red and k blue blocks into their regions.  The six start slots are shuffled
+    per context, so every block shares one demo start region (bounding box of the slots).
+    Context = list of 6 [pos (x, y, deg), quat]; red_1..red_k take ctx[0:k], blue ctx[k:2k]."""
+    act_dim = 2
+    INIT_BOX = ((0.40, 0.65), (-0.15, 0.10))
+    # static walls of the two target regions (centre, half-extent), sorting_objects.py
+    TARGET_WALLS = [((0.4, 0.41), (0.1, 0.01)), ((0.3, 0.32), (0.005, 0.1)), ((0.5, 0.32), (0.005, 0.1)),
+                    ((0.4, 0.22), (0.1, 0.005)), ((0.625, 0.41), (0.1, 0.01)), ((0.525, 0.32), (0.005, 0.1)),
+                    ((0.725, 0.32), (0.005, 0.1)), ((0.625, 0.22), (0.1, 0.005))]
+    workspace = ((0.25, 0.80), (-0.35, 0.45))
+    block_half = 0.03
+    STEPS = {2: (500, 100), 4: (700, 150), 6: (1200, 250)}
+
+    def __init__(self, n):
+        super().__init__()
+        self.n = n
+        self.k = n // 2
+        self.name = f"sorting_{n}"
+        self.n_boxes = n
+        self.obs_dim = 4 + 4 * n
+        self.box_attrs = tuple(f"red_box_{i}" for i in range(1, self.k + 1)) + tuple(f"blue_box_{i}" for i in range(1, self.k + 1))
+        self.INIT_RANGE = [self.INIT_BOX] * n
+        self.max_steps, self.push_step = self.STEPS[n]
+
+    def make_env(self, max_steps):
+        from envs.gym_sorting_env.gym_sorting.envs.sorting import Sorting_Env
+        env = Sorting_Env(render=False, n_substeps=35, max_steps_per_episode=max_steps, num_boxes=self.n, if_vision=False)
+        env.start()
+        return env
+
+    def contexts(self, args, cfg):
+        """Official files are generated by D3IL's get_contexts.py (not shipped); see make_sorting_contexts.py."""
+        import pickle
+        base = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "fm_baseline", "contexts")
+        f = args.contexts_file or os.path.join(base, f"sorting_{self.n}_{args.contexts}_contexts.pkl")
+        with open(f, "rb") as fh:
+            ctx = pickle.load(fh)
+        n = min(args.n_contexts or 30, len(ctx))
+        return [(f"{args.contexts}_{i:03d}", ctx[i]) for i in range(n)]
+
+    def reset(self, env, ctx):
+        env.reset(random=False, context=copy.deepcopy(ctx), if_vision=False)
+
+    def ctx_box_xy(self, ctx, i):
+        return np.asarray(ctx[i][0][:2], dtype=float)
+
+    def ctx_set_box_xy(self, ctx, i, xy):
+        ctx = [list(e) for e in ctx]
+        ctx[i][0] = np.array([xy[0], xy[1], ctx[i][0][2]])
+        return ctx
+
+    def walls(self, env):
+        return [(np.asarray(c, dtype=float), np.asarray(h, dtype=float)) for c, h in self.TARGET_WALLS]
+
+    def outcome(self, info):
+        return {"success": float(bool(info.get("success", False))), "mode": int(info.get("mode", -1))}
+
+    def summarize(self, out):
+        s, m = out["success"], out["mode"]
+        from math import comb
+        ids = sorted(set(m[s == 1].astype(int).tolist())) or [0]
+        n_mode = comb(self.n, self.k)            # orders of k red and k blue placements
+        r = {"success_rate": float(s.mean()), "n_modes_seen": len(ids), "n_modes_possible": n_mode}
+        if s.shape[1] > 1:
+            ent = []
+            for ci in range(s.shape[0]):
+                p = np.array([np.sum((m[ci] == k) & (s[ci] == 1)) for k in ids], dtype=float)
+                if p.sum() > 0:
+                    p /= p.sum()
+                    ent.append(float(-(p * np.log(p + 1e-12)).sum() / np.log(n_mode)))
+            r["entropy"] = float(np.mean(ent)) if ent else 0.0
+        return r
+
+
+class Stacking(TaskSpec):
+    """Stack red, green, blue on the target (joint-position control + binary gripper).
+    obs = [desired joints 7, gripper 1, per block (x, y, z, sin yaw, cos yaw)];
+    action = [desired-joint increment 7, gripper width (absolute)].
+    Context = 4 [pos (x, y, deg), quat] pairs: red, green, blue, target (target is ignored by D3IL)."""
+    name, obs_dim, act_dim, n_boxes = "stacking", 23, 8, 3
+    box_attrs = ("red_box", "green_box", "blue_box")
+    INIT_RANGE = [((0.35, 0.45), (-0.25, -0.15)), ((0.35, 0.45), (-0.10, 0.00)), ((0.55, 0.60), (-0.20, 0.00))]
+    TARGET = ((0.5, 0.2), (0.05, 0.05))
+    workspace = ((0.25, 0.75), (-0.35, 0.35))
+    block_half = 0.05                     # blue is 6 x 10 cm; use the long half side for all
+    hand_r = 0.06                         # gripper fingers
+    ON_TABLE_Z = 0.045                    # resting centre z ~0.03; above this a block is held or stacked
+    max_steps, push_step = 1000, 150
+    motion_dims, dt = 7, 0.030            # jerk metrics on the 7 joints; n_substeps 30 x 1 ms
+
+    def make_env(self, max_steps):
+        from envs.gym_stacking_env.gym_stacking.envs.stacking import CubeStacking_Env
+        env = CubeStacking_Env(render=False, max_steps_per_episode=max_steps)
+        env.start()
+        return env
+
+    def contexts(self, args, cfg):
+        f = args.contexts_file or os.path.join(args.d3il_root, "environments/dataset/data/stacking", f"{args.contexts}_contexts.pkl")
+        ctx = np.load(f, allow_pickle=True)
+        n = len(ctx) if not args.n_contexts else min(args.n_contexts, len(ctx))
+        return [(f"{args.contexts}_{i:03d}", ctx[i]) for i in range(n)]
+
+    def ctx_box_xy(self, ctx, i):
+        return np.asarray(ctx[i][0][:2], dtype=float)
+
+    def ctx_set_box_xy(self, ctx, i, xy):
+        ctx = [list(e) for e in ctx]
+        ctx[i][0] = np.array([xy[0], xy[1], ctx[i][0][2]])
+        return ctx
+
+    def walls(self, env):
+        return [(np.asarray(self.TARGET[0], dtype=float), np.asarray(self.TARGET[1], dtype=float))]
+
+    def pushable(self, boxes, hand_xy):
+        """Only blocks resting on the table and not between the fingers."""
+        return [i for i, (p, _q, _y) in enumerate(boxes)
+                if p[2] < self.ON_TABLE_Z and np.linalg.norm(np.asarray(p[:2]) - hand_xy) > self.hand_r + 0.02]
+
+    def read(self, env):
+        s = super().read(env)
+        env.robot.receiveState()
+        s.extra["j"] = np.asarray(env.robot.current_j_pos, dtype=np.float64).copy()
+        s.extra["g"] = float(env.robot.gripper_width)
+        return s
+
+    def init_des(self, env, s):
+        return np.r_[s.extra["j"], s.extra["g"]], np.zeros(0)
+
+    def obs(self, des, s):
+        feats = [v for pos, _q, yaw in s.boxes for v in (pos[0], pos[1], pos[2], np.sin(yaw), np.cos(yaw))]
+        return np.concatenate([np.asarray(des[:8]), feats]).astype(np.float32)
+
+    def apply(self, des, a):
+        a = np.asarray(a, dtype=np.float64)
+        return np.r_[des[:7] + a[:7], a[7]]
+
+    def command(self, des, fixed):
+        return np.asarray(des, dtype=np.float64)
+
+    def log_state(self, s):
+        return np.concatenate([np.r_[p[:3], y] for p, _q, y in s.boxes] + [[s.extra["g"]]])
+
+    MODE3 = {"rgb": 0, "rbg": 1, "grb": 2, "gbr": 3, "brg": 4, "bgr": 5}
+
+    def outcome(self, info):
+        mode = str(info.get("mode", ""))
+        return {"success": float(bool(info.get("success", False))), "success_1": float(bool(info.get("success_1", False))),
+                "success_2": float(bool(info.get("success_2", False))), "mode": self.MODE3.get(mode[:3], -1)}
+
+    def summarize(self, out):
+        s, s1, s2 = out["success"], out["success_1"], out["success_2"]
+        r = {"success_rate": float(s.mean()), "success_1_rate": float(s1.mean()), "success_2_rate": float(s2.mean()),
+             "entropy": mode_entropy(out["mode"], s, range(6))}
+        r["score"] = r["success_1_rate"] + r["success_2_rate"] + r["success_rate"]
+        return r
+
+
+TASKS = {"pushing": Pushing, "inserting": Inserting, "avoiding": Avoiding, "aligning": Aligning,
+         "sorting_2": lambda: Sorting(2), "sorting_4": lambda: Sorting(4), "sorting_6": lambda: Sorting(6),
+         "stacking": Stacking}
 
 
 def get_task(name):

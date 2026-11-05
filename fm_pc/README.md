@@ -93,37 +93,61 @@ python fm_pc/eval_pushing.py --run-dir $R --ckpt baseline_ema.pt --n-traj 4 --ex
 - 원인 추정: 데모 action이 축마다 $\{-a_{\max},0,+a_{\max}\}$의 bang-bang이라, 계획 안의 부호 반전은 거의 없고(청크당 0.002회) jerk 대부분은 0↔$a_{\max}$ 전환이다. ACG가 겨냥하는 "사람 데모의 고주파 떨림"이 이 데이터에는 거의 없다.
 - **관측을 분포 밖으로 밀면**(정규화 공간 noise σ=0.1, 0.3) 베이스라인의 `bJerk`가 0.383 → 1.012 → 1.411로 2.6~3.7배가 되는 반면 청크 내부 `jerk`는 0.221 → 0.320 → 0.333(+45~50%)이다. OOD에서 늘어나는 jerk는 주로 **청크 경계**에 있고, 이때도 ACG는 효과가 없다(±3% 이내). 단 `bJerk`는 오프라인에서 데모 이력과 비교한 값이라, 폐루프에서는 직전 계획을 이력으로 다시 재야 한다.
 
-## OOD 벤치마크 (`ood.py`, `ood_metrics.py`, `run_ood_benchmark.sh`)
+## OOD 벤치마크 (`tasks.py`, `ood.py`, `benchmark.py`, `eval_task.py`, `ood_metrics.py`, `run_ood_benchmark.sh`)
 
-정책·체크포인트·실행 방식(16 생성, 앞 8 실행, Euler 10)은 그대로 두고 **테스트 상황만** 데모 분포 밖으로 옮긴다. 한 실행에 조건 하나(`--ood`)만 켠다. `--ood none`이면 기존 평가 루프와 호출 순서까지 같다(OOD 난수는 전용 Generator를 쓰므로 정책의 torch/numpy 난수열을 건드리지 않는다).
+정책·체크포인트·실행 방식(16 생성, 앞 8 실행, Euler 10)은 그대로 두고 **테스트 상황만** 데모 분포 밖으로 옮긴다. 한 실행에 조건 하나(`--ood`)만 켠다. `--ood none`이면 기존 평가 루프와 호출 순서까지 같다(OOD 난수는 전용 Generator를 쓰므로 정책의 torch/numpy 난수열을 건드리지 않는다). Pushing에서 `eval_task.py`와 `eval_pushing.py`는 ID·OOD 모두 rollout이 비트 단위로 같다.
 
-| 조건 | 옵션 | 상황 |
-|---|---|---|
-| ID | `--ood none` | 기준 |
-| OOD-1 초기 이동 | `--ood shift --ood-shift 0.02` | 모든 블록이 데모 초기 범위 밖 d m에서 시작. 가장 가까운 면부터, 다른 블록·손·벽·작업공간과 겹치지 않는 면을 고른다 |
-| OOD-2 관측 노이즈 | `--ood obsnoise --ood-noise-pos 0.005 --ood-noise-yaw 5` | 재계획마다 정책이 보는 블록 x, y, yaw에 가우시안 노이즈. 실제 상태는 그대로 |
-| OOD-3 중간 밀기 | `--ood push --ood-push-dist 0.04` | `--ood-push-step` 이후 첫 재계획 직전에 손에 가장 가까운 블록을 d m 순간이동(무작위 방향, 충돌 없는 방향만). `--ood-push-phase mid`면 청크 중간에 밀어 남은 4 step을 틀린 계획으로 실행 |
-| OOD-4 추론 지연 | `--ood delay --ood-delay 2` | 다음 청크를 d step 전 관측으로 계획하고, 새 청크의 d번째 action부터 실행(naive async) |
+| 조건 | 옵션 | 블록이 있는 task | Avoiding (블록 없음) |
+|---|---|---|---|
+| ID | `--ood none` | 기준 | 기준 |
+| OOD-1 초기 이동 | `--ood shift --ood-shift 0.02` | 모든 블록이 데모 초기 범위 밖 d m에서 시작. 가장 가까운 면부터, 다른 블록·손·벽·작업공간과 겹치지 않는 면을 고른다 | 시작 손 위치를 고정 시작점에서 d m (x−, x+, y− 중 무작위) |
+| OOD-2 관측 노이즈 | `--ood obsnoise --ood-noise-pos 0.005 --ood-noise-yaw 5` | 재계획마다 정책이 보는 블록 x, y, yaw에 가우시안 노이즈. 실제 상태는 그대로 | 관측한 손 xy에 노이즈 |
+| OOD-3 중간 밀기 | `--ood push --ood-push-dist 0.04` | `--ood-push-step` 이후 첫 재계획 직전에 손에 가장 가까운 블록을 d m 순간이동(무작위 방향, 충돌 없는 방향만). `--ood-push-phase mid`면 청크 중간 | 목표 손 위치를 d m 밀기 |
+| OOD-4 추론 지연 | `--ood delay --ood-delay 2` | 다음 청크를 d step 전 관측으로 계획하고 새 청크의 d번째 action부터 실행(naive async) | 같음 |
 
-데모 초기 범위: Pushing 빨강 x 0.40–0.50, 초록 x 0.55–0.65, y −0.15–0 m; Inserting box1 [0.35,0.50]×[−0.20,−0.15], box2 [0.55,0.70]×[−0.10,−0.05], box3 [0.35,0.50]×[0,0.05] (D3IL context sampler). 적용된 이동·밀기 기록은 `results.json`의 `ood.events`에 남는다.
+### task별 설정 (`tasks.py`)
+
+| task | obs / act | action | 블록 (OOD-1/3 대상) | context | 기본 평가 크기 | 밀기 step | 주요 지표 |
+|---|---|---|---|---|---|---|---|
+| pushing | 12 / 2 | Δ 목표 손 xy | 빨강·초록 | D3IL test 60 | 30 × 4 | 80 | success, mode |
+| inserting | 16 / 2 | Δ 목표 손 xy | box 1–3 (미로 벽 회피) | `fm_baseline/contexts/inserting_val.pkl` | 전체 × 4 | 300 | success, boxes |
+| avoiding | 4 / 2 | Δ 목표 손 xy | 없음 (손) | 고정 시작 (rollout index) | 100 × 1 | 24 | success, 경로 mode 엔트로피(24), score 0.8s+0.2e |
+| aligning | 14 / 3 | Δ 목표 손 xyz | push box만 (target은 고정) | D3IL test 60 | 60 × 4 | 80 | success, mode 엔트로피 |
+| sorting_2/4/6 | 4+4n / 2 | Δ 목표 손 xy | 빨강 k, 파랑 k (공통 시작 범위, 목표 영역 벽 회피) | `fm_baseline/contexts/sorting_{n}_test_contexts.pkl` | 30 × 4 | 100 / 150 / 250 | success, 순서 mode 엔트로피 |
+| stacking | 23 / 8 | Δ 목표 관절 7 + 그리퍼 폭(절대값) | 테이블 위에 있고 손가락 사이가 아닌 블록 | D3IL test 100 | 30 × 4 | 150 | success 1/2/3단, 쌓는 순서 엔트로피(6) |
+
+- 관측 배치는 `preprocess/prepare_task.py`(학습)와 `tasks.TaskSpec.obs`(평가)가 같아야 한다. `python preprocess/check_prepare_task.py`가 시뮬레이터에서 원본 pickle 형식으로 기록한 뒤 두 경로를 비교한다(전 task 오차 < 2e-7 확인).
+- Sorting: D3IL의 `get_contexts.py`는 gym Box 공간 난수를 seed하지 않아 test context를 재현할 수 없고 배포도 안 됨. `make_sorting_contexts.py`가 같은 sampler에 seed를 넣어 1200개를 만든다(파일은 레포에 포함). 2/4/6 상자 파일은 의도적으로 같다(앞 n개 슬롯을 사용).
+- Stacking의 jerk 지표는 관절 7개 기준(rad, $\Delta t$ = 0.030 s), 그리퍼는 제외.
+- 블록 반폭·손 반경은 task별(`block_half`, `hand_r`), 데모 초기 범위는 `INIT_RANGE`에 있다. 적용된 이동·밀기 기록은 `results.json`의 `ood.events`.
 
 rollout에는 기존 키에 더해 `<ep>_seams`(새 청크가 실행을 시작한 step), `<ep>_pobs`(각 청크를 계획한 관측), `<ep>_event`(밀기 step, 없으면 −1)를 저장한다.
 
+### VESSL에서 돌리는 순서
+
 ```bash
-bash fm_pc/run_ood_benchmark.sh pushing                     # ID + 9개 OOD 조건 → <run>/ood_logs_base_<stamp>/summary
+# 1) 전처리 (task별, raw = D3IL 원본 데모 폴더)
+python preprocess/prepare_task.py --task stacking --raw <raw>/stacking/... --d3il /root/d3il-work/d3il \
+    --out /root/d3il-work/codex/processed/stacking_sincos_v1
+# 2) 학습 (pushing baseline과 같은 설정)
+python fm_baseline/train.py --task stacking --steps 1000000 --scheduler cosine --ema-decay 0.995 --save-every 25000 --tag main
+# 3) 벤치마크 (ID + 9개 조건 → <run>/ood_logs_<TAG>_<stamp>/summary)
+RUN=<run dir> bash fm_pc/run_ood_benchmark.sh stacking
+QUICK=1 RUN=<run dir> bash fm_pc/run_ood_benchmark.sh sorting_4     # 빠른 점검 (4 context × 1)
 TAG=pc JOBS=2 bash fm_pc/run_ood_benchmark.sh pushing --sampler pc --constraints action_box,tracking
-QUICK=1 bash fm_pc/run_ood_benchmark.sh inserting           # 빠른 점검 (4 context x 1)
 python fm_pc/ood_metrics.py --eval-dir <ID 폴더> --label id --eval-dir <OOD 폴더> --label push5cm
 ```
+
+split: aligning·stacking은 D3IL 공식 `train/eval_files.pkl`(900/100, 1000/95). avoiding은 공식 split이 없고, sorting 목록은 배포되지 않아서 파일명을 정렬한 뒤 `split_data.py`처럼 `random.seed(42)` shuffle, 앞 10 %를 val로 둔다(사용한 목록은 `manifest.json`).
 
 `ood_metrics.py` 지표 (단위 $a_{\max}$, Δ = 같은 context에서 ID 대비 차이, 95% CI는 context bootstrap):
 
 | 지표 | 정의 |
 |---|---|
-| `J_seam` | 청크 경계 $s$에서 $\lVert a_s - 2a_{s-1} + a_{s-2}\rVert / a_{\max}$ (목표 손 위치의 3차 차분) |
+| `J_seam` | 청크 경계 $s$에서 $\lVert a_s - 2a_{s-1} + a_{s-2}\rVert / a_{\max}$ (목표 위치의 3차 차분) |
 | `J_in` | $t, t-1$이 경계가 아닌 step의 같은 값 (청크 내부) |
 | `jump` | 경계에서 $\lVert a_s - a_{s-1}\rVert / a_{\max}$ |
-| `JerkRMS` | 목표 손 위치의 $\sqrt{\mathrm{mean}\lVert \Delta^3 d / \Delta t^3\rVert^2}$ (m/s³, $\Delta t$ = 0.035 s) |
+| `JerkRMS` | 목표 위치의 $\sqrt{\mathrm{mean}\lVert \Delta^3 d / \Delta t^3\rVert^2}$ (m/s³, Stacking은 rad/s³) |
 | `ATV` | $\mathrm{mean}\lVert a_t - a_{t-1}\rVert / a_{\max}$ |
 | `J_event` | 밀기 직후 첫 경계의 jerk (OOD-3) |
 | `OOD dist` | 계획에 쓴 관측과 가장 가까운 학습 관측 사이 거리(정규화 공간). 조건이 실제로 분포 밖이었는지 확인용 |
