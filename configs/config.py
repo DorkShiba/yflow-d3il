@@ -23,7 +23,7 @@ def _merge_settings(target, supplied, prefix=''):
         if isinstance(default, dict):
             _merge_settings(default, value, name)
         else:
-            if default is not None and name != 'methods.pc.eps':
+            if default is not None:
                 valid = (type(value) in (int, float) and math.isfinite(value)
                          if isinstance(default, float) else type(value) is type(default))
                 if not valid:
@@ -45,7 +45,7 @@ class ExperimentConfig:
         task = supplied['task']
         inserting = task == 'inserting'
         values = {
-            'schema_version': 2, 'task': task, 'device': 'cpu',
+            'schema_version': 3, 'task': task, 'device': 'cpu',
             'paths': {
                 'run_dir': f'fm_baseline/results/{task}_baseline',
                 'output_root': 'fm_constraint/runs', 'data_root': 'data',
@@ -73,8 +73,11 @@ class ExperimentConfig:
             # 가독성을 위해 실행 순서로 나열한다. 순서를 선택하는 설정은 아니다.
             'methods': {
                 'projection': {'enabled': False, 'mode': 'every', 'scope': 'predict', 'skip_first': 0},
-                'pc': {'enabled': False, 'correct_steps': 9, 'alpha': 2.0,
-                       'rho': 0.9, 'delta': 0.01, 'eps': 'auto'},
+                'pf2mp': {'enabled': False, 'weight': 0.01, 'bandwidth_m': 0.025,
+                          'distance_alpha': -1.0, 'max_support': 3000, 'seed': 42,
+                          'grid_step_m': 0.01, 'grid_padding_m': 0.15,
+                          'density_quantile': 0.05, 'query_chunk_size': 128,
+                          'lock_timeout_s': 600.0},
                 'vlsa': {'enabled': False, 'scope': 'terminal_plan', 'execution_recheck': False,
                          'invalidate_queue_on_change': True},
             },
@@ -94,6 +97,8 @@ class ExperimentConfig:
                        'eps_abs': 1e-9, 'eps_rel': 1e-9, 'max_iter': 20000,
                        'on_failure': 'abort_episode'},
         }
+        if 'pc' in supplied.get('methods', {}) or any(k.startswith('methods.pc') for k in (overrides or {})):
+            raise ValueError('PC is retired; select methods.pf2mp explicitly (schema v3)')
         _merge_settings(values, supplied)
         for dotted, value in (overrides or {}).items():
             parts = dotted.split('.')
@@ -127,8 +132,8 @@ class ExperimentConfig:
         """형상·단위·지원 모드를 확인한다. 미지원 설정을 자동 대체하지 않는다."""
         v = self.values
         model, train, ev = (v[k] for k in ('model', 'train', 'eval'))
-        if v['schema_version'] != 2:
-            raise ValueError('Require schema_version: 2; migrate legacy settings explicitly')
+        if v['schema_version'] != 3:
+            raise ValueError('Require schema_version: 3; PC is retired; migrate legacy settings explicitly')
         for group, keys in [('model', ['horizon', 'dim']),
                             ('train', ['steps', 'batch_size', 'log_every', 'val_batches']),
                             ('sample', ['n_windows', 'batch_size']),
@@ -161,20 +166,26 @@ class ExperimentConfig:
         # 현재 D3IL은 1ms 내부 스텝 35회로 명령 하나를 실행한다. 다른 dt는 지원하지 않는다.
         if command == 'eval' and not math.isclose(v['control']['dt_s'], 0.035, abs_tol=1e-12):
             raise ValueError('D3IL evaluation requires control.dt_s=0.035')
-        proj, vlsa, pc = (v['methods'][k] for k in ('projection', 'vlsa', 'pc'))
+        proj, vlsa, pf = (v['methods'][k] for k in ('projection', 'vlsa', 'pf2mp'))
         if proj['mode'] not in ('every', 'final') or proj['scope'] != 'predict' or proj['skip_first'] < 0:
             raise ValueError('Invalid projection mode/scope/skip_first')
         if vlsa['scope'] != 'terminal_plan' or not vlsa['invalidate_queue_on_change']:
             raise ValueError('VLSA requires terminal_plan and queue invalidation on change')
-        # PC off일 때만 두 투영이 연속해서 같은 계획에 적용된다.
-        # PC on에서는 중간에 계획이 바뀌므로 final Projection과 VLSA를 함께 허용한다.
-        if proj['enabled'] and proj['mode'] == 'final' and vlsa['enabled'] and not pc['enabled']:
-            raise ValueError('Projection final and terminal VLSA are identical when PC is off; select one')
-        if pc['correct_steps'] < 1 or pc['alpha'] <= 0 or not 0 < pc['rho'] < 1 or pc['delta'] <= 0:
-            raise ValueError('Invalid PC steps/alpha/rho/delta')
-        if pc['eps'] != 'auto' and (type(pc['eps']) not in (int, float)
-                                   or not math.isfinite(pc['eps']) or pc['eps'] <= 0):
-            raise ValueError('PC eps must be auto or a positive number')
+        # PF는 Predict 내부이므로 final Projection과 VLSA 사이에 보정이 없다.
+        if proj['enabled'] and proj['mode'] == 'final' and vlsa['enabled']:
+            raise ValueError('Projection final and terminal VLSA are identical; select one')
+        for key in ('bandwidth_m', 'grid_step_m', 'grid_padding_m', 'lock_timeout_s'):
+            if not math.isfinite(pf[key]) or pf[key] <= 0:
+                raise ValueError(f'PF2MP {key} must be positive')
+        for key in ('max_support', 'query_chunk_size'):
+            if type(pf[key]) is not int or pf[key] < 1:
+                raise ValueError(f'PF2MP {key} must be a positive integer')
+        if type(pf['seed']) is not int or pf['seed'] < 0:
+            raise ValueError('PF2MP seed must be a nonnegative integer')
+        if (not math.isfinite(pf['weight']) or pf['weight'] < 0
+                or not math.isfinite(pf['distance_alpha']) or pf['distance_alpha'] > 0
+                or not 0 <= pf['density_quantile'] < 1):
+            raise ValueError('Invalid PF2MP weight, distance_alpha or density_quantile')
         ws, acc, obj = (v['constraints'][k] for k in ('workspace', 'acceleration', 'object_envelope'))
         if ws['geometry'] != 'rectangle' or ws['margin_m'] < 0:
             raise ValueError('Workspace requires rectangle and nonnegative margin')
@@ -292,11 +303,14 @@ def parse_config(command, task=None, argv=None):
     parser.add_argument('--config', required=True)
     parser.add_argument('--set', action='append', default=[], metavar='SECTION.KEY=VALUE')
     parser.add_argument('--device')
-    for method in ('projection', 'vlsa', 'pc'):
+    for method in ('projection', 'vlsa', 'pf2mp'):
         parser.add_argument('--' + method, action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument('--pc', action=argparse.BooleanOptionalAction, default=None, help=argparse.SUPPRESS)
     parser.add_argument('--check-obs', type=int)
     parser.add_argument('--export-contexts')
     args = parser.parse_args(argv)
+    if args.pc is not None:
+        parser.error('PC is retired; use --pf2mp / --no-pf2mp explicitly')
     overrides = {}
     for item in args.set:
         if '=' not in item:
@@ -306,7 +320,7 @@ def parse_config(command, task=None, argv=None):
     for key, value in [('device', args.device), ('eval.check_obs', args.check_obs),
                        ('eval.export_contexts', args.export_contexts),
                        *[(f'methods.{name}.enabled', getattr(args, name))
-                         for name in ('projection', 'vlsa', 'pc')]]:
+                         for name in ('projection', 'vlsa', 'pf2mp')]]:
         if value is not None:
             overrides[key] = value
     cfg = ExperimentConfig.from_yaml(args.config, overrides)

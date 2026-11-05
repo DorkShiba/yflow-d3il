@@ -55,8 +55,10 @@ def main():
             comparison = 'same_order' if order == baseline_order else 'order_change'
         row = {'label': args.label[i] if args.label else path.name, 'directory': str(path),
                'pipeline_order': order, 'pipeline_comparison': comparison,
+               **{key: result.get(key) for key in ('pipeline_version', 'predict_update_order',
+                                                  'post_predict_order', 'potential_cache', 'hard_constraints_enforced')},
                **{key: result.get(key) for key in ('task', 'success_rate', 'entropy', 'score',
-                                                  'plan_ms', 'model_calls', 'qp_calls', 'filter_abort_rate',
+                                                  'plan_ms', 'model_calls', 'qp_calls', 'pf_calls', 'pf_ms', 'filter_abort_rate',
                                                   'executed_acceleration_qp_exceed_rate')}}
         metric_names = ('success', 'entropy', 'score')
         row['pairing_status'] = 'unavailable_without_episode_contexts'

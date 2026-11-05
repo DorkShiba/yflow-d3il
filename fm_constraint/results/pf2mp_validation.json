@@ -1,0 +1,461 @@
+{
+  "before_commit": "e63f75a04a8f22e6b4b191d996eb447a0c63fd21",
+  "tasks": {
+    "pushing": {
+      "offline": [
+        {
+          "name": "pushing_p0f0v0",
+          "status": "ok",
+          "model_calls": 10,
+          "pf_calls": 0,
+          "qp_calls": 0,
+          "latency_ms": 62.10525800270261,
+          "final_residual_m": 0.0
+        },
+        {
+          "name": "pushing_p0f0v1",
+          "status": "ok",
+          "model_calls": 10,
+          "pf_calls": 0,
+          "qp_calls": 1,
+          "latency_ms": 65.96861100115348,
+          "final_residual_m": 0.0
+        },
+        {
+          "name": "pushing_p0f1v0",
+          "status": "ok",
+          "model_calls": 10,
+          "pf_calls": 10,
+          "qp_calls": 0,
+          "latency_ms": 120.61105099564884,
+          "final_residual_m": 0.0
+        },
+        {
+          "name": "pushing_p0f1v1",
+          "status": "ok",
+          "model_calls": 10,
+          "pf_calls": 10,
+          "qp_calls": 1,
+          "latency_ms": 125.07701899448875,
+          "final_residual_m": 0.0
+        },
+        {
+          "name": "pushing_p1f0v0",
+          "status": "ok",
+          "model_calls": 10,
+          "pf_calls": 0,
+          "qp_calls": 10,
+          "latency_ms": 74.93433100171387,
+          "final_residual_m": 0.0
+        },
+        {
+          "name": "pushing_p1f0v1",
+          "status": "ok",
+          "model_calls": 10,
+          "pf_calls": 0,
+          "qp_calls": 11,
+          "latency_ms": 75.92623500386253,
+          "final_residual_m": 0.0
+        },
+        {
+          "name": "pushing_p1f1v0",
+          "status": "ok",
+          "model_calls": 10,
+          "pf_calls": 10,
+          "qp_calls": 10,
+          "latency_ms": 189.7184359986568,
+          "final_residual_m": 0.0
+        },
+        {
+          "name": "pushing_p1f1v1",
+          "status": "ok",
+          "model_calls": 10,
+          "pf_calls": 10,
+          "qp_calls": 11,
+          "latency_ms": 138.7042440037476,
+          "final_residual_m": 0.0
+        }
+      ],
+      "single_step_all_eight": true,
+      "pf_off_exact_before_match": true,
+      "terminal_idempotent_both_pf": true,
+      "environment": [
+        {
+          "path": "fm_constraint/runs/pf2mp_validation/eval_pushing_p0f0v0",
+          "executed_actions": 10,
+          "plan_attempts": 2,
+          "failure": null
+        },
+        {
+          "path": "fm_constraint/runs/pf2mp_validation/eval_pushing_p0f0v1",
+          "executed_actions": 10,
+          "plan_attempts": 2,
+          "failure": null
+        },
+        {
+          "path": "fm_constraint/runs/pf2mp_validation/eval_pushing_p0f1v0",
+          "executed_actions": 10,
+          "plan_attempts": 2,
+          "failure": null
+        },
+        {
+          "path": "fm_constraint/runs/pf2mp_validation/eval_pushing_p0f1v1",
+          "executed_actions": 10,
+          "plan_attempts": 2,
+          "failure": null
+        },
+        {
+          "path": "fm_constraint/runs/pf2mp_validation/eval_pushing_p1f0v0",
+          "executed_actions": 10,
+          "plan_attempts": 2,
+          "failure": null
+        },
+        {
+          "path": "fm_constraint/runs/pf2mp_validation/eval_pushing_p1f0v1",
+          "executed_actions": 10,
+          "plan_attempts": 2,
+          "failure": null
+        },
+        {
+          "path": "fm_constraint/runs/pf2mp_validation/eval_pushing_p1f1v0",
+          "executed_actions": 10,
+          "plan_attempts": 2,
+          "failure": null
+        },
+        {
+          "path": "fm_constraint/runs/pf2mp_validation/eval_pushing_p1f1v1",
+          "executed_actions": 10,
+          "plan_attempts": 2,
+          "failure": null
+        }
+      ],
+      "cache": {
+        "path": "/home/hyeon/Research/yflow-d3il/data/pushing_sincos_v1/pf2mp_cache/6fcbf7d1c4e381b956bddf3f84331d19fce9c2ddd42f70dd74fbd9c5d38a5c7d.npz",
+        "fingerprint": "6fcbf7d1c4e381b956bddf3f84331d19fce9c2ddd42f70dd74fbd9c5d38a5c7d",
+        "artifact_sha256": "c29b9b2284b3ec042c8a3014ee2301fc255650bdb5e93a76b6f72abd32941cf9",
+        "event": "hit",
+        "corruption": null,
+        "build_ms": 0.0,
+        "prepare_ms": 104.47805999865523,
+        "audit": {
+          "max_delta_error_m": 5.960464477539063e-08,
+          "max_sincos_error": 1.1920928955078125e-07,
+          "max_tracking_distance_m": 0.0776473879814148,
+          "obs_dim": 12,
+          "train_files": 1800,
+          "train_rows": 417518,
+          "xy_max_m": [
+            0.7797633409500122,
+            0.3949761390686035
+          ],
+          "xy_min_m": [
+            0.26546746492385864,
+            -0.2964039146900177
+          ]
+        },
+        "support_points": 3000,
+        "safe_grid_points": 1705,
+        "log_threshold": 0.7180186550637329
+      },
+      "full_train_audit": {
+        "train_files": 1800,
+        "train_rows": 417518,
+        "obs_dim": 12,
+        "max_delta_error_m": 5.960464477539063e-08,
+        "max_sincos_error": 1.1920928955078125e-07,
+        "max_tracking_distance_m": 0.0776473879814148,
+        "xy_min_m": [
+          0.26546746492385864,
+          -0.2964039146900177
+        ],
+        "xy_max_m": [
+          0.7797633409500122,
+          0.3949761390686035
+        ]
+      },
+      "cache_initial_build": {
+        "path": "/home/hyeon/Research/yflow-d3il/data/pushing_sincos_v1/pf2mp_cache/6fcbf7d1c4e381b956bddf3f84331d19fce9c2ddd42f70dd74fbd9c5d38a5c7d.npz",
+        "fingerprint": "6fcbf7d1c4e381b956bddf3f84331d19fce9c2ddd42f70dd74fbd9c5d38a5c7d",
+        "artifact_sha256": "c29b9b2284b3ec042c8a3014ee2301fc255650bdb5e93a76b6f72abd32941cf9",
+        "event": "miss",
+        "corruption": null,
+        "build_ms": 50331.810949996,
+        "prepare_ms": 50429.61935600033,
+        "audit": {
+          "train_files": 1800,
+          "train_rows": 417518,
+          "obs_dim": 12,
+          "max_delta_error_m": 5.960464477539063e-08,
+          "max_sincos_error": 1.1920928955078125e-07,
+          "max_tracking_distance_m": 0.0776473879814148,
+          "xy_min_m": [
+            0.26546746492385864,
+            -0.2964039146900177
+          ],
+          "xy_max_m": [
+            0.7797633409500122,
+            0.3949761390686035
+          ]
+        },
+        "support_points": 3000,
+        "safe_grid_points": 1705,
+        "log_threshold": 0.7180186550637329
+      },
+      "camera_replay": {
+        "command_max_error_m": 0.0,
+        "measured_xy_max_error_m": 5.850693016173913e-07,
+        "within_0_1mm": true
+      },
+      "density_plot": "fm_constraint/runs/pf2mp_validation/pushing_density.png",
+      "sample_cli": [
+        {
+          "path": "fm_constraint/runs/sample_pushing_20261105T154649869479Z",
+          "generated": 2,
+          "failures": 0,
+          "pf_calls": 20,
+          "model_calls": 20
+        }
+      ],
+      "pf_action_difference_l2_m": 0.00014557750546373427
+    },
+    "inserting": {
+      "offline": [
+        {
+          "name": "inserting_p0f0v0",
+          "status": "ok",
+          "model_calls": 10,
+          "pf_calls": 0,
+          "qp_calls": 0,
+          "latency_ms": 153.41183399868896,
+          "final_residual_m": 0.0
+        },
+        {
+          "name": "inserting_p0f0v1",
+          "status": "ok",
+          "model_calls": 10,
+          "pf_calls": 0,
+          "qp_calls": 1,
+          "latency_ms": 140.03448000585195,
+          "final_residual_m": 0.0
+        },
+        {
+          "name": "inserting_p0f1v0",
+          "status": "ok",
+          "model_calls": 10,
+          "pf_calls": 10,
+          "qp_calls": 0,
+          "latency_ms": 196.2449100028607,
+          "final_residual_m": 0.0
+        },
+        {
+          "name": "inserting_p0f1v1",
+          "status": "ok",
+          "model_calls": 10,
+          "pf_calls": 10,
+          "qp_calls": 1,
+          "latency_ms": 200.62647799932165,
+          "final_residual_m": 0.0
+        },
+        {
+          "name": "inserting_p1f0v0",
+          "status": "ok",
+          "model_calls": 10,
+          "pf_calls": 0,
+          "qp_calls": 10,
+          "latency_ms": 164.08590699575143,
+          "final_residual_m": 0.0
+        },
+        {
+          "name": "inserting_p1f0v1",
+          "status": "ok",
+          "model_calls": 10,
+          "pf_calls": 0,
+          "qp_calls": 11,
+          "latency_ms": 155.58296899689594,
+          "final_residual_m": 0.0
+        },
+        {
+          "name": "inserting_p1f1v0",
+          "status": "ok",
+          "model_calls": 10,
+          "pf_calls": 10,
+          "qp_calls": 10,
+          "latency_ms": 254.47526200150605,
+          "final_residual_m": 0.0
+        },
+        {
+          "name": "inserting_p1f1v1",
+          "status": "ok",
+          "model_calls": 10,
+          "pf_calls": 10,
+          "qp_calls": 11,
+          "latency_ms": 215.99337099905824,
+          "final_residual_m": 0.0
+        }
+      ],
+      "single_step_all_eight": true,
+      "pf_off_exact_before_match": true,
+      "terminal_idempotent_both_pf": true,
+      "environment": [
+        {
+          "path": "fm_constraint/runs/pf2mp_validation/eval_inserting_p0f0v0",
+          "executed_actions": 10,
+          "plan_attempts": 2,
+          "failure": null
+        },
+        {
+          "path": "fm_constraint/runs/pf2mp_validation/eval_inserting_p0f0v1",
+          "executed_actions": 10,
+          "plan_attempts": 2,
+          "failure": null
+        },
+        {
+          "path": "fm_constraint/runs/pf2mp_validation/eval_inserting_p0f1v0",
+          "executed_actions": 10,
+          "plan_attempts": 2,
+          "failure": null
+        },
+        {
+          "path": "fm_constraint/runs/pf2mp_validation/eval_inserting_p0f1v1",
+          "executed_actions": 10,
+          "plan_attempts": 2,
+          "failure": null
+        },
+        {
+          "path": "fm_constraint/runs/pf2mp_validation/eval_inserting_p1f0v0",
+          "executed_actions": 10,
+          "plan_attempts": 2,
+          "failure": null
+        },
+        {
+          "path": "fm_constraint/runs/pf2mp_validation/eval_inserting_p1f0v1",
+          "executed_actions": 10,
+          "plan_attempts": 2,
+          "failure": null
+        },
+        {
+          "path": "fm_constraint/runs/pf2mp_validation/eval_inserting_p1f1v0",
+          "executed_actions": 10,
+          "plan_attempts": 2,
+          "failure": null
+        },
+        {
+          "path": "fm_constraint/runs/pf2mp_validation/eval_inserting_p1f1v1",
+          "executed_actions": 10,
+          "plan_attempts": 2,
+          "failure": null
+        }
+      ],
+      "cache": {
+        "path": "/home/hyeon/Research/yflow-d3il/data/inserting_sincos_v1/pf2mp_cache/7b9ba10cb5404191d206047d278f9e7edb368f50ed4523d89ba897caf04ab0b8.npz",
+        "fingerprint": "7b9ba10cb5404191d206047d278f9e7edb368f50ed4523d89ba897caf04ab0b8",
+        "artifact_sha256": "83e01ec38ae29ea3bb5375e26d4c1f1c3cb58ed6560c554a6e1e677d4da7df8e",
+        "event": "hit",
+        "corruption": null,
+        "build_ms": 0.0,
+        "prepare_ms": 106.38800100423396,
+        "audit": {
+          "max_delta_error_m": 5.960464477539063e-08,
+          "max_sincos_error": 1.1920928955078125e-07,
+          "max_tracking_distance_m": 0.5765904188156128,
+          "obs_dim": 16,
+          "train_files": 718,
+          "train_rows": 711908,
+          "xy_max_m": [
+            0.8012692332267761,
+            0.6660333871841431
+          ],
+          "xy_min_m": [
+            0.041476618498563766,
+            -0.3392340838909149
+          ]
+        },
+        "support_points": 3000,
+        "safe_grid_points": 1976,
+        "log_threshold": 0.026359475108845187
+      },
+      "full_train_audit": {
+        "train_files": 718,
+        "train_rows": 711908,
+        "obs_dim": 16,
+        "max_delta_error_m": 5.960464477539063e-08,
+        "max_sincos_error": 1.1920928955078125e-07,
+        "max_tracking_distance_m": 0.5765904188156128,
+        "xy_min_m": [
+          0.041476618498563766,
+          -0.3392340838909149
+        ],
+        "xy_max_m": [
+          0.8012692332267761,
+          0.6660333871841431
+        ]
+      },
+      "cache_initial_build": {
+        "path": "/home/hyeon/Research/yflow-d3il/data/inserting_sincos_v1/pf2mp_cache/7b9ba10cb5404191d206047d278f9e7edb368f50ed4523d89ba897caf04ab0b8.npz",
+        "fingerprint": "7b9ba10cb5404191d206047d278f9e7edb368f50ed4523d89ba897caf04ab0b8",
+        "artifact_sha256": "83e01ec38ae29ea3bb5375e26d4c1f1c3cb58ed6560c554a6e1e677d4da7df8e",
+        "event": "miss",
+        "corruption": null,
+        "build_ms": 90115.56307000137,
+        "prepare_ms": 90196.05290499749,
+        "audit": {
+          "train_files": 718,
+          "train_rows": 711908,
+          "obs_dim": 16,
+          "max_delta_error_m": 5.960464477539063e-08,
+          "max_sincos_error": 1.1920928955078125e-07,
+          "max_tracking_distance_m": 0.5765904188156128,
+          "xy_min_m": [
+            0.041476618498563766,
+            -0.3392340838909149
+          ],
+          "xy_max_m": [
+            0.8012692332267761,
+            0.6660333871841431
+          ]
+        },
+        "support_points": 3000,
+        "safe_grid_points": 1976,
+        "log_threshold": 0.026359475108845187
+      },
+      "camera_replay": {
+        "command_max_error_m": 0.0,
+        "measured_xy_max_error_m": 6.204653975050434e-07,
+        "within_0_1mm": true
+      },
+      "density_plot": "fm_constraint/runs/pf2mp_validation/inserting_density.png",
+      "sample_cli": [
+        {
+          "path": "fm_constraint/runs/sample_inserting_20261105T154650084164Z",
+          "generated": 2,
+          "failures": 0,
+          "pf_calls": 20,
+          "model_calls": 20
+        }
+      ],
+      "pf_action_difference_l2_m": 0.007897534407675266
+    }
+  },
+  "schema_version": 3,
+  "pipeline_version": "pf2mp_state_xy_v1",
+  "scope": "functional validation, not full task success/collision evaluation",
+  "test_command": "OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 python -m pytest fm_constraint/tests -q",
+  "tests_passed": 88,
+  "baseline_tests_passed": 81,
+  "run_root": "fm_constraint/runs/pf2mp_validation",
+  "hardware_validation": "CPU; GPU not validated",
+  "notes": [
+    "PC Correct is preserved as LEGACY_PC line comments and never executed.",
+    "PF guidance is exactly zero in action, first observation and non-target state channels.",
+    "All train transitions audited; validation/test excluded from support.",
+    "One Euler step does not change actions through PF; 10-step calls remain 10.",
+    "Default bandwidth/weight are unoptimized candidates; density overlaps some static wall regions.",
+    "D3IL runtime needs temporary XML writes in the external checkout; validation ran with approved access."
+  ],
+  "source_sha256": {
+    "fm_constraint/pf2mp.py": "0552b28b4cbc5f476bf36577e39f1e00910a243e4df4dc55221ee0428c3c72fd",
+    "fm_constraint/policy.py": "37368badcfea973b07f8a21acfdcbab2a6ade95d0cadf1a5f0d67cd98ad3f3d7",
+    "configs/config.py": "8cc17fba93e8b444b4882a036457f3cc23d956211e2c4d039a1b25bc21cb2b31",
+    "fm_constraint/render_rollouts.py": "0e1ffeb1ca232a9a7e330ba11f21d50a48558eea3c777b371a1af70c51845fb9"
+  }
+}

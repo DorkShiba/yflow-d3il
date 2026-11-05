@@ -51,25 +51,32 @@ eval:
   check_obs: 0
   export_contexts: null
   split: val
-schema_version: 2
+schema_version: 3
 control:
   dt_s: 0.035
 sampling:
   predict_steps: 10
 methods:
-  # 고정 순서: Predict 내부 Projection → PC → 최종 계획 VLSA.
+  # Predict 내부 FM+PF2MP → Euler → Projection, 이후 최종 계획 VLSA.
   projection:
     enabled: false
     mode: every
     scope: predict
     skip_first: 0
-  pc:
+  # 이전 PC Correct(9회, alpha=2, rho=0.9, delta=0.01, eps=auto)는 중단.
+  pf2mp:
     enabled: false
-    correct_steps: 9
-    alpha: 2.0
-    rho: 0.9
-    delta: 0.01
-    eps: auto
+    # 초기 후보값이며 D3IL 성능을 검증한 확정값이 아니다.
+    weight: 0.01
+    bandwidth_m: 0.025
+    distance_alpha: -1.0
+    max_support: 3000
+    seed: 42
+    grid_step_m: 0.01
+    grid_padding_m: 0.15
+    density_quantile: 0.05
+    query_chunk_size: 128
+    lock_timeout_s: 600.0
   vlsa:
     enabled: false
     scope: terminal_plan

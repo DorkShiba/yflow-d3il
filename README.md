@@ -185,10 +185,10 @@ python eval_inserting.py --run-dir $I --ckpt baseline_ema.pt --n-traj 2 --seed 1
 
 ## 통합 training-free 제약
 
-`fm_constraint/`에서 Projection, terminal VLSA, Predict-then-Correct를 독립적으로 선택할 수 있다. 공통 제약은 사각형 workspace, 목표 명령 가속도, 모든 블록을 포함하는 정n각형이다. 기존 `fm_pc/`, `fm_projection/` 코드는 통합 후 제거했으며 결과는 `fm_constraint/results/legacy/`에 보존했다.
+`fm_constraint/`에서 Projection, 상태 위치 PF2MP, terminal VLSA를 독립적으로 선택할 수 있다. 공통 제약은 사각형 workspace, 목표 명령 가속도, 모든 블록을 포함하는 정n각형이다. 기존 `fm_pc/`, `fm_projection/` 코드는 통합 후 제거했으며 결과는 `fm_constraint/results/legacy/`에 보존했다.
 
 실행·설정·검증 근거는 [통합 README](fm_constraint/README.md), [구현 계획과 진행 기록](docs/PLAN.md)을 참고한다.
 
 ```bash
-python -m fm_constraint.sample --config configs/pushing.yaml --projection --vlsa --pc --set sample.n_windows=4
+python -m fm_constraint.sample --config configs/pushing.yaml --projection --vlsa --pf2mp --set sample.n_windows=4
 ```

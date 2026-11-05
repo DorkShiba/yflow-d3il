@@ -1,5 +1,11 @@
 # FM Constraint 단계별 통합 구현 계획
 
+## PF2MP 교체 구현 완료 (2026-11-06, 기능 검증)
+
+이번 변경의 기준은 **8절**이다. 기존 PC Correct를 주석으로 보존하고 실행 경로에서 제외한 뒤, PF2MP를 Predict의 벡터장 보정으로 넣는다. 새 흐름은 **Predict 내부 `[FM + PF2MP → Euler → Projection]` → terminal VLSA**이며, Projection·PF2MP·VLSA는 독립적으로 on/off한다. schema v3 코드·설정·KDE 캐시를 구현하고 기능 검증을 완료했다. 근거와 범위는 **8.9절** 및 `fm_constraint/results/pf2mp_validation.json`을 따른다. 전체 성공률·충돌률 본실험은 별도다.
+
+아래 7절과 [`FM_Constraint_Integral.md`](FM_Constraint_Integral.md)의 이전 명세는 Projection → PC → VLSA의 이력이다. 새 순서·PC 비활성화·중복 투영·호출 예산·최종 검사 규칙은 8절을 우선한다. 관련 명세와 README에도 현재 기준을 반영했다. 과거 완료 기록은 그대로 보존한다.
+
 ## 순서 수정 완료 (2026-10-29)
 
 제약 적용 순서를 **Projection → PC → VLSA**로 수정한다. Projection은 Predict 내부에서, PC는 Predict 결과에서, VLSA는 PC까지 끝난 최종 계획에서 독립적으로 활성화한다. 이번 수정의 단계별 작업과 완료 조건은 **7절**을 따른다.
@@ -479,3 +485,226 @@ acceleration = (action - previous_action) / control_dt**2
 - [x] R5: 완료 근거·사용 문서·실험 기준 갱신 (`results/order_projection_pc_vlsa_validation.json`)
 
 **최종 완료 조건:** 독립적인 세 플래그가 고정된 **Projection → PC → VLSA** 순서로 동작하고, 최종 검사·실행 큐·로그가 그 결과를 사용하며, 구 순서 결과와 구별되는 검증 근거가 남아 있다.
+
+## 8. PC → PF2MP 교체 구현 계획 (2026-11-06)
+
+### 8.1. 목표와 변경 범위
+
+사용자 요청에 따라 현재 PC Correct의 반복문·CBF-QP 계산 블록을 **줄 주석으로 보존하고 실행하지 않도록** 변경할 계획이다. 복구용 커밋도 기록한다. PF2MP는 이 위치에 새 Correct 루프를 만드는 것이 아니라 **공통 Predict 루프의 벡터장 계산에 통합**한다. 원리는 [`PF2MP.md`](PF2MP.md), 기존 명시 제약·QP·실행 큐의 기준은 [`FM_Constraint_Integral.md`](FM_Constraint_Integral.md)를 따른다.
+
+```text
+PF2MP on일 때: 추론 프로세스 초기화 → train KDE 캐시 검증 / 없으면 생성 → 한 번 로드
+
+현재 관측으로 조건부 noise 생성
+  → Predict N회:
+      현재 X에서 FM 벡터장 계산
+      현재 X에서 에너지 gradient 계산 [PF2MP 선택]
+      두 벡터장을 합하여 Euler 적분
+      적분 결과의 행동 계획을 QP로 투영 [Projection 선택]
+      현재 관측 조건 복원
+  → 전체 행동 계획의 terminal QP [VLSA 선택]
+  → 유한값 검사·제약 측정·선택한 강제 정책에 따른 판정
+  → 앞 K개 행동 실행 → 최신 관측으로 재계획
+```
+
+기존 모델·EMA checkpoint·normalizer·학습 손실·세 명시 제약의 수식과 물리 단위는 유지한다. PC의 추가 모델 호출과 별도 보정 시간 초기화는 제거한다. 이번 작업은 추론 변경이며 재학습은 요구하지 않는다.
+
+### 8.2. PF2MP와 Projection의 결합 수식
+
+생성 시간을 $\tau$, 제어 간격을 $\Delta t=0.035$초로 구분한다. 정규화된 계획 $X_k=[\widetilde A_k,\widetilde S_k]$에서 PF2MP는 **상태의 위치 채널 벡터장**, Projection은 **Euler가 만든 중간 샘플의 행동 계획**을 수정하므로 함께 적용할 수 있다.
+
+$$
+Y_{k+1}=X_k+\frac1N\left[v_\theta(X_k,k/N)+\lambda G_{\rm PF}(X_k)\right],
+\qquad G_{\rm PF}=[0_{\rm action},\,M_s\nabla_{\widetilde S}\Psi].
+$$
+
+$M_s$는 선택한 상태 위치 채널과 고정되지 않은 계획 시점만 통과시키는 마스크다. **Action 증분 채널의 PF guidance는 항상 0**이며 명목 FM 행동 벡터장은 그대로 적분한다. Projection/VLSA가 활성화되면 그 단계에서는 행동이 수정될 수 있다.
+
+Projection on이면 $Y_{k+1}$를 raw 단위로 복원한 행동 $A_Y$에 대해 기존 공통 QP를 푼다.
+
+$$
+A^*=\arg\min_A\frac12\|A-A_Y\|_2^2
+\quad\text{s.t.}\quad GA\le d.
+$$
+
+여기서 QP 행렬 $G$는 PF guidance 텐서 $G_{\rm PF}$와 별개인 기존 명세의 기호다. 구현에서는 `guidance`와 `constraints.G`로 구분한다. 수정한 행동만 재정규화하여 결합하고 첫 관측을 복원한다. Projection off이면 Euler 결과를 그대로 쓴다.
+
+PF와 FM은 **동일한 갱신 전 $X_k$** 에서 평가하며, Projection은 갱신 후 샘플에 정확히 한 번 적용한다. PF 안에서 QP·clipping을 수행하거나 Projection 안에서 KDE 에너지를 다시 최소화하지 않는다. 마지막 PF 보정을 Projection 뒤에 덧붙이지 않는다. 현재 단계의 PF 직접 가산과 행동 투영은 서로 다른 채널에 작용하지만, 다음 FM 평가는 전체 계획을 입력받으므로 반복 과정에서 두 방법은 간접적으로 상호작용한다.
+
+### 8.3. D3IL에 사용할 에너지와 좌표계
+
+첫 구현은 **train 목표 TCP XY의 2D Gaussian KDE**를 사용한다. 행동 증분의 밀도는 장벽의 공간 위치를 표현하기 어려우므로 주 실험의 기본으로 삼지 않는다. 실제 TCP 위치 KDE, 상대 좌표 KDE, 관측 조건부 KDE는 별도 확장으로 남긴다.
+
+**데이터 집계 원칙:** 같은 태스크라면 블록 초기 배치·행동 경로·처리 순서가 달라도 전체 train 시연을 하나의 모집단으로 모아 공통 PDF를 추정한다. 현재 context와 비슷한 시연만 골라 매번 별도 PDF를 만들지 않는다. Pushing과 Inserting은 태스크별로 분리하고 val/test는 밀도 fitting에서 제외한다. 전체 train에서 support를 부분 추출하는 것은 계산 근사이며, 모든 점을 반드시 kernel 중심으로 써야 한다는 뜻은 아니다. 이 밀도는 여러 상황에서 방문한 위치의 주변분포로, 현재 블록 배치에서의 조건부 안전 확률은 아니다.
+
+**채널 적용 원칙(사용자 지정):** PDF 입력은 위치이며 action 증분이 아니다. PF는 생성된 **미래 상태의 목표 TCP XY**에만 적용한다. `[action(2), obs]` 배열 기준 대상은 `X[:,1:,2:4]`이고, `X[:,:,:2]`의 guidance는 엄밀히 0으로 둔다. 실제 TCP XY·블록 위치·sin/cos 채널도 기본 guidance는 0이다. 첫 시점의 전체 관측은 조건으로 고정한다. 여기서 0으로 두는 것은 action 자체나 FM 행동 벡터장이 아니라 **에너지의 action 방향 미분과 PF 가산항**이다.
+
+생성 관측에서 읽은 raw 목표 위치를 $q_h^{\rm state}$라 두고 다음 에너지를 사용한다. Action 누적에서 위치를 재구성하여 미분하지 않는다.
+
+$$
+\phi(q)=\log\widehat p(q)+\alpha d(q,\mathcal H),\quad
+\alpha<0,\quad \mathcal H=\{q:\log\widehat p(q)>\ell_\eta\}.
+$$
+
+$$
+\Psi(S)=\sum_{h=1}^{H-1}\phi(q_h^{\rm state}),\qquad
+E=-\Psi,\qquad v_{\rm guided}=v_\theta-\lambda\nabla E
+=v_\theta+\lambda\nabla\Psi.
+$$
+
+`energy`를 비용 $E$로 정의하면 음의 gradient, 논문의 potential $\Psi$를 쓰면 양의 gradient를 적용한다. 코드·설정·로그에서 이 규약을 명시한다. Sum 규약을 고정하고, horizon을 바꾸는 비교에서는 유효한 guidance 크기도 확인한다.
+
+상태의 목표 위치에 해당하는 center·대각 scale을 $c_q,S_q$라 하면 $q_h^{\rm state}=c_q+S_q\widetilde q_h$이므로 다음을 사용한다.
+
+$$
+\nabla_{\widetilde q_h}\Psi=S_q^\top\nabla_q\phi(q_h^{\rm state})\quad(h\ge1),
+\qquad \nabla_{\widetilde A}E=0.
+$$
+
+Gaussian의 해석적 score와 거리항의 gradient에 위치 scale을 곱하고 유한차분으로 대조한다. Guidance 텐서를 0으로 초기화한 뒤 허용된 위치 slice에만 값을 채운다. Autograd를 사용해도 FM 모델이나 행동 누적 계산을 에너지 그래프에 연결하지 않는다. `guidance[:,:,:act_dim] == 0`과 `guidance[:,0,act_dim:] == 0`을 확인한다.
+
+이 규칙은 앞서 제안했던 **누적 목표 위치의 에너지를 action으로 역전파하는 설계를 대체**한다. `PF2MP.md`의 행동 chain rule 및 의사 코드도 본 절의 상태 위치 전용 방식으로 교체했다. 이번 구성은 상태·행동을 함께 생성하는 D3IL 모델에 맞춘 적용안으로 구분한다.
+
+**효과와 한계:** PF가 수정한 미래 상태를 다음 Euler 단계의 FM이 입력으로 읽으며 행동에 간접 영향을 줄 수 있지만, 동일 단계에서 action을 직접 수정하지는 않는다. 따라서 마지막 단계의 PF는 이후 모델 평가가 없어 행동으로 전달되지 않으며, `predict_steps=1`이면 이 경로를 통한 행동 변화가 없다. 생성된 목표 위치와 $q_0+\sum_{j\le h}a_j$의 차이를 별도로 기록하고, 상태 에너지 개선만으로 실행 행동의 안전 개선을 판정하지 않는다. Projection/VLSA는 계속 행동 누적으로 제약을 계산한다.
+
+KDE는 raw XY(m)로 정의하여 checkpoint의 normalizer와 독립시킨다. Bandwidth 단위는 m이며 log-density도 같은 좌표 규약으로 비교한다. Gaussian 혼합의 score는 `logsumexp`/softmax로 안정화한다. 초기 noise가 분포에서 멀어도 정의되는 해석적 KDE를 기본으로 사용한다. 저밀도에서 PDF가 수치적으로 0이 된 것을 밀도장이 없는 것으로 처리하지 않는다.
+
+거리항은 논문에 구현 상세가 없으므로 초기 구현에서는 **학습 데이터 범위와 명시적 padding을 덮는 2D grid로 level set을 이산화하고, 고밀도 grid 점 집합까지의 최근접 거리**로 근사한다. Grid 원점·간격·범위·threshold 규칙을 고정하고, 고밀도 영역이 grid 외곽에서 잘리지 않는지 확인한다. 임의 query에서 집합까지의 거리를 계산하므로 grid 밖 query도 처리할 수 있다. 연속 level set까지의 거리와 다른 근사임을 기록하고, grid 의존성·최근접점 전환·거리 0에서의 gradient 규약을 검증한다. 고밀도 점이 없으면 설정 오류로 처리한다. 밀도와 score 자체는 grid 보간으로 대체하지 않고 Gaussian KDE로 평가한다.
+
+Bandwidth, $\alpha$, $\ell_\eta$, $\lambda$는 논문에서 D3IL 확정값으로 가져올 수 없다. 학습 분포와 밀도 그림으로 후보를 정하고 조정용 validation에서 선택하여 고정한다. Threshold를 train log-density의 분위수로 정하면 대상점·분위수·실현값을 기록한다. 거리항이 없는 설정은 명시적 ablation으로 구분한다.
+
+### 8.4. 데이터셋 재확인
+
+계획 작성 시 실제 폴더를 읽어 다음을 확인했다. 전체 파일 재검증을 완료한 것은 아니다.
+
+| 확인 항목 | Pushing | Inserting |
+|---|---|---|
+| 폴더 | `data/pushing_sincos_v1/` | `data/inserting_sincos_v1/` |
+| 실제 NPZ 수 train / val | 1,800 / 200 | 718 / 82 |
+| train 대표 파일의 obs / actions | `(280,12)` / `(280,2)` | `(1588,16)` / `(1588,2)` |
+| train·val 각 대표의 `obs[:,:2]+actions-next_obs[:,:2]` 최대 절대 오차 | 약 `5.96e-8 m` | 약 `5.96e-8 m` |
+| 기존 KDE·kernel·PF2MP 캐시 후보 | 검출 없음 | 검출 없음 |
+
+구현 시작 시 manifest와 전체 train NPZ를 재확인한다. 관측 필드 순서·단위·정규화 여부, shape·dtype·유한값, 기록 간격, 목표 위치와 행동의 대응, 실제 TCP와의 차이, sin/cos의 타당성, 분할·중복·시연 경계를 확인한다. Val은 정합성 확인에 사용하더라도 KDE support에 포함하지 않는다. 검증 결과는 실험 출력에 저장한다.
+
+Support 후보는 각 train 파일의 `obs[:,0:2]`이며 중첩 window를 열거하여 점을 늘리지 않는다. `next_obs`를 추가해 같은 위치를 중복 계산하지 않는다. 초기 후보는 전체 train 행에서 고정 seed로 최대 3,000점을 균등 추출하는 방식이다. 소수 경로·좁은 통로의 피복을 확인하고 점 수를 확정한다. 3,000점은 논문 Maze의 참고값으로 D3IL에 충분하다고 가정하지 않는다. 긴 시연과 긴 체류 시간에 가중치가 부여되는 추출 규칙도 명시한다.
+
+### 8.5. 추론 시작 시 PDF 캐시 생성과 재사용
+
+사용자 제안을 채택하여 **해당 데이터셋 폴더 안**에 KDE를 재현할 수 있는 표현을 저장한다. PDF는 확률 밀도 함수이며 Gaussian support 점·bandwidth·가중치로 임의 위치의 밀도와 gradient를 다시 계산할 수 있다. Python 객체 pickle 대신 수치 배열과 metadata를 저장한다.
+
+```text
+data/pushing_sincos_v1/pf2mp_cache/<fingerprint>.npz
+data/inserting_sincos_v1/pf2mp_cache/<fingerprint>.npz
+```
+
+NPZ에 support XY, 필요한 가중치, 고밀도 grid 점, grid 설정, JSON metadata를 담고 `allow_pickle=False`로 읽는다. Manifest·원본 NPZ는 수정하지 않으며 `pf2mp_cache/`는 train/val 데이터 탐색 및 Git 추적에서 제외한다.
+
+시작 처리는 `ensure_potential_cache(dataset_dir, density_config)`에 해당하는 공유 함수로 묶어 sample/eval의 policy 구성 전에 한 번만 실행한다.
+
+1. PF2MP off이면 캐시 탐색·생성·train 순회를 하지 않는다. On일 때도 현재 태스크만 대상으로 하며 `data/`의 모든 데이터셋을 자동 생성하지 않는다.
+2. Manifest, 정렬한 train 파일의 상대 경로·내용 hash, 특징 정의, Gaussian bandwidth, support 추출 seed·상한, 거리 grid·threshold 설정, 구현 format version으로 fingerprint를 만든다. 초기 구현에서는 내용 hash를 stream으로 계산하며 매번 전체 배열을 로드하는 비용과 구분한다.
+3. 해당 NPZ가 있으면 metadata·배열 shape·유한값·저장 내용의 정합성을 검증하고 로드한다. 파일 존재만으로 재사용하지 않는다.
+4. 없으면 train을 검증하면서 support와 거리 집합을 구성한다. 고정 seed의 지역 RNG로 재현하고 추론 noise용 RNG를 소비하지 않는다.
+5. 동일 fingerprint의 생성 lock을 얻고 존재 여부를 다시 확인한다. 같은 폴더의 임시 파일에 쓴 뒤 atomic rename한다. 동시 실행·중단 시 불완전한 캐시를 완성본으로 읽지 않게 한다. Lock 대기는 timeout과 실패 이유를 제공한다.
+6. 손상 캐시는 탐지 사실을 기록하고 격리한 뒤 재생성한다. 데이터·설정 변경은 별도 fingerprint로 저장하고 이전 캐시를 자동 삭제하지 않는다. 읽기 실패·쓰기 권한 없음·용량 부족·lock timeout에서는 이유를 반환하며 빈 밀도장이나 baseline으로 조용히 우회하지 않는다.
+7. 검증한 배열은 필요한 device로 한 번 옮겨 episode·재계획·Euler 단계 사이에서 재사용한다. 캐시 경로·fingerprint·artifact hash·hit/miss·생성 시간·로드 시간을 결과에 기록한다.
+
+캐시 식별에는 밀도·거리장을 바꾸는 항목만 넣는다. $\lambda$와 $\alpha$는 query 시 합성하며 checkpoint·normalizer·horizon·Projection/VLSA 플래그와 함께 실험 설정에 기록한다. 이들만 바뀌면 raw XY KDE를 재생성하지 않는다. Threshold·grid·bandwidth·support가 바뀌면 재생성한다. 재사용 시에도 데이터 변경 감지를 위한 hash 순회는 발생하므로 준비 시간과 정상 추론 시간을 분리한다.
+
+### 8.6. on/off, 중복 투영, 모델 호출 수
+
+새 실험의 세 플래그는 `methods.projection.enabled`, `methods.pf2mp.enabled`, `methods.vlsa.enabled`다. CLI에 `--pf2mp` / `--no-pf2mp`를 추가하며 다른 방법을 자동 활성화하지 않는다. PF 수치 설정과 캐시 설정을 구분한다. 의미가 달라지므로 schema v3로 올리고 이전 v2 결과의 읽기를 유지한다.
+
+`methods.pc`는 새 설정의 실행 방법에서 제외한다. 이전 설정·CLI의 PC 지정은 폐기 이유와 함께 거부하고 PF2MP로 암묵 변환하지 않는다. PC 수치·테스트는 이전 커밋으로 재현할 수 있게 기록하고 현재 기본 YAML에서는 이력 주석으로 옮긴다. PC를 주석으로 남겨도 `methods_enabled`나 호출 수에는 포함하지 않는다.
+
+Projection을 `every`로 둔 8가지 조합은 다음과 같다.
+
+| Projection | PF2MP | VLSA | 실행 경로 |
+|---|---|---|---|
+| off | off | off | 기본 FM |
+| on | off | off | FM Euler → 매회 Projection |
+| off | on | off | FM+PF Euler |
+| off | off | on | FM Euler → terminal VLSA |
+| on | on | off | FM+PF Euler → 매회 Projection |
+| on | off | on | FM Euler → 매회 Projection → terminal VLSA |
+| off | on | on | FM+PF Euler → terminal VLSA |
+| on | on | on | FM+PF Euler → 매회 Projection → terminal VLSA |
+
+**중복성 규칙은 PC 때와 달라진다.** PF2MP는 마지막 Euler 이후 독립적으로 실행되지 않으므로 같은 고정 제약·목적·dtype에서 마지막까지 Projection한 직후의 VLSA는 PF on/off에 관계없이 수학적으로 같은 집합에 대한 재투영이다.
+
+- `Projection final + VLSA`는 **PF on이어도 중복 설정으로 거부**한다. PC 때의 중간 보정이 있다는 허용 규칙을 재사용하지 않는다.
+- `Projection every + VLSA`는 8가지 비교를 위해 허용한다. 마지막 단계까지 투영했다면 terminal 수정량이 수치 허용 오차 안에서 0인지 확인한다. 별도의 성능 개선 효과를 가정하지 않는다.
+- Projection 단독과 VLSA 단독은 생성 중간의 입력이 달라 일반적으로 같지 않다. `final` 비교에 한정하여 동일성을 요구한다.
+- PF와 Projection에는 투영의 멱등성을 적용하지 않는다. PF는 분포에 의한 유도이며 Projection은 명시 제약에 대한 최소 수정이다.
+
+모든 조합에서 정상 종료 시 모델 호출은 $N$회, PF 평가는 on일 때 $N$회, PC/CBF-QP는 0회다. 계획 QP 수는 $Q_{projection}+I_{vlsa}$이며 실행 직전 VLSA 재검사는 별도로 집계한다. 초기 비교는 현재 Predict 10회·horizon 16·실행 8회를 유지한다. 이전 PC on의 19회와 새 PF on의 10회를 같은 호출 예산으로 취급하지 않는다.
+
+### 8.7. 최종 검사·실패·계측
+
+현재 `self.enabled=any(method.enabled)`를 그대로 쓰면 PF 단독에서도 기존 QP 제약 위반을 이유로 계획을 거부하여 실험 의미가 바뀐다. 다음 용도를 분리한다.
+
+- `generation_modified`: PF / Projection / VLSA 중 하나가 on. 샘플러 선택과 기록에 사용한다.
+- `hard_constraints_enforced`: Projection 또는 VLSA가 on. 기존 초기 workspace 외부 실패와 최종 QP 잔차에 의한 실행 거부에 사용한다.
+
+PF 단독과 all-off에서는 명시 제약을 **측정만** 하며 숨은 투영·잔차에 의한 거부를 넣지 않는다. 비유한값·잘못된 입력 shape·PF 계산 실패는 모든 경로에서 실패로 처리한다. 이로써 8가지 비교에는 강제 처리의 차이도 포함되므로 초기 영역 외부 사례 수·최종 거부율·실행률을 함께 기록하고 필요하면 공통 초기 영역 내부 context에서도 비교한다. 판정 방침 변경을 새 실험 버전으로 남긴다. `evaluation.py`의 `any(method.enabled)` 의존도 같은 의미로 점검한다.
+
+Projection/QP 실패·PF 비유한값은 즉시 종료하며 뒤의 VLSA가 실패 iterate를 복구하지 않는다. VLSA는 유효한 Predict 출력에만 적용한다. 실행 직전 재검사는 기존 VLSA의 명시 옵션으로 유지하고, 행동이 수정되면 실행 후 큐를 폐기한다.
+
+로그는 평탄한 `pipeline_order`에만 의존하지 않고 `pipeline_version`, `predict_update_order: [fm, pf2mp, euler, projection]`, `post_predict_order: [vlsa]`, 활성 플래그를 저장한다. PF는 별도 terminal 단계가 아닌 Predict 내부로 계측한다. 단계별 PF 전후 에너지·gradient norm·PF 증분 norm·Projection 수정량·QP 잔차, 계획 종료 및 VLSA 이후 에너지·잔차, 캐시 준비·PF·모델·QP 시간을 구분한다. Projection 후 에너지가 단조 개선된다고 가정하지 않는다.
+
+### 8.8. 구현 단계와 완료 조건
+
+| 단계 | 주요 대상 | 작업과 완료 조건 |
+|---|---|---|
+| P0: 기준 고정·데이터 점검 | `data/*/manifest.json`, train NPZ, 기존 policy·결과 | 8.4의 전체 train 확인, checkpoint·normalizer·현재 코드 hash와 고정 noise 기준 저장. 데이터 불일치를 해소한 뒤 밀도장 구성 |
+| P1: KDE·거리장·캐시 | 신규 `fm_constraint/pf2mp.py`, 신규 `fm_constraint/tests/test_pf2mp.py` | 전체 train 모집단에서 Gaussian log-density/score, 이산 거리 집합, 위치 scale·채널 마스크, 8.5의 생성·로드·무효화·동시 실행·중단 처리를 구현. CPU에서 구성 가능하도록 함 |
+| P2: 설정·PC 중단 | `configs/config.py`, 두 YAML, `test_config.py` | schema v3, PF 설정·CLI·값 검증, PC 지정 거부, final Projection+VLSA 금지 규칙과 명시 제약 강제 조건 구현 |
+| P3: Predict 통합 | `policy.py`, `test_policy.py` | 이전 PC 블록을 줄 주석으로 보관. FM+PF→Euler→Projection, 마지막 VLSA. 추가 모델 호출 없이 plan 안에서 KDE를 로드하지 않음 |
+| P4: 진입점·기록 | `sample.py`, `evaluation.py`, `eval_*.py`, 집계·렌더링 | 공유 캐시 준비를 한 번만 실행. 새 metadata·시간·실패 판정 기록. 이전 결과는 이전 pipeline으로 읽기 |
+| P5: 실모델·환경 확인 | 두 checkpoint, sample, D3IL, 저장 결과 | 8가지 수치 검사, 두 태스크 짧은 rollout, 재계획·큐·이전 행동 확인. 밀도·위치장을 시각화하고 필요 접촉과 금지 접촉 정의 확인 |
+| P6: 문서 동기화·본실험 준비 | `FM_Constraint_Integral.md`, `PF2MP.md`, README, 본 PLAN | 이전 PC 단계·19회 호출·조건부 중복 규칙 갱신. 새 검증 summary와 실행 예시 기록. 과거 결과와 분리 |
+
+최소 검증 항목은 다음과 같다.
+
+1. Gaussian 해석 score와 정규화 위치 scale을 포함한 상태 위치 gradient를 유한차분과 대조한다. Action을 바꾸어도 동일 상태의 에너지가 변하지 않고 action guidance가 정확히 0인지 확인한다. 거리항은 최근접점이 유일한 영역과 전환점·거리 0을 구분하여 확인한다.
+2. Cache miss→생성→hit에서 밀도장과 고정 noise 계획이 같고 추론 RNG를 바꾸지 않는다. Train·bandwidth 변경으로 무효화되고 $\lambda$만 바꾸면 재사용된다. Val이 support에 들어가지 않으며 손상·동시 생성·쓰기 실패를 처리한다.
+3. PF off의 4가지 조합은 현재 PC off의 대응하는 4가지와 계획·상태·호출 수가 같다. All-off는 KDE 파일 유무와 무관하게 baseline과 같다.
+4. $\lambda=0$의 유효 설정에서는 밀도장을 준비·기록하되 가산을 엄밀히 0으로 하여 PF off와 같은 noise에서 수치 결과·강제 판정이 같다. 추가 반올림이나 난수를 넣지 않는다.
+5. 같은 갱신 전 계획에서 모델과 PF를 평가하고 Euler 후 Projection하는 순서를 확인한다. 상태와 행동이 결합된 모델로 다음 단계에서만 PF의 행동 영향이 생기는지, 한 단계 생성에서는 PF on/off 행동이 같은지 검증한다. Action guidance는 전 단계에서 0이며 현재 관측을 고정하고 추가 모델·CBF-QP 호출이 없음을 확인한다.
+6. PF on/off 모두 마지막까지 Projection한 계획에 대한 VLSA는 수치 허용 오차 안에서 멱등성을 만족한다. PF 단독의 제약 위반에는 숨은 거부·투영이 없고 hard on에서만 최종 잔차를 판정한다.
+7. 두 실모델의 8가지 조합, `predict_steps=1`, 실제 D3IL에서 재계획 경계를 포함한 짧은 실행, 저장 로그 집계·지도/카메라 재생을 확인한다. 기능 확인과 본평가 성공률을 구분한다.
+
+본실험은 같은 checkpoint·context·noise seed·제약·horizon·실행 chunk로 8가지 조합을 비교한다. PF hyperparameter를 먼저 고정하고 성공률·episode별 금지 접촉률·안전 성공률·제약 위반·계획 거부·다양성·계획 시간을 보고한다. 접촉 관측이 없으면 접촉 지표는 null이며 KDE 밀도나 QP 위반으로 충돌을 추정하지 않는다. PF 계산 비용과 첫 캐시 준비 비용도 보고한다.
+
+구현 진행 상태(아래 기능 검증 완료, 전체 성능 본실험은 별도):
+
+- [x] P0: 전체 train 데이터 확인과 이전 구현 비교 기준 고정
+- [x] P1: KDE·거리장·저장/재사용·gradient 검증
+- [x] P2: 새 설정과 PC 실행 중단·중복 판정 갱신
+- [x] P3: Predict 내부 PF2MP→Euler→Projection 연결
+- [x] P4: 모든 추론 진입점·실패 판정·metadata·후처리 대응
+- [x] P5: 두 실모델·8가지 조합·실제 환경 기능 확인
+- [x] P6: 관련 문서 동기화와 새 실험 기준 확정
+
+
+### 8.9. 구현 완료 및 검증 근거 (2026-11-06)
+
+검증 요약은 [`pf2mp_validation.json`](../fm_constraint/results/pf2mp_validation.json), 상세 배열·단계 보고·실행 로그·밀도 그림·재생 영상·재현 스크립트는 `fm_constraint/runs/pf2mp_validation/`에 저장했다. 변경 전 기준 커밋은 `e63f75a04a8f22e6b4b191d996eb447a0c63fd21`이다. 기존 사용자 작업과 이전 결과는 보존했다.
+
+- 변경 전 81개 테스트, 새 schema·PF·캐시·실행 경계 테스트 **88개 통과**. Gaussian/거리 gradient 유한차분, action·첫 관측·비대상 채널의 가산항 0, 캐시 재사용·무효화·손상 격리·동시 생성·쓰기 실패·lock timeout·RNG 보존을 확인했다.
+- 전체 train 재검증: Pushing **1,800개/417,518전이**, Inserting **718개/711,908전이**. 목표 위치+행동과 다음 목표의 최대 오차는 두 태스크 모두 약 `5.96e-8 m`, sin/cos 제곱합 오차는 약 `1.19e-7`이다. Manifest의 필드·분할·행동 정의·시연 내 연결·시간 간격을 검사했다.
+- 두 태스크에 3,000점 support KDE 캐시를 만들고 hit 재사용을 확인했다. 기본 설정의 첫 생성은 이 CPU 환경에서 약 **50초/90초**, hit 준비는 hash 확인을 포함해 약 **0.15~0.2초**였다. 병렬 부하·하드웨어에 따라 달라지는 참고값이다.
+- 두 실제 EMA checkpoint에서 **8가지 조합**, 단일 Euler의 **8가지 조합**을 확인했다. PF off의 4가지는 변경 전과 배열 단위로 정확히 같았다. PF on/off 모두 마지막 Projection 뒤 terminal VLSA가 수치적으로 멱등이었다. 모델은 10회, PF guidance는 on일 때 10회, PC/CBF 호출은 0회다.
+- 실제 D3IL에서 두 태스크 × 8가지 조합을 각각 **10스텝·2회 계획**으로 실행했다. Sample CLI도 두 태스크에서 각 2개 window를 생성했다. 큐·이전 실제 행동·재계획 경계·실행 결과 저장을 확인했다.
+- 집계 및 지도 PNG/GIF, 두 태스크 카메라 PNG/GIF 재생을 확인했다. 명령 재생 오차는 0, 실제 XY 재생 오차는 Pushing 약 `5.85e-7 m`, Inserting 약 `6.20e-7 m`였다. D3IL의 외부 checkout 임시 XML 쓰기는 승인된 실행으로 검증했다.
+
+현재 결과는 **CPU 기능 검증**이다. GPU 실행과 전체 context의 성공률·충돌률은 검증하지 않았다. 접촉 observer가 없는 평가에서 안전 성공률은 계속 null이다. 기본 PF 수치는 초기 후보값이다. 생성한 Inserting 밀도 그림에서는 일부 고정 장벽과 고밀도 영역이 겹치므로, 본실험 전 bandwidth·threshold와 실제 접촉 지표를 별도로 평가해야 한다. 데이터 방문 밀도를 충돌 없는 영역의 증명으로 해석하지 않는다.
+
+현재 실행 예:
+
+```bash
+python -m fm_constraint.sample --config configs/pushing.yaml --pf2mp --projection --vlsa \
+  --set sample.n_windows=4
+MUJOCO_GL=disable python -m fm_constraint.eval_inserting --config configs/inserting.yaml --pf2mp --vlsa
+```

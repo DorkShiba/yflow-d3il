@@ -11,7 +11,8 @@ import torch
 
 from configs.config import parse_config
 from . import checkpoint_reads, import_baseline
-from .policy import PIPELINE_ORDER, Policy
+from .policy import PIPELINE_ORDER, PIPELINE_METADATA, Policy
+from .pf2mp import prepare_potential
 
 
 def main():
@@ -23,7 +24,7 @@ def main():
         mc, model, norm, conditioning, solver, checkpoint_step = baseline.load_model(
             paths['run_dir'], v['eval']['checkpoint'], v['eval']['weights'], paths['hardflow_root'], v['device'])
     base = baseline.Policy(model, norm, mc, conditioning, solver, v['sampling']['predict_steps'], v['device'])
-    policy = Policy(base, cfg)
+    policy = Policy(base, cfg, prepare_potential(cfg))
     files = trainer.find_split_files(str(Path(paths['data_root']) / f'{cfg.task}_sincos_v1'), v['sample']['split'])
     episodes, _ = trainer.load_split(files, mc['obs_dim'], mc['act_dim'], mc['horizon'])
     index = trainer.window_index(episodes, mc['horizon'])
@@ -50,7 +51,7 @@ def main():
             first_previous.append(previous)
     elapsed = perf_counter() - started
     checkpoint = Path(paths['run_dir']) / v['eval']['checkpoint']
-    result = {'schema_version': 2, 'pipeline_order': list(PIPELINE_ORDER),
+    result = {'schema_version': 3, 'pipeline_order': list(PIPELINE_ORDER), **PIPELINE_METADATA,
               'methods': {name: v['methods'][name]['enabled'] for name in PIPELINE_ORDER},
               'task': cfg.task, 'attempts': len(rows),
               'generated': len(generated), 'failures': len(rows) - len(generated),
@@ -60,6 +61,9 @@ def main():
               'normalizer_sha256': hashlib.sha256((Path(paths['run_dir']) / 'normalizer.npz').read_bytes()).hexdigest(),
               'seed': v['sample']['seed'], 'execution': 'serial_windows', 'elapsed_s': elapsed,
               'model_calls': sum(r['model_calls'] for r in reports),
+              'pf_calls': sum(r['pf_calls'] for r in reports),
+              'pf_ms': sum(r['pf_ms'] for r in reports),
+              'potential_cache': policy.potential.cache_report if policy.potential else None,
               'qp_calls': sum(r['qp_calls'] for r in reports), 'windows': reports}
     if generated:
         gen, gt = np.stack(generated), np.stack(truth)

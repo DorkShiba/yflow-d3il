@@ -11,3 +11,5 @@ fm_baseline/results/*/eval_*/
 fm_constraint/runs/
 
 docs/report.md
+# 태스크별 재생성 가능한 KDE 캐시
+data/*/pf2mp_cache/

@@ -13,7 +13,8 @@ import numpy as np
 
 from . import checkpoint_reads, import_baseline
 from .constraints import PlanConstraints
-from .policy import PIPELINE_ORDER, Policy
+from .policy import PIPELINE_ORDER, PIPELINE_METADATA, Policy
+from .pf2mp import prepare_potential
 from .qp import solve_qp
 
 
@@ -21,13 +22,12 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
                    task, settings, config, observe_safety=None):
     """계획 실패를 실행하지 않고, 실제 실행 행동으로만 이전 행동을 갱신한다.
 
-    config는 schema v2의 resolved 값이다. 접촉 관측이 없으면 물리적
+    config는 schema v3의 resolved 값이다. 접촉 관측이 없으면 물리적
     safe success는 null로 둔다. all-off에서는 제약 위반을 측정만 한다.
     """
     if not contexts:
         raise ValueError('No evaluation contexts')
     methods, definitions = config['methods'], config['constraints']
-    enabled = any(m['enabled'] for m in methods.values())
     recheck = methods['vlsa']['enabled'] and methods['vlsa']['execution_recheck']
     dt, tolerance = config['control']['dt_s'], config['solver']['feasibility_tolerance_m']
     ws = definitions['workspace']
@@ -35,7 +35,8 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
     high = np.asarray(ws['high_m']) - ws['margin_m'] if ws['enabled'] else None
     episodes, rollouts = [], {}
     plan_seconds = 0.
-    plan_count = model_calls = qp_calls = attempts = executed = interventions = 0
+    plan_count = model_calls = qp_calls = attempts = executed = interventions = pf_calls = 0
+    pf_ms = 0.
     acceleration_violations = 0
 
     for ci, item in enumerate(contexts):
@@ -67,6 +68,8 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
                     new_plan_report = copy.deepcopy(policy.last_report)
                     model_calls += new_plan_report.get('model_calls', 0)
                     qp_calls += new_plan_report.get('qp_calls', 0)
+                    pf_calls += new_plan_report.get('pf_calls', 0)
+                    pf_ms += new_plan_report.get('pf_ms', 0.)
                     if plan is None:
                         failure = new_plan_report.get('status', 'invalid_policy_output')
                         logs.append({'step': steps, 'plan_id': plan_id, 'plan_report': new_plan_report,
@@ -162,7 +165,7 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
     entropy = float(np.mean(entropies)) if task == 'pushing' or settings['n_traj'] > 1 else None
     success_rate = float(np.mean([e['success'] for e in episodes]))
     distances = [e['mean_distance'] for e in episodes if e['mean_distance'] is not None]
-    results = {'schema_version': 2, 'pipeline_order': list(PIPELINE_ORDER),
+    results = {'schema_version': 3, 'pipeline_order': list(PIPELINE_ORDER), **PIPELINE_METADATA,
                'task': task, 'n_contexts': len(contexts), 'n_traj': settings['n_traj'],
                'methods': {name: m['enabled'] for name, m in methods.items()},
                'execution_recheck': bool(recheck), 'success_rate': success_rate, 'entropy': entropy,
@@ -173,7 +176,8 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
                'forbidden_contact_free_rate': float(np.mean([not e['forbidden_contact'] for e in episodes])) if observe_safety else None,
                'safety_measurement': 'adapter_cumulative_internal_steps' if observe_safety else 'unavailable',
                'plan_ms': 1000 * plan_seconds / max(plan_count, 1), 'plan_attempts': plan_count,
-               'model_calls': model_calls, 'qp_calls': qp_calls,
+               'model_calls': model_calls, 'qp_calls': qp_calls, 'pf_calls': pf_calls, 'pf_ms': pf_ms,
+               'hard_constraints_enforced': any(methods[k]['enabled'] for k in ('projection', 'vlsa')),
                'action_attempts': attempts, 'executed_actions': executed,
                'execution_intervention_rate': interventions / executed if executed else None,
                'executed_acceleration_qp_exceed_rate': acceleration_violations / executed if executed else None,
@@ -241,7 +245,7 @@ def evaluate(cfg):
             items = [{'id': name, 'context': ctx, 'demo_length': len(data['robot']['des_c_pos'])}
                      for name, data, ctx, _ in raw_items]
         base = pushing.Policy(model, norm, model_cfg, conditioning, solver, v['sampling']['predict_steps'], v['device'])
-        policy = Policy(base, cfg)
+        policy = Policy(base, cfg, prepare_potential(cfg))
         import torch
         torch.manual_seed(settings['seed'])
         np.random.seed(settings['seed'])
@@ -253,7 +257,8 @@ def evaluate(cfg):
                     'checkpoint_sha256': hashlib.sha256(checkpoint.read_bytes()).hexdigest(),
                     'checkpoint_step': checkpoint_step, 'weights': settings['weights'],
                     'seed': settings['seed'], 'predict_steps': v['sampling']['predict_steps'],
-                    'constraint_scope': 'command_plan', 'schema_version': 2,
+                    'potential_cache': policy.potential.cache_report if policy.potential else None,
+                    'constraint_scope': 'command_plan', 'schema_version': 3,
                     'normalizer_sha256': hashlib.sha256((Path(paths['run_dir']) / 'normalizer.npz').read_bytes()).hexdigest(),
                     'control_dt_s': v['control']['dt_s'],
                     'execute_steps': settings['execute_steps'], 'max_steps': settings['max_steps']}

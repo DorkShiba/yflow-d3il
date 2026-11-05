@@ -1,6 +1,28 @@
 # FM Constraint 통합 방침
 
-이 문서는 `fm_constraint`의 **설계 명세**다. 2026-10-29 순서 수정에서는 `PLAN.md` 7절에 따라 Projection → PC → VLSA를 적용한다. 기존 FM 모델을 고정한 training-free 추론 방법의 통합을 대상으로 한다. 수식은 $$으로 감싸 작성한다. inline은 $으로 감싼다. 2절의 구 구현 비교는 통합 이전의 이력이며, 현재 구현·검증 상태는 `PLAN.md`와 순서별 검증 요약을 따른다.
+## 현재 구현 기준: PF2MP 교체 (schema v3)
+
+현재 실행 기준은 [PLAN 8절](PLAN.md)이다. 이전 PC Correct는 `policy.py`의 `LEGACY_PC` 줄 주석에 보존하며 실행하지 않는다. 아래 1~14절의 PC 통합 명세는 이전 구현 이력이다. 공통 제약 수식과 QP·실행 큐 규칙은 유지하고 다음 항목을 새 기준으로 우선한다.
+
+```text
+태스크 train KDE 캐시 준비 [PF on에서만, 프로세스당 한 번]
+→ Predict N회 [동일 X에서 FM + PF → Euler → Projection]
+→ terminal VLSA → 최종 검사 → 앞 K개 실행 → 재계획
+```
+
+- PF2MP는 전체 train 모집단의 목표 TCP XY 밀도를 사용한다. 초기 배치가 달라도 같은 태스크는 합치고 Pushing/Inserting 및 train/val/test는 분리한다.
+- 에너지는 생성된 미래 상태의 목표 XY `X[:,1:,2:4]`에 정의한다. Action 증분·첫 관측·나머지 상태의 PF 가산항은 0이다. 상태 위치 scale을 곱해 정규화 좌표 gradient를 만들며 행동 누적 chain rule은 사용하지 않는다.
+- 비용 $E=-\sum_h\phi(q_h)$이면 $v_{guided}=v_\theta-\lambda\nabla E$다. 상태 전용 PF는 다음 FM 평가를 통해 행동에 간접 영향을 주며 한 단계 생성에서는 행동을 바꾸지 않는다.
+- Projection과 VLSA의 제약 대상은 기존처럼 현재 목표와 행동 누적에서 재구성한 명령이다. 생성 상태 위치와의 일관성은 별도 측정한다.
+- Projection·PF2MP·VLSA의 on/off는 독립적이다. PC 설정·CLI는 거부하고 schema v3로 구별한다. PF on/off 모두 모델 호출은 $N$회이며 추가 CBF-QP가 없다.
+- PF 단독·all-off는 명시 제약을 측정만 한다. Projection 또는 VLSA on에서 초기 workspace와 최종 QP 잔차를 강제한다. 비유한값·PF 실패·QP 실패는 실행하지 않는다.
+- PF는 Predict 안에 있으므로 `Projection final + VLSA`는 항상 중복 설정이다. 마지막까지 적용한 `every + VLSA`의 terminal 재투영도 PF on/off 모두 수치적으로 멱등이어야 한다.
+- KDE는 `data/<task>_sincos_v1/pf2mp_cache/<fingerprint>.npz`로 저장한다. 데이터 내용·밀도 설정·format version을 검증하고 없으면 생성하며 lock·atomic rename·손상 격리로 재사용한다. PF off는 캐시를 읽지 않는다.
+- 로그는 `pipeline_version`, `predict_update_order: [fm,pf2mp,euler,projection]`, `post_predict_order: [vlsa]`와 활성 플래그·캐시 식별자를 기록한다. 이전 결과를 새 알고리즘 결과로 합치지 않는다.
+
+실행 방법은 [통합 README](../fm_constraint/README.md)를 따른다. 이하 원래 명세의 수식은 $$과 $으로 표기하며, 새 PF 설정과 충돌하는 이전 PC 규칙은 위 기준으로 대체한다.
+
+## 이전 PC 통합 설계 명세 (schema v2, 이력)
 
 ## 1. 통합의 목표와 확정할 원칙
 

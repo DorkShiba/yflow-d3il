@@ -12,44 +12,52 @@ from configs.config import ExperimentConfig, REPO, parse_config
 
 def test_nested_overrides_and_cli_priority():
     cfg = parse_config('sample', argv=['--config', str(REPO / 'configs/pushing.yaml'),
-                                      '--set', 'methods.pc.enabled=true', '--no-pc',
+                                      '--set', 'methods.pf2mp.enabled=true', '--no-pf2mp',
                                       '--set', 'constraints.object_envelope.n_sides=7', '--vlsa'])
     assert cfg.values['methods']['vlsa']['enabled']
-    assert not cfg.values['methods']['pc']['enabled']
+    assert not cfg.values['methods']['pf2mp']['enabled']
     assert cfg.values['constraints']['object_envelope']['n_sides'] == 7
     assert cfg.check_checkpoint()['obs_dim'] == 12
     assert '--no-save' in cfg.baseline_argv('sample')
-    ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml', {'methods.pc.eps': 4.}).validate('sample')
+    ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml', {'methods.pf2mp.weight': .04}).validate('sample')
 
 
 @pytest.mark.parametrize('overrides', [
     {'vlsa.enabled': True}, {'constraints.action_box.enabled': True},
-    {'methods.pc.enabled': 'false'}, {'train.batch_size': True}, {'train.lr': float('nan')},
+    {'methods.pf2mp.enabled': 'false'}, {'train.batch_size': True}, {'train.lr': float('nan')},
     {'model.horizon': 15}, {'eval.execute_steps': 17}, {'sampling.predict_steps': 0},
     {'constraints.object_envelope.n_sides': 2}, {'constraints.acceleration.polygon_sides': 7},
     {'constraints.acceleration.max_m_s2': None}, {'constraints.acceleration.max_m_s2': True},
     {'paths.output_root': 'fm_baseline/runs'}, {'sample.no_save': False},
     {'methods.projection.enabled': True, 'methods.projection.mode': 'final', 'methods.vlsa.enabled': True},
-    {'constraints.workspace.low_m': [1, 0]}, {'control.dt_s': 0.},
+    {'constraints.workspace.low_m': [1, 0]}, {'control.dt_s': 0.}, {'methods.pf2mp.bandwidth_m': 0.},
+    {'methods.pf2mp.weight': -1.}, {'methods.pf2mp.distance_alpha': 1.},
+    {'methods.pf2mp.max_support': 0}, {'methods.pf2mp.density_quantile': 1.},
 ])
 def test_invalid_configuration_is_rejected(overrides):
     with pytest.raises(ValueError):
         ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml', overrides).validate('sample')
 
 
-def test_final_projection_and_terminal_vlsa_allow_pc_between_them():
-    # PC가 사이에 있으면 두 투영의 명목 계획이 달라지므로 중복 설정이 아니다.
-    cfg = ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml', {
-        'methods.projection.enabled': True, 'methods.projection.mode': 'final',
-        'methods.pc.enabled': True, 'methods.vlsa.enabled': True})
-    cfg.validate('sample')
+def test_final_projection_and_terminal_vlsa_are_duplicate_even_with_pf():
+    with pytest.raises(ValueError, match='identical'):
+        ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml', {
+            'methods.projection.enabled': True, 'methods.projection.mode': 'final',
+            'methods.pf2mp.enabled': True, 'methods.vlsa.enabled': True})
+
+
+def test_pc_is_rejected_explicitly():
+    with pytest.raises(ValueError, match='PC is retired'):
+        ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml', {'methods.pc.enabled': False})
+    with pytest.raises(SystemExit):
+        parse_config('sample', argv=['--config', str(REPO / 'configs/pushing.yaml'), '--pc'])
 
 
 def test_model_mismatch_and_training_free_flags():
     with pytest.raises(ValueError, match='Checkpoint model'):
         ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml', {'model.dim': 64}).validate('sample')
     with pytest.raises(ValueError, match='Training-free'):
-        ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml', {'methods.pc.enabled': True}).validate('train')
+        ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml', {'methods.pf2mp.enabled': True}).validate('train')
     with pytest.raises(ValueError, match='dt_s'):
         ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml', {'control.dt_s': .04}).validate('eval')
 

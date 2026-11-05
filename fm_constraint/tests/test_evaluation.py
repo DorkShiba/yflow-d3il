@@ -73,23 +73,24 @@ def test_failed_plan_is_not_executed_and_counts_as_failure(config):
     assert logs['c000_t0'][0]['safe_action'] is None
 
 
-def test_queue_executes_terminal_vlsa_actions_after_pc(config):
+def test_queue_executes_terminal_vlsa_actions_after_pf(config):
     from fm_constraint.policy import Policy
-    from fm_constraint.tests.test_policy import baseline
+    from fm_constraint.tests.test_policy import baseline, potential
+    from types import SimpleNamespace
     import torch
 
-    config['methods']['pc']['enabled'] = config['methods']['vlsa']['enabled'] = True
+    config['methods']['pf2mp']['enabled'] = config['methods']['vlsa']['enabled'] = True
     torch.manual_seed(19)
-    env, policy = FakeEnv(), Policy(baseline(), config)
+    env, policy = FakeEnv(), Policy(baseline(), config, potential(SimpleNamespace(values=config)))
     result, logs = run_evaluation(env, policy, CONTEXTS, read_state, build_obs, None,
                                   'pushing', SETTINGS, config)
-    assert result['pipeline_order'] == ['projection', 'pc', 'vlsa']
+    assert result['pipeline_order'] == ['pf2mp', 'projection', 'vlsa']
     assert result['executed_actions'] == 5
     terminal, offset = None, 0
     for row in logs['c000_t0']:
         if row['plan_report'] is not None:
             stages = row['plan_report']['stages']
-            assert list(stages) == ['predict', 'pc', 'vlsa']
+            assert list(stages) == ['predict', 'vlsa']
             terminal, offset = stages['vlsa']['actions_m'], 0
         np.testing.assert_array_equal(row['safe_action'], terminal[offset])
         offset += 1
@@ -156,7 +157,7 @@ def test_reporting_keeps_context_pairing_and_renders_saved_geometry(config, tmp_
     summary = json.loads((tmp_path / 'summary/summary.json').read_text())[0]
     assert summary['paired_success_difference'] == 0
     assert summary['pairing_status'] == 'matched_contexts_and_checkpoint'
-    assert summary['pipeline_order'] == ['projection', 'pc', 'vlsa']
+    assert summary['pipeline_order'] == ['pf2mp', 'projection', 'vlsa']
     assert summary['pipeline_comparison'] == 'same_order'
     monkeypatch.setattr(sys, 'argv', ['render', '--eval-dir', str(directory), '--gif'])
     render()
@@ -172,7 +173,7 @@ def test_summary_distinguishes_changed_and_unknown_order(config, tmp_path, monke
                                None, 'pushing', SETTINGS, config)
     result['checkpoint_sha256'] = 'same-model'
     argv = ['compute']
-    for name, order in [('new', ['projection', 'pc', 'vlsa']),
+    for name, order in [('new', ['pf2mp', 'projection', 'vlsa']),
                         ('old', ['projection', 'vlsa', 'pc']), ('unknown', None)]:
         directory = tmp_path / name
         directory.mkdir()
@@ -187,5 +188,21 @@ def test_summary_distinguishes_changed_and_unknown_order(config, tmp_path, monke
     rows = json.loads((output / 'summary.json').read_text())
     assert [r['pipeline_comparison'] for r in rows] == ['same_order', 'order_change', 'unknown_order']
     assert rows[2]['pipeline_order'] is None
-    assert 'projection → pc → vlsa' in (output / 'summary.md').read_text()
+    assert 'pf2mp → projection → vlsa' in (output / 'summary.md').read_text()
     assert 'projection → vlsa → pc' in (output / 'summary.md').read_text()
+
+
+def test_legacy_camera_config_is_read_only_and_not_migrated(config, tmp_path):
+    import yaml
+    from fm_constraint.render_rollouts import load_replay_config
+    config['schema_version'] = 2
+    config['methods'].pop('pf2mp')
+    config['methods']['pc'] = {'enabled': True, 'correct_steps': 9}
+    path = tmp_path / 'old_resolved_config.yaml'
+    path.write_text(yaml.safe_dump(config))
+    before = path.read_bytes()
+    loaded = load_replay_config(path)
+    assert loaded.values['schema_version'] == 2
+    assert loaded.values['methods']['pc']['enabled']
+    assert 'pf2mp' not in loaded.values['methods']
+    assert path.read_bytes() == before
