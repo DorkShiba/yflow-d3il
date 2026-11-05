@@ -119,7 +119,7 @@ python fm_pc/eval_pushing.py --run-dir $R --ckpt baseline_ema.pt --n-traj 4 --ex
 - 관측 배치는 `preprocess/prepare_task.py`(학습)와 `tasks.TaskSpec.obs`(평가)가 같아야 한다. `python preprocess/check_prepare_task.py`가 시뮬레이터에서 원본 pickle 형식으로 기록한 뒤 두 경로를 비교한다(전 task 오차 < 2e-7 확인).
 - Sorting: D3IL의 `get_contexts.py`는 gym Box 공간 난수를 seed하지 않아 test context를 재현할 수 없고 배포도 안 됨. `make_sorting_contexts.py`가 같은 sampler에 seed를 넣어 1200개를 만든다(파일은 레포에 포함). 2/4/6 상자 파일은 의도적으로 같다(앞 n개 슬롯을 사용).
 - Stacking의 jerk 지표는 관절 7개 기준(rad, $\Delta t$ = 0.030 s), 그리퍼는 제외.
-- 블록 반폭·손 반경은 task별(`block_half`, `hand_r`), 데모 초기 범위는 `INIT_RANGE`에 있다. 적용된 이동·밀기 기록은 `results.json`의 `ood.events`.
+- 블록 크기(외접 반경 `block_radii`, Stacking은 빨강·초록 6 cm 정육면체, 파랑 6×10 cm)·손 반경 `hand_r`은 task별이다. Stacking은 그리퍼가 블록 위(tcp z > 0.12 m)에 있으면 손과의 간섭을 검사하지 않는다. 데모 초기 범위는 `INIT_RANGE`에 있다. 밀기에서 가장 가까운 블록이 움직일 방향이 없으면 다음으로 가까운 블록을 민다. 적용된 이동·밀기 기록은 `results.json`의 `ood.events`.
 
 rollout에는 기존 키에 더해 `<ep>_seams`(새 청크가 실행을 시작한 step), `<ep>_pobs`(각 청크를 계획한 관측), `<ep>_event`(밀기 step, 없으면 −1)를 저장한다.
 
