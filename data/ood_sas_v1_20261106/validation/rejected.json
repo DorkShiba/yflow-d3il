@@ -1,0 +1,1150 @@
+[
+  {
+    "id": "sorting2/dev/object_position/L2/0003",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/dev/object_position/L3/0003",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/dev/object_position/L3/0004",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/dev/object_position/L3/0009",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L2/0007",
+    "reasons": [
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L3/0007",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L3/0013",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L2/0016",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L3/0016",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L2/0017",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L3/0017",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L3/0019",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L3/0025",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L3/0027",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L3/0028",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L3/0030",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L2/0040",
+    "reasons": [
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L3/0040",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L2/0046",
+    "reasons": [
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L3/0046",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L2/0047",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L3/0047",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L2/0050",
+    "reasons": [
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L3/0050",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L3/0054",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L2/0062",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L3/0062",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L2/0063",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L3/0063",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L2/0068",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L3/0068",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L2/0077",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L3/0077",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L3/0083",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L2/0085",
+    "reasons": [
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L3/0085",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L2/0087",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L3/0087",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting2/test/object_position/L3/0099",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/dev/object_position/L2/0007",
+    "reasons": [
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/dev/object_position/L3/0007",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/dev/object_position/L3/0012",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/dev/object_position/L2/0013",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/dev/object_position/L3/0013",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/dev/object_position/L3/0014",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift"
+    ]
+  },
+  {
+    "id": "sorting4/dev/object_position/L3/0015",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/dev/object_position/L3/0019",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L2/0000",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L3/0000",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L2/0007",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L3/0007",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L2/0009",
+    "reasons": [
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L3/0009",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L3/0012",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L3/0013",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L3/0022",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L2/0025",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L3/0025",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L2/0033",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L3/0033",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L3/0040",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L3/0041",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L2/0042",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L3/0042",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L2/0044",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L2/0048",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L3/0048",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L2/0060",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L3/0060",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L2/0064",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L3/0064",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L2/0073",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L3/0073",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L2/0075",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L3/0075",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L2/0088",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L3/0092",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L3/0096",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting4/test/object_position/L3/0098",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/dev/object_position/L3/0000",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/dev/object_position/L3/0001",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/dev/object_position/L2/0006",
+    "reasons": [
+      "settled_collision",
+      "xy_drift"
+    ]
+  },
+  {
+    "id": "sorting6/dev/object_position/L3/0006",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift"
+    ]
+  },
+  {
+    "id": "sorting6/dev/object_position/L3/0010",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift"
+    ]
+  },
+  {
+    "id": "sorting6/dev/object_position/L2/0013",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/dev/object_position/L3/0013",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/dev/object_position/L3/0014",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/dev/object_position/L3/0015",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L3/0001",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L2/0010",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L3/0010",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L3/0018",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L2/0023",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L3/0023",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L2/0024",
+    "reasons": [
+      "settled_collision",
+      "xy_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L3/0024",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L3/0030",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L2/0031",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L3/0031",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L3/0032",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L2/0035",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L3/0035",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L2/0038",
+    "reasons": [
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L3/0038",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L2/0048",
+    "reasons": [
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L3/0048",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L2/0050",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L3/0050",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L2/0055",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L2/0060",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L3/0060",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L3/0066",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L3/0071",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L2/0072",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L3/0072",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L3/0073",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L3/0076",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L2/0077",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L3/0077",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L3/0079",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L2/0084",
+    "reasons": [
+      "settled_collision",
+      "xy_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L3/0084",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L2/0092",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L3/0092",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L3/0098",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L2/0099",
+    "reasons": [
+      "settled_collision",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  },
+  {
+    "id": "sorting6/test/object_position/L3/0099",
+    "reasons": [
+      "initial_collision",
+      "settled_collision",
+      "unstable",
+      "xy_drift",
+      "yaw_drift"
+    ]
+  }
+]

@@ -1,0 +1,8 @@
+{
+  "verified_cases": 7440,
+  "sha256": "passed",
+  "support_and_separation": "passed",
+  "paired_seeds": "passed",
+  "simulator_validation": "NOT RUN",
+  "rollout_ready_cases": 0
+}
