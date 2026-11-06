@@ -65,7 +65,7 @@ class ExperimentConfig:
                        'seed': 0, 'no_save': True},
             'eval': {'checkpoint': 'baseline_ema.pt', 'weights': 'ema',
                      'execute_steps': 8, 'max_steps': 2000 if inserting else 400,
-                     'n_contexts': 0 if inserting else 30, 'n_traj': 4, 'seed': 0,
+                     'n_contexts': 0 if inserting else 30, 'context_start': 0, 'n_traj': 4, 'seed': 0,
                      'check_obs': 0, 'export_contexts': None,
                      **({'split': 'val'} if inserting else {'contexts': 'test'})},
             'control': {'dt_s': 0.035},
@@ -144,7 +144,7 @@ class ExperimentConfig:
         if ev['execute_steps'] > model['horizon']:
             raise ValueError('Require execute_steps <= horizon')
         for group, keys in [('train', ['seed', 'val_seed', 'save_every', 'time_limit_hours']),
-                            ('sample', ['seed']), ('eval', ['seed', 'n_contexts', 'check_obs'])]:
+                            ('sample', ['seed']), ('eval', ['seed', 'n_contexts', 'context_start', 'check_obs'])]:
             if any(v[group][key] < 0 for key in keys):
                 raise ValueError(f'{group}: counts and seeds must be nonnegative')
         mults = model['dim_mults']

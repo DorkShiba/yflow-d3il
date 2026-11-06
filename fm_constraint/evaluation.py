@@ -46,7 +46,7 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
     for ci, item in enumerate(contexts):
         for ti in range(settings['n_traj']):
             if qp5_bound is not None:
-                episode_seed = int(np.random.SeedSequence([settings['seed'], ci, ti]).generate_state(1)[0])
+                episode_seed = int(np.random.SeedSequence([settings['seed'], ci + settings.get('context_start', 0), ti]).generate_state(1)[0])
                 np.random.seed(episode_seed)
                 torch.manual_seed(episode_seed)
                 generator = torch.Generator(device=policy.base.device).manual_seed(episode_seed)
@@ -177,7 +177,7 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
                 failure = 'max_steps'
             success = bool(info.get('success', False)) and failure is None
             distance = float(info.get('mean_distance', float('nan')))
-            episodes.append({'context_id': item['id'], 'context_index': ci, 'trajectory': ti,
+            episodes.append({'context_id': item['id'], 'context_index': ci, 'global_context_index': ci + settings.get('context_start', 0), 'trajectory': ti,
                              'success': success, 'mode': int(info.get('mode', -1 if task == 'pushing' else 0)),
                              'mean_distance': distance if np.isfinite(distance) else None,
                              'steps': steps, 'failure': failure,
@@ -279,13 +279,16 @@ def evaluate(cfg, qp5_bound=None):
         if cfg.task == 'pushing':
             context_path = Path(paths['d3il_root']) / 'environments/dataset/data/pushing' / f'{settings["contexts"]}_contexts.pkl'
             contexts = np.load(context_path, allow_pickle=True)
+            start = settings.get('context_start', 0)
+            contexts = contexts[start:]
             if settings['n_contexts']:
                 contexts = contexts[:settings['n_contexts']]
-            items = [{'id': str(i), 'context': ctx} for i, ctx in enumerate(contexts)]
+            items = [{'id': str(i + start), 'context': ctx} for i, ctx in enumerate(contexts)]
         else:
             raw_items = module.load_contexts(model_cfg, 'val' if settings['check_obs'] else settings['split'],
                                             paths['raw_root'], quat2euler,
-                                            settings['check_obs'] or settings['n_contexts'], paths['contexts_file'])
+                                            settings['check_obs'] or settings['n_contexts'], paths['contexts_file'],
+                                            start=settings.get('context_start', 0))
             if settings['check_obs']:
                 for name, data, ctx, npz in raw_items[:settings['check_obs']]:
                     env.reset(random=False, context=ctx)
@@ -316,7 +319,8 @@ def evaluate(cfg, qp5_bound=None):
                     'constraint_scope': 'command_plan', 'schema_version': 3,
                     'normalizer_sha256': hashlib.sha256((Path(paths['run_dir']) / 'normalizer.npz').read_bytes()).hexdigest(),
                     'control_dt_s': v['control']['dt_s'],
-                    'execute_steps': settings['execute_steps'], 'max_steps': settings['max_steps']}
+                    'execute_steps': settings['execute_steps'], 'max_steps': settings['max_steps'],
+                    'context_start': settings.get('context_start', 0)}
         if qp5_bound is not None:
             repo = Path(__file__).resolve().parents[1]
             sources = [*Path(__file__).parent.glob('*.py'), repo / 'configs/config.py',
