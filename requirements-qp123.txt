@@ -1,0 +1,3 @@
+-r requirements-lipo.txt
+osqp==1.0.4
+PyYAML>=6.0,<7

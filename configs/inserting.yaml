@@ -1,0 +1,122 @@
+# 가속도·물체 margin은 results의 학습 시연 통계에서 선정한 고정값이다.
+task: inserting
+device: cpu
+paths:
+  run_dir: fm_baseline/results/inserting_baseline
+  output_root: fm_constraint/runs
+  data_root: data
+  hardflow_root: ../HardFlow
+  d3il_root: ../d3il
+  raw_root: /root/d3il-work/raw/inserting
+  contexts_file: fm_baseline/contexts/inserting_val.pkl
+model:
+  horizon: 16
+  dim: 64
+  dim_mults:
+  - 1
+  - 2
+  - 4
+  - 8
+  attention: false
+  sn: false
+  sn_skip_output: false
+train:
+  steps: 1000000
+  batch_size: 32
+  lr: 0.0002
+  scheduler: cosine
+  ema_decay: 0.995
+  seed: 42
+  log_every: 5000
+  save_every: 25000
+  val_batches: 8
+  val_seed: 1234
+  time_limit_hours: 0.0
+  tag: constraint
+  resume: null
+sample:
+  n_windows: 256
+  batch_size: 64
+  split: val
+  seed: 0
+  no_save: true
+eval:
+  checkpoint: baseline_ema.pt
+  weights: ema
+  execute_steps: 8
+  max_steps: 2000
+  n_contexts: 0
+  n_traj: 4
+  seed: 0
+  check_obs: 0
+  export_contexts: null
+  split: val
+schema_version: 3
+control:
+  dt_s: 0.035
+sampling:
+  predict_steps: 10
+methods:
+  # Predict 내부 FM+PF2MP → Euler → Projection, 이후 최종 계획 VLSA.
+  projection:
+    enabled: false
+    mode: every
+    scope: predict
+    skip_first: 0
+  # 이전 PC Correct(9회, alpha=2, rho=0.9, delta=0.01, eps=auto)는 중단.
+  pf2mp:
+    enabled: false
+    # 초기 후보값이며 D3IL 성능을 검증한 확정값이 아니다.
+    weight: 0.01
+    bandwidth_m: 0.025
+    distance_alpha: -1.0
+    max_support: 3000
+    seed: 42
+    grid_step_m: 0.01
+    grid_padding_m: 0.15
+    density_quantile: 0.05
+    query_chunk_size: 128
+    lock_timeout_s: 600.0
+  vlsa:
+    enabled: false
+    scope: terminal_plan
+    execution_recheck: false
+    invalidate_queue_on_change: true
+constraints:
+  workspace:
+    enabled: true
+    geometry: rectangle
+    source: research_bounds
+    low_m:
+    - 0.0
+    - -0.4
+    high_m:
+    - 0.85
+    - 0.75
+    margin_m: 0.01
+  acceleration:
+    enabled: true
+    max_m_s2: 14.2
+    approximation: inscribed_polygon
+    polygon_sides: 32
+  object_envelope:
+    enabled: true
+    geometry: regular_polygon
+    n_sides: 8
+    normal_offset_rad: 0.0
+    center: mean_blocks
+    include: all_blocks
+    footprint: centers
+    margin_m: 0.14
+    update: per_plan
+    auto_expand: false
+solver:
+  formulation: linear_inequality_qp
+  backend: osqp
+  dtype: float64
+  feasibility_tolerance_m: 1.0e-07
+  intervention_tolerance_m: 1.0e-07
+  eps_abs: 1.0e-09
+  eps_rel: 1.0e-09
+  max_iter: 20000
+  on_failure: abort_episode

@@ -16,3 +16,7 @@ experiments/lipo_inserting_20261104/artifacts/
 .visualizer/
 .venv-visualizer/
 .local-runtime/
+
+codex/pf2mp_cache/
+codex/qp123_runs/
+codex/qp123_validation/
