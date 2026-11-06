@@ -36,6 +36,9 @@ def merge_shards(folders, destination):
         for key in (*MATCH_FIELDS, 'postprocess', 'lipo_config'):
             if key not in ('context_start', 'n_contexts', 'context_hashes') and result[key] != merged[key]:
                 raise ValueError(f'Shard mismatch: {key}')
+        for key in ('rtc', 'rtc_beta', 'inference_delay_steps', 'execution_protocol', 'bootstrap_protocol'):
+            if result.get(key) != merged.get(key):
+                raise ValueError(f'Shard mismatch: {key}')
         if inserting: context_files.extend(result['context_files'])
         detail = json.loads((folder/'smoothness.json').read_text())
         def rekey(key):

@@ -184,4 +184,7 @@ python eval_inserting.py --run-dir $I --ckpt baseline_ema.pt --n-traj 2 --seed 1
 
 ## LiPo smoothness and rollout viewer
 
+RTC + QP의 구현과 4군 비교 실행 방법은 [RTC.md](fm_baseline/RTC.md)를 참고한다.
+`--rtc --postprocess qp`로 기존 체크포인트에 적용하며, 스텝 기반 추론 지연 비교를 지원한다.
+
 Training-free Baseline / Blending / LiPo comparisons for Pushing and Inserting: [implementation and evaluation](fm_baseline/LIPO.md). Run `./visualizer/run.sh` for the [local 3D viewer](visualizer/README.md), including verified sample replays, live XY jerk plots and video export. Full evaluation summaries are under `experiments/lipo_pushing_20261104` and `experiments/lipo_inserting_20261104`.

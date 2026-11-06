@@ -46,6 +46,7 @@ class Env:
 
 
 class Policy:
+    horizon = 16
     def __init__(self, *args): pass
     def plan(self, obs, generator=None):
         return np.column_stack([generator.rng.normal(.001, .001, (16, 2)), np.zeros((16, 16))])
@@ -95,13 +96,14 @@ class EvaluationIntegrationTests(unittest.TestCase):
                 (run/'baseline_ema.pt').write_bytes(b'fake checkpoint')
                 np.savez(run/'normalizer.npz', center=[0], scale=[1])
                 paths = {}
-                for mode in ('none', 'blend', 'lipo'):
+                for mode in ('none', 'blend', 'lipo', 'qp', 'rtc', 'rtc_qp', 'rtc_qp_delay2', 'baseline_delay2'):
                     output = root / f'{task}_{mode}'
                     args = SimpleNamespace(run_dir=str(run), ckpt='baseline_ema.pt', weights='ema',
                         d3il_root=str(root), hardflow_root=str(root), data_dir=str(root),
                         contexts='test', contexts_file=str(context_file), export_contexts=None, split='val', raw_root='',
                         context_start=0, n_contexts=2, n_traj=2, ode_steps=10, execute_steps=8, max_steps=20, seed=7,
-                        check_obs=0, record_joints=True, tag=mode, device='cpu', postprocess=mode, lipo_blend_steps=4,
+                        check_obs=0, record_joints=True, tag=mode, device='cpu', postprocess={'rtc': 'none', 'rtc_qp': 'qp', 'rtc_qp_delay2': 'qp', 'baseline_delay2': 'none'}.get(mode, mode),
+                        rtc=mode.startswith('rtc'), rtc_beta=5., inference_delay_steps=2 if mode.endswith('delay2') else 0, lipo_blend_steps=4,
                         lipo_blend_bound_m=.002, lipo_path_bound_m=.0003, paired_noise=True, output_root=str(output))
                     boxes = [(np.zeros(3), np.array([1, 0, 0, 0]), 0.)] * (2 if task == 'pushing' else 3)
                     patches = dict(parse_args=lambda: args, load_model=lambda *a: (cfg.copy(), None, None, None, None, 0),
@@ -109,7 +111,7 @@ class EvaluationIntegrationTests(unittest.TestCase):
                                    read_state=lambda env, _: (env.c.copy(), boxes))
                     if task == 'inserting':
                         patches['load_contexts'] = lambda *a, **kw: [(f'{ci}.npz', {'robot': {'des_c_pos': np.zeros((20, 3))}}, [ci], '') for ci in range(2)]
-                    with patch.multiple(mod, **patches), contextlib.redirect_stdout(io.StringIO()):
+                    with patch.multiple(mod, **patches), contextlib.redirect_stdout(io.StringIO()), patch('rtc.guided_plan', side_effect=lambda policy, obs, old, s, d, beta, generator: policy.plan(obs, generator)):
                         mod.main()
                     paths[mode] = next(output.iterdir())
                     with np.load(paths[mode]/'rollouts.npz') as saved:
@@ -117,9 +119,13 @@ class EvaluationIntegrationTests(unittest.TestCase):
                         np.testing.assert_array_equal(saved['c000_t0_joints'][0], np.arange(7))
                         self.assertEqual(saved['c000_t0_goals'].shape, (len(boxes), 3))
                     result = json.loads((paths[mode]/'results.json').read_text())
-                    self.assertEqual(result['qp_solved_count'], 12 if mode == 'lipo' else 0)
+                    self.assertEqual(result['qp_solved_count'], 12 if mode in ('lipo', 'qp', 'rtc_qp', 'rtc_qp_delay2') else 0)
                     self.assertEqual(result['smoothness']['seam_count']['mean'], 2)
                     self.assertEqual(result['smoothness']['actual_jerk_rms_m_s3']['n'], 4)
+                delayed = compare(paths['baseline_delay2'], paths['rtc_qp_delay2'], n_boot=20)
+                self.assertEqual(delayed['metrics']['success_rate']['delta'], 0)
+                with self.assertRaisesRegex(ValueError, 'inference_delay_steps'):
+                    compare(paths['none'], paths['rtc_qp_delay2'], n_boot=20)
                 report = compare(paths['none'], paths['lipo'], n_boot=50)
                 self.assertEqual(report['metrics']['success_rate']['delta'], 0)
                 self.assertEqual(report['metrics']['actual_jerk_rms_m_s3']['paired_episodes'], 4)

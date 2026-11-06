@@ -11,7 +11,11 @@ from smoothness import rollout_metrics, summarize_metrics
 
 
 def add_arguments(parser):
-    parser.add_argument('--postprocess', choices=['none', 'blend', 'lipo'], default='none')
+    parser.add_argument('--postprocess', choices=['none', 'blend', 'lipo', 'qp'], default='none')
+    parser.add_argument('--rtc', action='store_true', help='Action-channel RTC soft-mask guidance')
+    parser.add_argument('--rtc-beta', type=float, default=5.)
+    parser.add_argument('--inference-delay-steps', type=int, default=0,
+                        help='Simulated control-step delay, not wall-clock asynchronous inference')
     parser.add_argument('--lipo-blend-steps', type=int, default=4)
     parser.add_argument('--lipo-blend-bound-m', type=float, default=0.002)
     parser.add_argument('--lipo-path-bound-m', type=float, default=0.0003)
@@ -40,8 +44,17 @@ class EvaluationDiagnostics:
         self.config = LipoConfig(args.lipo_blend_steps, args.lipo_blend_bound_m, args.lipo_path_bound_m)
         if not 1 <= args.execute_steps <= cfg['horizon']:
             raise ValueError('execute_steps must be in [1, horizon]')
-        if args.postprocess != 'none' and self.config.blend_steps > cfg['horizon'] - args.execute_steps:
+        if args.postprocess in ('blend', 'lipo') and self.config.blend_steps > cfg['horizon'] - args.execute_steps:
             raise ValueError('LiPo blend window must fit the unexecuted overlap')
+        from rtc import soft_mask
+        delay = getattr(args, 'inference_delay_steps', 0)
+        rtc = getattr(args, 'rtc', False)
+        soft_mask(cfg['horizon'], args.execute_steps, delay)
+        beta = getattr(args, 'rtc_beta', 5.)
+        if not np.isfinite(beta) or beta < 0:
+            raise ValueError('RTC beta must be finite and nonnegative')
+        if (rtc or delay) and args.postprocess in ('blend', 'lipo'):
+            raise ValueError('RTC/delayed evaluation requires --postprocess none or qp')
         self.dt = float(env.scene.dt) * int(env.n_substeps)
         if not np.isfinite(self.dt) or self.dt <= 0:
             raise ValueError('Invalid simulator control period')
@@ -49,7 +62,10 @@ class EvaluationDiagnostics:
         self.metadata = {
             'metrics_version': 1, 'context_start': getattr(args, 'context_start', 0), 'task': cfg['task'], 'control_dt_s': self.dt,
             'postprocess': args.postprocess, 'lipo_config': asdict(self.config),
-            'inference_delay_steps': 0, 'paired_noise': args.paired_noise,
+            'inference_delay_steps': delay, 'paired_noise': args.paired_noise,
+            'rtc': rtc, 'rtc_beta': beta, 'rtc_target': 'normalized_action_channels',
+            'execution_protocol': 'simulated_delay_v1',
+            'bootstrap_protocol': 'initial_chunk_ready_before_first_step',
             'checkpoint_sha256': sha256(Path(run_dir) / args.ckpt),
             'normalizer_sha256': sha256(Path(run_dir) / 'normalizer.npz'),
             'config_sha256': sha256(Path(run_dir) / 'config.json'),

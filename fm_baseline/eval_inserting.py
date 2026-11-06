@@ -18,6 +18,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from eval_pushing import Policy, load_model
 from eval_smoothness import add_arguments, EvaluationDiagnostics
+from rtc import ChunkController
 from train import resolve_d3il, resolve_data_dir, resolve_hardflow
 
 CONTEXTS_FILE = os.path.join(HERE, "contexts", "inserting_val.pkl")
@@ -243,18 +244,30 @@ def main():
             log_des, log_c, log_b, log_act = [], [], [], []
             log_joints, log_boxes_xyz = [], []
             queue = []
+            use_controller = getattr(args, 'rtc', False) or getattr(args, 'inference_delay_steps', 0) > 0
+            controller = None
+            if use_controller:
+                controller = ChunkController(policy, processor, args.execute_steps,
+                    delay=getattr(args, 'inference_delay_steps', 0),
+                    rtc=getattr(args, 'rtc', False), beta=getattr(args, 'rtc_beta', 5.),
+                    fixed_rng=generator.get_state() if generator is not None and getattr(args, 'replan_noise', 'fresh') == 'fixed' else None)
             while not done:
                 obs = build_obs(des, c, boxes)
-                plan_starts.append(not queue)
-                if not queue:
-                    tp = time.time()
-                    plan = policy.plan(obs, generator=generator)
-                    plan_time += time.time() - tp
-                    n_plans += 1
+                if controller is not None:
                     history = np.vstack([initial_des, *log_des[-3:]])[-3:]
-                    actions = processor.process(plan[:, :2], history)
-                    queue = [actions[k].copy() for k in range(args.execute_steps)]
-                a = queue.pop(0)
+                    a, switched = controller.next_action(obs, history, generator)
+                    plan_starts.append(switched)
+                else:
+                    plan_starts.append(not queue)
+                    if not queue:
+                        tp = time.time()
+                        plan = policy.plan(obs, generator=generator)
+                        plan_time += time.time() - tp
+                        n_plans += 1
+                        history = np.vstack([initial_des, *log_des[-3:]])[-3:]
+                        actions = processor.process(plan[:, :2], history)
+                        queue = [actions[k].copy() for k in range(args.execute_steps)]
+                    a = queue.pop(0)
                 des = des + a
                 command = np.concatenate([des, fixed_z, [0.0, 1.0, 0.0, 0.0]])
                 _, _, done, info = env.step(command)
@@ -267,6 +280,9 @@ def main():
                 if capture:
                     capture.save(ci, ti, step)
                 step += 1
+            if controller is not None:
+                plan_time += controller.plan_time
+                n_plans += controller.n_plans
             successes[ci, ti] = float(info.get("success", False))
             modes[ci, ti] = int(info.get("mode", 0))
             n_boxes[ci, ti] = int(info.get("one_box_success", 0)) + int(info.get("two_box_success", 0)) + int(info.get("three_box_success", 0))

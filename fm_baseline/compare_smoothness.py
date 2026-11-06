@@ -38,6 +38,9 @@ def compare(baseline, candidate, n_boot=5000, seed=0):
             raise ValueError(f'Incompatible paired evaluations: {key}')
     if a.get('replan_noise', 'fresh') != b.get('replan_noise', 'fresh'):
         raise ValueError('Incompatible paired evaluations: replan_noise')
+    for key in ('inference_delay_steps', 'execution_protocol', 'bootstrap_protocol'):
+        if a.get(key) != b.get(key):
+            raise ValueError(f'Incompatible paired evaluations: {key}')
     nctx, ntraj = a['n_contexts'], a['n_traj']
     if ass.shape != (nctx, ntraj) or bss.shape != ass.shape:
         raise ValueError('Success array shape mismatch')
@@ -46,7 +49,7 @@ def compare(baseline, candidate, n_boot=5000, seed=0):
         raise ValueError('Missing/unpaired episodes')
     rng = np.random.default_rng(seed)
     result = {'baseline': str(baseline), 'candidate': str(candidate),
-              'candidate_mode': b['postprocess'], 'n_boot': n_boot,
+              'candidate_mode': b['postprocess'], 'candidate_rtc': b.get('rtc', False), 'n_boot': n_boot,
               'aggregation': 'equal episodes within context; paired bootstrap over contexts',
               'metrics': {}, 'timing': {label: {k: r.get(k) for k in ('plan_ms', 'qp_ms', 'postprocess_ms', 'postprocess_max_ms')}
                                        for label, r in [('baseline', a), ('candidate', b)]}}

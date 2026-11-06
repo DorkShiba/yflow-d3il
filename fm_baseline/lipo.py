@@ -81,38 +81,44 @@ def minimum_jerk(reference, history, bounds):
 class ChunkPostprocessor:
     """One instance per episode; previous_tail is in absolute desired XY."""
     def __init__(self, mode="none", execute_steps=8, config=None):
-        if mode not in ("none", "blend", "lipo") or execute_steps < 1:
+        if mode not in ("none", "blend", "lipo", "qp") or execute_steps < 1:
             raise ValueError("Invalid postprocessor mode or execute_steps")
         self.mode, self.execute_steps = mode, execute_steps
         self.config = config or LipoConfig()
         self.previous_tail = None
         self.diagnostics = []
 
-    def process(self, actions, history):
+    def process(self, actions, history, frozen_prefix=0):
         actions, history = xy(actions, "actions"), xy(history, "history")[-3:]
         if self.execute_steps > len(actions):
             raise ValueError("execute_steps exceeds chunk horizon")
-        if self.mode != "none" and self.config.blend_steps > len(actions) - self.execute_steps:
+        if not isinstance(frozen_prefix, int) or not 0 <= frozen_prefix <= len(actions):
+            raise ValueError("Invalid frozen prefix")
+        if frozen_prefix and self.mode in ("blend", "lipo"):
+            raise ValueError("Frozen prefixes require none/qp mode")
+        if self.mode in ("blend", "lipo") and self.config.blend_steps > len(actions) - self.execute_steps:
             raise ValueError("blend_steps exceeds unexecuted overlap (horizon - execute_steps)")
         start = perf_counter()
         raw = history[-1] + np.cumsum(actions, axis=0)
         ref = raw.copy()
         blend = 0
-        if self.mode != "none" and self.previous_tail is not None:
+        if self.mode in ("blend", "lipo") and self.previous_tail is not None:
             blend = self.config.blend_steps
             if blend:
                 alpha = (np.arange(1, blend + 1) / blend)[:, None]
                 ref[:blend] = (1 - alpha) * self.previous_tail[:blend] + alpha * raw[:blend]
         diag = {"solver_status": "not_run", "qp_correction_max_m": 0.0}
-        if self.mode == "lipo":
+        if self.mode in ("lipo", "qp"):
             bounds = np.full(len(ref), self.config.path_bound_m)
             bounds[:blend] = self.config.blend_bound_m
+            bounds[:frozen_prefix] = 0.
             optimized, diag = minimum_jerk(ref, history, bounds)
         else:
             optimized = ref
         self.previous_tail = optimized[self.execute_steps:].copy()
         # Preserve baseline increments exactly, avoiding a cumsum/diff roundtrip.
         output = actions.copy() if self.mode == "none" else np.diff(np.vstack((history[-1], optimized)), axis=0)
+        output[:frozen_prefix] = actions[:frozen_prefix]
         diag.update(postprocess_ms=1000 * (perf_counter() - start),
                     raw_deviation_max_m=float(np.abs(optimized - raw).max()),
                     blend_deviation_max_m=float(np.abs(ref - raw).max()), blend_steps=blend)
