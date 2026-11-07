@@ -1,4 +1,4 @@
-"""Eight combinations of methods 1/2/3, with RTC OFF and jerk QP ON."""
+"""Eight combinations of methods 1/2/3, with optional synchronous RTC and fixed jerk QP."""
 import argparse
 from datetime import datetime, timezone
 import itertools
@@ -16,6 +16,23 @@ METHODS = ('projection', 'pf2mp', 'vlsa')
 ARMS = [''.join(map(str, bits)) for bits in itertools.product((0, 1), repeat=3)]
 
 
+def add_protocol_options(parser):
+    parser.add_argument('--rtc', action='store_true', help='Use synchronous RTC (delay=0, beta=5)')
+    parser.add_argument('--condition', help='Frozen ID/OOD condition, e.g. id or ABC_mid')
+
+
+def protocol_options(args):
+    flags = ['--rtc'] if args.rtc else []
+    if args.condition:
+        flags += ['--condition', args.condition]
+    return flags
+
+
+def arm_name(arm, rtc):
+    state = 'on' if rtc else 'off'
+    return f'm123_{arm}_m4{state}_m5on'
+
+
 def run_parallel(args, output, overrides):
     """One sequential worker per GPU; only the parent writes the summary."""
     devices = args.devices
@@ -30,11 +47,11 @@ def run_parallel(args, output, overrides):
         jobs[device] = []
         for seed in args.seeds:
             for arm in arms:
-                dest = output / f'seed_{seed}' / f'm123_{arm}_m4off_m5on'
+                dest = output / f'seed_{seed}' / arm_name(arm, args.rtc)
                 cmd = [sys.executable, '-u', '-m', 'fm_constraint.run_qp123',
                        '--task', args.task, '--device', device, '--n-contexts', str(args.n_contexts),
                        '--n-traj', str(args.n_traj), '--seeds', str(seed), '--arm', arm,
-                       '--qp-bound-m', str(args.qp_bound_m), '--output-root', str(dest)]
+                       '--qp-bound-m', str(args.qp_bound_m), '--output-root', str(dest), *protocol_options(args)]
                 for field in ('hardflow_root', 'd3il_root', 'data_root'):
                     if getattr(args, field):
                         cmd += ['--' + field.replace('_', '-'), overrides['paths.' + field]]
@@ -132,7 +149,11 @@ def main(argv=None):
     p.add_argument('--qp-bound-m', type=float, default=0.0003)
     p.add_argument('--dry-run', action='store_true')
     p.add_argument('--arm', choices=ARMS, help=argparse.SUPPRESS)
+    add_protocol_options(p)
     args = p.parse_args(argv)
+    if args.condition:
+        from .fixed_conditions import load_condition
+        load_condition(args.task, args.condition)
     if args.devices and (len(args.devices) > 8 or len(set(args.devices)) != len(args.devices)
                          or any(not d.startswith('cuda:') or not d[5:].isdigit() for d in args.devices)):
         p.error('--devices requires 1 to 8 unique cuda:N devices')
@@ -166,7 +187,7 @@ def main(argv=None):
         for name, bit in zip(METHODS, args.arm):
             cfg.values['methods'][name]['enabled'] = bit == '1'
         from .evaluation import evaluate
-        evaluate(cfg, qp5_bound=args.qp_bound_m)
+        evaluate(cfg, qp5_bound=args.qp_bound_m, rtc=args.rtc, condition=args.condition)
         return
     if args.devices and not args.dry_run:
         if output.exists():
@@ -189,9 +210,9 @@ def main(argv=None):
         output.mkdir(parents=True, exist_ok=False)
         (output / 'experiment.json').write_text(json.dumps({
             'method123_source': '5acb1034d0819453fcf6364477cb25f1c30e6d8b',
-            'bit_order': METHODS, 'arms': ARMS, 'method4': False, 'method5': True,
+            'bit_order': METHODS, 'arms': ARMS, 'method4': args.rtc, 'method5': True,
             'args': vars(args), 'reference_arm': '000',
-            'order': 'PF2MP / Euler / projection, then VLSA, then QP5',
+            'order': ('RTC + ' if args.rtc else '') + 'FM + PF2MP / Euler / projection, then VLSA, then QP5',
         }, indent=2), encoding='utf-8')
     if args.devices:
         run_parallel(args, output, overrides)
@@ -200,11 +221,11 @@ def main(argv=None):
     summary = []
     for seed in args.seeds:
         for arm in ARMS:
-            dest = output / f'seed_{seed}' / f'm123_{arm}_m4off_m5on'
+            dest = output / f'seed_{seed}' / arm_name(arm, args.rtc)
             cmd = [sys.executable, '-m', 'fm_constraint.run_qp123', '--task', args.task,
                    '--device', args.device, '--n-contexts', str(args.n_contexts),
                    '--n-traj', str(args.n_traj), '--seeds', str(seed), '--arm', arm,
-                   '--qp-bound-m', str(args.qp_bound_m), '--output-root', str(dest)]
+                   '--qp-bound-m', str(args.qp_bound_m), '--output-root', str(dest), *protocol_options(args)]
             for field in ('hardflow_root', 'd3il_root', 'data_root'):
                 if getattr(args, field):
                     cmd += ['--' + field.replace('_', '-'), overrides['paths.' + field]]

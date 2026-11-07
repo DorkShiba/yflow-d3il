@@ -12,7 +12,7 @@ import time
 import uuid
 
 from configs.config import ExperimentConfig, REPO
-from .run_qp123 import ARMS
+from .run_qp123 import ARMS, add_protocol_options, protocol_options
 
 
 def digest(path):
@@ -174,6 +174,7 @@ def main(argv=None):
     p.add_argument('--resume', action='store_true')
     p.add_argument('--dry-run', action='store_true')
     p.add_argument('--prepare-only', action='store_true', help=argparse.SUPPRESS)
+    add_protocol_options(p)
     args = p.parse_args(argv)
     if not 0 < args.max_hours <= 20 or args.cpu_threads < 1:
         p.error('Require 0 < max-hours <= 20 and positive cpu-threads')
@@ -201,7 +202,11 @@ def main(argv=None):
         return
     cfg.validate('eval')
     paths = cfg.values['paths']
-    if args.task == 'pushing':
+    if args.condition:
+        from .fixed_conditions import load_condition
+        context_source, dataset = load_condition(args.task, args.condition)
+        count = len(dataset['episodes'])
+    elif args.task == 'pushing':
         import numpy as np
         context_source = Path(paths['d3il_root']) / 'environments/dataset/data/pushing/test_contexts.pkl'
         count = len(np.load(context_source, allow_pickle=True))
@@ -216,6 +221,7 @@ def main(argv=None):
     sources = [*Path(__file__).parent.glob('*.py'), * (REPO / 'fm_baseline').glob('*.py'),
                REPO / 'configs/config.py', REPO / 'configs' / f'{args.task}.yaml']
     identity = {'schema': 'qp123_context_jobs_v1', 'task': args.task, 'contexts': count,
+                'method4': args.rtc, 'method5': True, 'condition': args.condition,
                 'n_traj': args.n_traj, 'seeds': args.seeds, 'qp_bound_m': args.qp_bound_m,
                 'source_sha256': {x.relative_to(REPO).as_posix(): digest(x) for x in sources},
                 'checkpoint': digest(Path(paths['run_dir']) / 'baseline_ema.pt'),
@@ -272,7 +278,7 @@ def main(argv=None):
                         '--context-start', str(context), '--n-contexts', '1', '--n-traj', str(args.n_traj),
                         '--qp-bound-m', str(args.qp_bound_m), '--output-root', str(attempt),
                         '--hardflow-root', paths['hardflow_root'], '--d3il-root', paths['d3il_root'],
-                        '--data-root', paths['data_root']]
+                        '--data-root', paths['data_root'], *protocol_options(args)]
                 jobs[device].append((directory, command))
     save_json(output / 'gpu_assignments.json', {d: [str(x.relative_to(output)) for x, _ in group]
                                                for d, group in jobs.items()})

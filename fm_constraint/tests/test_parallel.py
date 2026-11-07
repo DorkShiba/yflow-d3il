@@ -35,7 +35,7 @@ def test_gpu_workers_are_serial_and_failures_are_visible(tmp_path, monkeypatch, 
                 active[self.device] -= 1
             return 2 if fail and self.device == 'cuda:0' else 0
     monkeypatch.setattr('fm_constraint.run_qp123.subprocess.Popen', Process)
-    args = SimpleNamespace(devices=['cuda:0', 'cuda:1'], seeds=[0, 1, 2],
+    args = SimpleNamespace(rtc=False, condition=None, devices=['cuda:0', 'cuda:1'], seeds=[0, 1, 2],
         task='pushing', n_contexts=0, n_traj=4, qp_bound_m=.0003,
         hardflow_root=None, d3il_root=None, data_root=None, dry_run=False, cpu_threads=2)
     if fail:
@@ -53,7 +53,7 @@ def test_gpu_workers_are_serial_and_failures_are_visible(tmp_path, monkeypatch, 
 
 
 def test_eight_gpu_dry_run_has_24_unique_jobs_and_writes_nothing(tmp_path, capsys):
-    args = SimpleNamespace(devices=[f'cuda:{i}' for i in range(8)], seeds=[0, 1, 2],
+    args = SimpleNamespace(rtc=False, condition=None, devices=[f'cuda:{i}' for i in range(8)], seeds=[0, 1, 2],
         task='pushing', n_contexts=0, n_traj=4, qp_bound_m=.0003,
         hardflow_root=None, d3il_root=None, data_root=None, dry_run=True, cpu_threads=2)
     run_parallel(args, tmp_path, {})
@@ -67,7 +67,7 @@ def test_eight_gpu_dry_run_has_24_unique_jobs_and_writes_nothing(tmp_path, capsy
 
 
 def test_four_gpus_each_get_one_pf_on_and_one_pf_off(tmp_path, capsys):
-    args = SimpleNamespace(devices=[f'cuda:{i}' for i in range(4)], seeds=[0, 1, 2],
+    args = SimpleNamespace(rtc=False, condition=None, devices=[f'cuda:{i}' for i in range(4)], seeds=[0, 1, 2],
         task='pushing', n_contexts=0, n_traj=4, qp_bound_m=.0003,
         hardflow_root=None, d3il_root=None, data_root=None, dry_run=True, cpu_threads=2)
     run_parallel(args, tmp_path, {})

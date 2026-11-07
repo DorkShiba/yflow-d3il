@@ -12,6 +12,7 @@ from time import perf_counter
 import numpy as np
 
 from . import checkpoint_reads, import_baseline
+from .fixed_conditions import load_condition, observe_boxes
 from .constraints import PlanConstraints
 from .policy import PIPELINE_ORDER, PIPELINE_METADATA, Policy
 from .pf2mp import prepare_potential
@@ -19,7 +20,7 @@ from .qp import solve_qp
 
 
 def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
-                   task, settings, config, observe_safety=None, qp5_bound=None):
+                   task, settings, config, observe_safety=None, qp5_bound=None, rtc=False):
     """계획 실패를 실행하지 않고, 실제 실행 행동으로만 이전 행동을 갱신한다.
 
     config는 schema v3의 resolved 값이다. 접촉 관측이 없으면 물리적
@@ -51,6 +52,13 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
                 torch.manual_seed(episode_seed)
                 generator = torch.Generator(device=policy.base.device).manual_seed(episode_seed)
             env.reset(random=False, context=copy.deepcopy(item['context']))
+            suffix = None
+            noise_rng = np.random.default_rng([item['noise_seed'], ti]) if 'noise_seed' in item else None
+            hand = item.get('robot_start')
+            if hand is not None:
+                z = float(env.robot.current_c_pos[2])
+                env.robot.gotoCartPositionAndQuat(desiredPos=[*hand, z],
+                                                  desiredQuat=[0., 1., 0., 0.], duration=2.)
             c, boxes = read_state(env, quat2euler)
             fixed_z, des = c[2:3].copy(), c[:2].copy()
             # episode 시작만 0이다. 재계획에서는 직전 실제 행동을 계속 사용한다.
@@ -80,13 +88,20 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
                         base = policy.base
                         noise = torch.randn((1, base.horizon, base.act_dim + base.obs_dim),
                                             device=base.device, generator=generator)
-                        plan = policy.plan(obs, previous.copy(), noise=noise)
+                        observed = observe_boxes(boxes, item.get('noise_factor'), noise_rng)
+                        plan_obs = build_obs(des, c, observed)
+                        kwargs = {'rtc_suffix': suffix} if rtc else {}
+                        plan = policy.plan(plan_obs, previous.copy(), noise=noise, **kwargs)
                     else:
                         plan = policy.plan(obs, previous.copy())
                     plan_seconds += perf_counter() - started
                     plan_count += 1
                     plan_id += 1
                     new_plan_report = copy.deepcopy(policy.last_report)
+                    if rtc:
+                        new_plan_report.update(pipeline_version='rtc_qp123_sync_v1',
+                                               predict_update_order=['fm_with_rtc', 'pf2mp', 'euler', 'projection'],
+                                               post_predict_order=['vlsa', 'qp5'])
                     model_calls += new_plan_report.get('model_calls', 0)
                     qp_calls += new_plan_report.get('qp_calls', 0)
                     pf_calls += new_plan_report.get('pf_calls', 0)
@@ -103,7 +118,7 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
                                      'safe_action': None, 'failure': failure})
                         break
                     if processor is not None:
-                        geometry = PlanConstraints(obs, previous, len(plan), definitions, dt)
+                        geometry = PlanConstraints(plan_obs, previous, len(plan), definitions, dt)
                         before = geometry.violation(plan[:, :2])
                         try:
                             plan = processor.process(plan[:, :2], np.asarray(history[-3:]))
@@ -112,6 +127,8 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
                             logs.append({'step': steps, 'plan_id': plan_id, 'failure': failure,
                                          'error': str(error), 'plan_report': new_plan_report})
                             break
+                        if rtc:
+                            suffix = plan[settings['execute_steps']:].copy()
                         new_plan_report['qp5'] = {**processor.diagnostics[-1],
                             'before_violation': before, 'after_violation': geometry.violation(plan)}
                     queue = [plan[k, :2].astype(np.float64) for k in range(settings['execute_steps'])]
@@ -234,10 +251,10 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
         for n, word in enumerate(('one', 'two', 'three'), 1):
             results[f'{word}_box_rate'] = float(np.mean([e['n_boxes'] >= n for e in episodes]))
     if qp5_bound is not None:
-        results.update(rtc=False, method4=False, method5=True, qp5_bound_m=qp5_bound,
+        results.update(rtc=rtc, method4=rtc, method5=True, qp5_bound_m=qp5_bound,
                        paired_noise='per_episode_generator_v1',
                        pipeline_order=[*PIPELINE_ORDER, 'qp5'],
-                       pipeline_version='qp123_state_xy_v1',
+                       pipeline_version='rtc_qp123_sync_v1' if rtc else 'qp123_state_xy_v1',
                        post_predict_order=['vlsa', 'qp5'],
                        hard_constraints_enforced=False,
                        safety_scope='123 constraints checked before and after qp5; qp5 has correction bounds only',
@@ -245,10 +262,13 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
                        qp5_solved_count=len(qp5_reports),
                        qp5_ms=float(np.mean([r['qp_ms'] for r in qp5_reports])) if qp5_reports else None,
                        postprocess_ms=float(np.mean([r['postprocess_ms'] for r in qp5_reports])) if qp5_reports else None)
+    if rtc:
+        results.update(rtc_beta=5., inference_delay_steps=0, pipeline_order=['rtc', *PIPELINE_ORDER, 'qp5'],
+                       predict_update_order=['fm_with_rtc', 'pf2mp', 'euler', 'projection'])
     return results, rollouts
 
 
-def evaluate(cfg, qp5_bound=None):
+def evaluate(cfg, qp5_bound=None, rtc=False, condition=None):
     """baseline 환경·모델 로더를 재사용해 두 태스크를 동일한 평가 루프로 실행한다."""
     cfg.validate('eval')
     v, paths, settings = cfg.values, cfg.values['paths'], cfg.values['eval']
@@ -276,7 +296,14 @@ def evaluate(cfg, qp5_bound=None):
         if settings['check_obs'] and cfg.task == 'pushing':
             module.check_obs(env, quat2euler, model_cfg, paths['raw_root'], settings['check_obs'])
             return
-        if cfg.task == 'pushing':
+        if condition is not None:
+            condition_path, dataset = load_condition(cfg.task, condition)
+            start = settings.get('context_start', 0)
+            count = settings['n_contexts']
+            entries = dataset['episodes'][start:start + count if count else None]
+            items = [dict(entry, id=entry['name'], noise_factor=dataset['factors']['C'])
+                     for entry in entries]
+        elif cfg.task == 'pushing':
             context_path = Path(paths['d3il_root']) / 'environments/dataset/data/pushing' / f'{settings["contexts"]}_contexts.pkl'
             contexts = np.load(context_path, allow_pickle=True)
             start = settings.get('context_start', 0)
@@ -324,15 +351,18 @@ def evaluate(cfg, qp5_bound=None):
         if qp5_bound is not None:
             repo = Path(__file__).resolve().parents[1]
             sources = [*Path(__file__).parent.glob('*.py'), repo / 'configs/config.py',
-                       repo / 'fm_baseline/lipo.py', repo / 'fm_baseline/smoothness.py',
+                       repo / 'fm_baseline/rtc.py', repo / 'fm_baseline/lipo.py', repo / 'fm_baseline/smoothness.py',
                        repo / 'fm_baseline/eval_pushing.py', repo / 'fm_baseline/eval_inserting.py']
             metadata['source_sha256'] = {p.relative_to(repo).as_posix():
                 hashlib.sha256(p.read_bytes()).hexdigest() for p in sources}
             metadata['contexts_sha256'] = hashlib.sha256(pickle.dumps(
                 [(item['id'], item['context']) for item in items], protocol=4)).hexdigest()
         (output / 'model_config.json').write_text((Path(paths['run_dir']) / 'config.json').read_text())
+        if condition is not None:
+            metadata.update(condition=condition, condition_sha256=hashlib.sha256(condition_path.read_bytes()).hexdigest(),
+                            condition_factors=dataset['factors'])
         results, rollouts = run_evaluation(env, policy, items, module.read_state, module.build_obs,
-                                          quat2euler, cfg.task, settings, config=v, qp5_bound=qp5_bound)
+                                          quat2euler, cfg.task, settings, config=v, qp5_bound=qp5_bound, rtc=rtc)
         results.update(metadata)
         (output / 'results.json').write_text(json.dumps(results, indent=2, allow_nan=False))
         (output / 'rollouts.json').write_text(json.dumps(rollouts, allow_nan=False))

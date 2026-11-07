@@ -5,6 +5,8 @@ from time import perf_counter
 import numpy as np
 import torch
 
+from fm_baseline.rtc import guided_velocity, rtc_target, soft_mask
+
 from .constraints import PlanConstraints
 from .qp import solve_qp
 
@@ -85,7 +87,7 @@ class Policy:
         stages[label] = report
 
     @torch.no_grad()
-    def plan(self, obs, previous_action, noise=None):
+    def plan(self, obs, previous_action, noise=None, rtc_suffix=None):
         """현재 관측과 직전 실행 행동으로 전체 계획을 생성한다.
 
         obs는 raw (obs_dim,), previous_action은 실제 실행한 XY 증분 (2,), 단위 m다.
@@ -102,6 +104,13 @@ class Policy:
                             'hard_constraints_enforced': self.hard_constraints_enforced,
                             'qp_calls': 0, 'qp_ms': 0., 'qp': [], 'stages': {},
                             'latency_ms': 0., 'stage_ms': {}, 'methods': {k: s['enabled'] for k, s in self.methods.items()}}
+        self.last_report['rtc_guided'] = rtc_suffix is not None
+        if rtc_suffix is not None:
+            execute = v['eval']['execute_steps']
+            if rtc_suffix.shape != (p.horizon - execute, p.act_dim):
+                raise ValueError('RTC requires the post-QP H-s action suffix')
+            weights = soft_mask(p.horizon, execute, 0)
+            target, mask = rtc_target(p, rtc_suffix, weights)
         try:
             # 재계획 시점에 한 번만 구성한다. Predict나 terminal VLSA에서
             # 물체 기하·이전 행동·제어 간격을 바꾸면 서로 다른 제약 문제가 된다.
@@ -118,7 +127,7 @@ class Policy:
             self.last_report['latency_ms'] = 1000 * (perf_counter() - started)
             return None
         # 모든 방법 off이면 baseline에 위임한다. 추가 noise를 뽑거나 제약으로 행동을 거부하지 않는다.
-        if not self.enabled and noise is None and v['sampling']['predict_steps'] > 1:
+        if rtc_suffix is None and not self.enabled and noise is None and v['sampling']['predict_steps'] > 1:
             result = p.plan(obs)
             if not np.isfinite(result).all():
                 self.last_report.update(status='invalid_policy_output', failure_stage='predict')
@@ -153,7 +162,10 @@ class Policy:
         stage_started = perf_counter()
         for k, t in enumerate(times):
             model_started = perf_counter()
-            velocity = p.model(x, t)
+            if rtc_suffix is None:
+                velocity = p.model(x, t)
+            else:
+                velocity = guided_velocity(p, x, t, target, mask, k / steps, beta=5.)
             self.last_report['model_calls'] += 1
             self.last_report['model_ms'] += 1000 * (perf_counter() - model_started)
             velocity[:, 0, p.act_dim:] = 0.

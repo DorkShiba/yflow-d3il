@@ -76,3 +76,85 @@ def test_qp_failure_aborts_episode_without_executing_unfiltered_plan(monkeypatch
     assert not env.commands
     assert result['episodes'][0]['failure'] == 'qp5_solver_failed'
     assert result['success_rate'] == 0 and result['filter_abort_rate'] == 1
+
+
+@pytest.mark.parametrize('flags', list(product((False, True), repeat=3)))
+def test_rtc_uses_post_qp_suffix_on_every_replan(flags, monkeypatch):
+    from fm_baseline.lipo import ChunkPostprocessor
+
+    cfg = ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml')
+    cfg.values['eval']['execute_steps'] = 2
+    for name, flag in zip(('projection', 'pf2mp', 'vlsa'), flags):
+        cfg.values['methods'][name]['enabled'] = flag
+    policy = Policy(baseline(), cfg, potential(cfg) if flags[1] else None)
+    outputs, references = [], []
+    process = ChunkPostprocessor.process
+    plan = policy.plan
+
+    def capture_qp(self, *args, **kwargs):
+        output = process(self, *args, **kwargs)
+        outputs.append(output.copy())
+        return output
+
+    def capture_plan(*args, rtc_suffix, **kwargs):
+        references.append(rtc_suffix)
+        return plan(*args, rtc_suffix=rtc_suffix, **kwargs)
+
+    monkeypatch.setattr(ChunkPostprocessor, 'process', capture_qp)
+    monkeypatch.setattr(policy, 'plan', capture_plan)
+    result, logs = run_evaluation(FakeEnv(), policy, [{'id': '0', 'context': {}}],
+        read_state, build_obs, None, 'pushing',
+        {'n_traj': 1, 'max_steps': 5, 'execute_steps': 2, 'seed': 0}, cfg.values,
+        qp5_bound=.0003, rtc=True)
+    assert result['method4'] and result['method5']
+    assert result['qp5_solved_count'] == 3
+    assert references[0] is None
+    for reference, previous in zip(references[1:], outputs):
+        np.testing.assert_array_equal(reference, previous[2:])
+    reports = [r['plan_report'] for r in logs['c000_t0'] if r['plan_report']]
+    assert [r['rtc_guided'] for r in reports] == [False, True, True]
+    assert all(r['model_calls'] == 10 and r['pf_calls'] == 10 * flags[1] for r in reports)
+
+
+@pytest.mark.parametrize('task,count', [('pushing', 60), ('inserting', 82)])
+def test_fixed_conditions_have_matched_context_ids_and_noise(task, count):
+    from fm_constraint.fixed_conditions import load_condition, observe_boxes
+    import json
+    directory = REPO / 'fm_baseline/ood_benchmark' / task
+    manifest = json.loads((directory / 'manifest.json').read_text())
+    _, reference = load_condition(task, 'id')
+    assert len(manifest['conditions']) == 14
+    for name in manifest['conditions']:
+        _, condition = load_condition(task, name)
+        assert len(condition['episodes']) == count
+        assert [(e['name'], e['noise_seed']) for e in condition['episodes']] == [
+            (e['name'], e['noise_seed']) for e in reference['episodes']]
+    boxes = [(np.zeros(3), None, 0.)]
+    _, condition = load_condition(task, 'C_mid')
+    noise = condition['factors']['C']
+    seed = [condition['episodes'][0]['noise_seed'], 0]
+    noisy = observe_boxes(boxes, noise, np.random.default_rng(seed))
+    assert np.any(noisy[0][0] != boxes[0][0])
+    assert np.all(boxes[0][0] == 0)
+    np.testing.assert_array_equal(noisy[0][0], observe_boxes(boxes, noise, np.random.default_rng(seed))[0][0])
+
+
+def test_reference_arm_matches_existing_rtc_guidance_for_identical_noise():
+    import torch
+    from fm_baseline.rtc import guided_plan
+    from fm_constraint.tests.test_policy import OBS
+
+    class Field(torch.nn.Module):
+        def forward(self, x, t):
+            return .2 - .5 * x
+
+    base = baseline()
+    base.model = Field()
+    base.t_span = torch.linspace(0., 1., 11)[:-1]
+    cfg = ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml')
+    cfg.values['eval']['execute_steps'] = 2
+    suffix = np.array([[.002, -.005], [.004, .001]])
+    reference = guided_plan(base, OBS, suffix, 2, 0, generator=torch.Generator().manual_seed(21))
+    noise = torch.randn((1, 4, 14), generator=torch.Generator().manual_seed(21))
+    actual = Policy(base, cfg).plan(OBS, np.zeros(2), noise, rtc_suffix=suffix)
+    np.testing.assert_allclose(actual, reference, atol=1e-7)

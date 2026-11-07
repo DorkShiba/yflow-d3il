@@ -25,6 +25,35 @@ def soft_mask(horizon, execute_steps, delay):
     return w
 
 
+def rtc_target(p, previous_actions, weights):
+    """Normalize the previous executed plan's remaining action suffix."""
+    import torch
+    dtype = p.center.dtype
+    target = torch.zeros(1, p.horizon, p.act_dim, dtype=dtype, device=p.device)
+    target[:, :len(previous_actions)] = (
+        torch.as_tensor(previous_actions, dtype=dtype, device=p.device)
+        - p.center[:p.act_dim]) / p.scale[:p.act_dim]
+    w = torch.as_tensor(weights, dtype=dtype, device=p.device)[None, :, None]
+    return target, w
+
+
+def guided_velocity(p, x, t, target, w, tau, beta):
+    """RTC correction of the nominal FM velocity, one input VJP per step."""
+    import torch
+    with torch.enable_grad():
+        x = x.detach().requires_grad_(True)
+        v = p.model(x, t)
+        free = torch.ones_like(v)
+        free[:, 0, p.act_dim:] = 0
+        v = v * free
+        clean_actions = (x + (1 - tau) * v)[..., :p.act_dim]
+        error = ((target - clean_actions) * w).detach()
+        g = torch.autograd.grad(clean_actions, x, grad_outputs=error)[0]
+        # Handle tau=0 explicitly instead of evaluating infinity/NaN.
+        strength = beta if tau == 0 else min(beta, (tau*tau + (1-tau)**2) / (tau*(1-tau)))
+        return (v + strength * g * free).detach()
+
+
 def guided_plan(policy, obs, previous_actions, execute_steps, delay, beta=5., generator=None):
     """Generate a raw-unit plan using action-only RTC guidance (one VJP/step)."""
     import torch
@@ -49,11 +78,7 @@ def guided_plan(policy, obs, previous_actions, execute_steps, delay, beta=5., ge
             dtype = p.center.dtype
             observation = torch.as_tensor(obs, dtype=dtype, device=p.device)[None]
             cond = {0: (observation - p.center[p.act_dim:]) / p.scale[p.act_dim:]}
-            target = torch.zeros(1, p.horizon, p.act_dim, dtype=dtype, device=p.device)
-            target[:, :len(previous_actions)] = (
-                torch.as_tensor(previous_actions, dtype=dtype, device=p.device)
-                - p.center[:p.act_dim]) / p.scale[:p.act_dim]
-            w = torch.as_tensor(weights, dtype=dtype, device=p.device)[None, :, None]
+            target, w = rtc_target(p, previous_actions, weights)
             x = torch.randn(1, p.horizon, p.obs_dim + p.act_dim,
                             device=p.device, dtype=dtype, generator=generator)
             x = p.apply_conditioning(x, cond, p.act_dim)
@@ -62,18 +87,9 @@ def guided_plan(policy, obs, previous_actions, execute_steps, delay, beta=5., ge
                 raise ValueError('At least one Euler step required')
             for k in range(n):
                 tau = k / n
-                x = x.detach().requires_grad_(True)
                 t = torch.as_tensor(tau, dtype=dtype, device=p.device)
-                v = p.model(x, t)
-                free = torch.ones_like(v)
-                free[:, 0, p.act_dim:] = 0
-                v = v * free
-                clean_actions = (x + (1 - tau) * v)[..., :p.act_dim]
-                error = ((target - clean_actions) * w).detach()
-                g = torch.autograd.grad(clean_actions, x, grad_outputs=error)[0]
-                # Handle tau=0 explicitly instead of evaluating infinity/NaN.
-                strength = beta if k == 0 else min(beta, (tau*tau + (1-tau)**2) / (tau*(1-tau)))
-                x = (x + (v + strength * g * free) / n).detach()
+                velocity = guided_velocity(p, x, t, target, w, tau, beta)
+                x = (x + velocity / n).detach()
                 x = p.apply_conditioning(x, cond, p.act_dim)
             result = (x * p.scale + p.center)[0].detach().cpu().numpy()
             if not np.isfinite(result).all():
