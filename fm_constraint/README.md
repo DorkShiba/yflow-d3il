@@ -130,3 +130,44 @@ bash scripts/run_method123.sh --stage main --inserting-set all-val \
 모델·CFM·조건부 Euler는 `fm_baseline/models/`로 이관했다. 외부 모델 경로·설치 없이 기존 EMA checkpoint를 읽는다. 구 YAML의 `paths.hardflow_root`는 읽을 때 제외하며 기존 checkpoint config의 같은 이름도 실행에 사용하지 않는다. 출처는 [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md), 수치 비교 근거는 [검증 요약](results/local_models_validation.json)에 기록한다.
 
 새 순차 실험 manifest는 내부 모델 파일과 baseline 로더·trainer의 hash도 동결한다. **이관 전 manifest의 코드 hash를 무시하거나 갱신하지 않는다.** 기존 결과는 보존되며 집계·재생할 수 있다. 이전 동결 실험의 실행 재개는 원래 코드 snapshot에서 수행하고, 이관된 코드의 새 실행은 새 `--output` 경로를 사용한다.
+
+## Inserting을 GPU 두 개에 4조합씩 분할
+
+새 스크립트 [run_inserting_gpu_group.sh](../scripts/run_inserting_gpu_group.sh)는 기존 runner와 manifest를 그대로 사용한다. 기존 8개 순차 실행을 먼저 중단한 뒤, GPU 하나씩 할당받은 두 셸에서 실행한다. 두 작업이 같은 파일시스템의 동일 출력 경로를 사용해야 완료 결과와 잠금을 공유할 수 있다.
+
+```bash
+# GPU 할당 셸 1: conda activate yflow 후 실행
+bash scripts/run_inserting_gpu_group.sh --group 1 \
+  --output fm_constraint/runs/inserting_gpu_main
+
+# GPU 할당 셸 2: conda activate yflow 후 실행
+bash scripts/run_inserting_gpu_group.sh --group 2 \
+  --output fm_constraint/runs/inserting_gpu_main
+```
+
+| 그룹 | 순차 실행 조합 | 기본 계획량 |
+|---|---|---:|
+| 1 | I00 → I04 → I08 → I12 | 60 context × 5 seed × 4 = 1,200회 |
+| 2 | I16 → I20 → I24 → I28 | 60 context × 5 seed × 4 = 1,200회 |
+
+Slurm이 각 셸에 GPU 하나를 노출하면 두 스크립트 모두 기본 `cuda:0`을 사용한다. 같은 manifest에서 그룹 2만 `--device cuda:1`로 바꾸지 않는다. 한 셸에 GPU 두 개를 모두 할당받은 경우에만 다음처럼 프로세스별 노출 장치를 나눈다.
+
+```bash
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_inserting_gpu_group.sh --group 1 \
+  --output fm_constraint/runs/inserting_gpu_main > inserting_group1.log 2>&1 &
+group1_pid=$!
+CUDA_VISIBLE_DEVICES=1 bash scripts/run_inserting_gpu_group.sh --group 2 \
+  --output fm_constraint/runs/inserting_gpu_main > inserting_group2.log 2>&1 &
+group2_pid=$!
+wait "$group1_pid"
+wait "$group2_pid"
+```
+
+Slurm이 이미 장치를 제한한 별도 할당 셸에서는 `CUDA_VISIBLE_DEVICES`를 임의로 덮어쓰지 않고 위의 그룹별 명령을 사용한다. GPU 모델·호스트·Slurm 작업 ID·노출 장치는 `group_1.device.log`, `group_2.device.log`에 기록한다.
+
+- `--output`은 이전 GPU 8조합 실행의 경로와 같게 지정한다. 기본값은 `fm_constraint/runs/inserting_gpu_main`이다. 이전 실행이 `all-val` 또는 다른 split seed를 사용했다면 같은 옵션을 지정한다.
+- 완료 표식과 결과 checksum이 맞는 조합은 건너뛴다. 중단된 조합은 `*.interrupted.*`로 보존하고 300회 전체를 재실행한다. Rollout 중간부터 재개하지 않는다.
+- Shared suite lock은 두 그룹의 병렬 실행을 허용하고 기존 전체-suite 스크립트의 실행과 충돌한다. 그룹별 exclusive lock은 같은 그룹의 이중 실행을 막는다. 기존에 직접 작성한 `for` 루프나 직접 Python 실행은 이 잠금을 사용하지 않으므로 반드시 먼저 중단한다.
+- 최초 manifest 생성은 별도 lock으로 직렬화한다. 두 그룹은 공통 context·seed·설정과 기존 캐시 lock을 공유한다. 기존 manifest의 코드 hash를 수정하거나 검증을 우회하지 않는다.
+- `--dry-run`이면 GPU와 시뮬레이터를 실행하지 않고 해당 그룹의 4개 명령을 출력한다. `--stage smoke --context-limit 1 --max-steps 2` 등 검증 옵션도 지원한다.
+- 이 스크립트는 Inserting 8개만 실행하므로, 전체 16개 완료가 필요한 기존 `summarize`는 자동 호출하지 않는다. 각 조합의 결과는 원래 형식으로 저장된다.
