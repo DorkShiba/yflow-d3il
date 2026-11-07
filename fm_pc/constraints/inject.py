@@ -94,15 +94,18 @@ class ConstrainedPolicy:
 
     ``injector``  hook-based method (identity here)
     ``sampler``   replaces the Euler loop: (2) pc.PCSampler
+    ``field``     replaces the velocity field v_θ seen by the sampler, e.g.
+                  ``acg.ACGModel`` (same ``field(x, t)`` signature)
 
     ``plan(obs)`` has the same signature and returns the same (H, 2 + obs_dim)
-    raw-unit array.  With neither attached it reproduces the baseline exactly.
+    raw-unit array.  With none attached it reproduces the baseline exactly.
     """
 
-    def __init__(self, policy, injector: Injector | None = None, sampler=None):
+    def __init__(self, policy, injector: Injector | None = None, sampler=None, field=None):
         self.base = policy
         self.injector = injector or Injector()
         self.sampler = sampler
+        self.field = field
         self.last_stats = {}
         # mirror the attributes eval scripts might touch
         self.model, self.norm, self.device = policy.model, policy.norm, policy.device
@@ -116,13 +119,18 @@ class ConstrainedPolicy:
         cond = {0: o_n}
         x = torch.randn(1, p.horizon, p.obs_dim + p.act_dim, device=p.device)
         x = p.apply_conditioning(x, cond, p.act_dim)
+        field = p.model if self.field is None else self.field
+        if self.field is not None and hasattr(self.field, "reset_stats"):
+            self.field.reset_stats()
         if self.sampler is None:
-            x = euler_solve(p.model, x, cond, p.act_dim, p.t_span, p.apply_conditioning, self.injector)
+            x = euler_solve(field, x, cond, p.act_dim, p.t_span, p.apply_conditioning, self.injector)
         else:
-            x = self.sampler.solve(p.model, x, cond, p.act_dim, p.apply_conditioning, self.injector, len(p.t_span))
+            x = self.sampler.solve(field, x, cond, p.act_dim, p.apply_conditioning, self.injector, len(p.t_span))
         x = x * p.scale + p.center
-        self.last_stats = {**self.injector.stats(), **(self.sampler.stats() if self.sampler else {})}
+        self.last_stats = {**self.injector.stats(), **(self.sampler.stats() if self.sampler else {}),
+                           **(self.field.stats() if hasattr(self.field, "stats") else {})}
         return x[0].cpu().numpy()
 
     def describe(self):
-        return {"sampler": self.sampler.describe() if self.sampler else "euler", "inject": self.injector.describe()}
+        return {"sampler": self.sampler.describe() if self.sampler else "euler", "inject": self.injector.describe(),
+                "field": self.field.describe() if self.field is not None else "v_theta"}

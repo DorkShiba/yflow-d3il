@@ -15,6 +15,8 @@ BASE = os.path.join(os.path.dirname(HERE), "fm_baseline")   # unchanged baseline
 sys.path.insert(0, BASE)
 sys.path.insert(0, HERE)
 from constraints import add_constraint_args, build_policy_from_args, tag_suffix
+from ood import OOD, add_ood_args, ood_tag, pack_rollout, run_episode
+from tasks import get_task
 from train import Normalizer, add_spectral_norm, resolve_d3il, resolve_data_dir, resolve_hardflow
 
 
@@ -37,6 +39,7 @@ def parse_args():
     p.add_argument("--check-obs", type=int, default=0)
     p.add_argument("--tag", default="")
     add_constraint_args(p)
+    add_ood_args(p)
     p.add_argument("--device", default="cuda:0" if torch.cuda.is_available() else "cpu")
     return p.parse_args()
 
@@ -175,8 +178,10 @@ def main():
     n_ctx = min(args.n_contexts, len(contexts))
     policy = Policy(model, norm, cfg, apply_conditioning, Solver, args.ode_steps, args.device)
     policy, constraint_info = build_policy_from_args(args, policy)
-    args.tag = (args.tag or '') + tag_suffix(args)
+    args.tag = (args.tag or '') + tag_suffix(args) + ood_tag(args)
     print('constraint injection:', json.dumps(constraint_info), flush=True)
+    ood = OOD(args, get_task('pushing'), env, args.execute_steps, cfg['horizon'])
+    print('ood:', json.dumps(ood.describe()), flush=True)
 
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
@@ -196,40 +201,17 @@ def main():
 
     for ci in range(n_ctx):
         for ti in range(args.n_traj):
-            env.reset(random=False, context=copy.deepcopy(contexts[ci]))
-            c, boxes = read_state(env, quat2euler)
-            fixed_z = c[2:3].copy()
-            des = c[:2].copy()
-            done = False
-            info = {}
-            step = 0
-            log_des, log_c, log_b, log_act = [], [], [], []
-            queue = []
-            while not done:
-                obs = build_obs(des, c, boxes)
-                if not queue:
-                    tp = time.time()
-                    plan = policy.plan(obs)
-                    plan_time += time.time() - tp
-                    n_plans += 1
-                    queue = [plan[k, :2].astype(np.float64) for k in range(min(args.execute_steps, plan.shape[0]))]
-                a = queue.pop(0)
-                des = des + a
-                command = np.concatenate([des, fixed_z, [0.0, 1.0, 0.0, 0.0]])
-                _, _, done, info = env.step(command)
-                c, boxes = read_state(env, quat2euler)
-                log_des.append(des.copy()); log_c.append(c.copy()); log_act.append(a.copy())
-                log_b.append(np.concatenate([boxes[0][0][:2], [boxes[0][2]], boxes[1][0][:2], [boxes[1][2]]]))
-                step += 1
+            info, step, log, ps, npl, ev = run_episode(
+                env, policy, ood, contexts[ci], ci, ti, lambda e: read_state(e, quat2euler), build_obs,
+                [env.push_box1, env.push_box2], args.execute_steps,
+                lambda b: np.concatenate([b[0][0][:2], [b[0][2]], b[1][0][:2], [b[1][2]]]))
+            plan_time += ps
+            n_plans += npl
             successes[ci, ti] = float(info.get("success", False))
             modes[ci, ti] = int(info.get("mode", -1))
             mean_dist[ci, ti] = float(info.get("mean_distance", np.nan))
             lengths[ci, ti] = step
-            key = f"c{ci:03d}_t{ti}"
-            rollouts[key + "_des"] = np.asarray(log_des, dtype=np.float32)
-            rollouts[key + "_c"] = np.asarray(log_c, dtype=np.float32)
-            rollouts[key + "_boxes"] = np.asarray(log_b, dtype=np.float32)
-            rollouts[key + "_act"] = np.asarray(log_act, dtype=np.float32)
+            rollouts.update(pack_rollout(f"c{ci:03d}_t{ti}", log, ev))
             print(f"context {ci:3d} traj {ti}  success {int(successes[ci, ti])}  mode {modes[ci, ti]:2d}  mean_dist {mean_dist[ci, ti]:.4f}  steps {step}  elapsed {time.time() - t0:.0f}s", flush=True)
 
     n_modes = 4
@@ -265,6 +247,7 @@ def main():
         "constraint_info": constraint_info,
         "constraint_params": args.constraint_params,
         "wall_sec": time.time() - t0,
+        "ood": ood.describe(),
     }
     with open(os.path.join(out_dir, "results.json"), "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
