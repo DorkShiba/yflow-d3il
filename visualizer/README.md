@@ -20,7 +20,7 @@ Select up to four panels, a time interval, speed, and MP4/GIF. 3D exports includ
 
 ## Optional checkpoint execution
 
-Use a separate D3IL-compatible runtime, with the repository dependencies plus `requirements-lipo.txt` and Pillow installed. Specify that Python executable, D3IL and data directories in the UI (the model code is bundled in `fm_baseline/models`). The viewer runs the baseline evaluator on CPU with paired noise and joint recording; it does not train a model. Pushing supports fresh/fixed replan noise; Inserting supports fresh noise only. MuJoCo frame capture is optional and requires a working graphics backend. WebGL playback and video export use recorded states and do not require D3IL locally.
+Use a separate D3IL-compatible runtime, with the repository dependencies (`requirements.txt`) and Pillow installed. Specify that Python executable, D3IL and data directories in the UI (the model code is bundled in `fm_baseline/models`). The viewer runs the baseline evaluator on CPU with paired noise and joint recording; it does not train a model. Pushing supports fresh/fixed replan noise; Inserting supports fresh noise only. MuJoCo frame capture is optional and requires a working graphics backend. WebGL playback and video export use recorded states and do not require D3IL locally.
 
 Only run trusted checkpoint/context files. Server access is restricted to localhost and same-origin requests. Inputs, source hashes, job manifests and results remain in the selected local store. Restarted in-progress jobs are marked interrupted, not automatically rerun.
 

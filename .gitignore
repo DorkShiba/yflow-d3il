@@ -14,10 +14,6 @@ docs/report.md
 # 태스크별 재생성 가능한 KDE 캐시
 data/*/pf2mp_cache/
 
-experiments/lipo_pushing_20261104/artifacts/
-
-experiments/lipo_inserting_20261104/artifacts/
-
 .playwright-mcp/
 .visualizer/
 .venv-visualizer/
@@ -25,3 +21,5 @@ experiments/lipo_inserting_20261104/artifacts/
 
 # Windows 다운로드 부산물
 *:Zone.Identifier
+# 참고 논문 PDF는 로컬에만 둔다
+docs/*.pdf

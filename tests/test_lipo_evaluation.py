@@ -94,14 +94,14 @@ class EvaluationIntegrationTests(unittest.TestCase):
                 (run/'baseline_ema.pt').write_bytes(b'fake checkpoint')
                 np.savez(run/'normalizer.npz', center=[0], scale=[1])
                 paths = {}
-                for mode in ('none', 'blend', 'lipo'):
+                for mode in ('none', 'lipo'):
                     output = root / f'{task}_{mode}'
                     args = SimpleNamespace(run_dir=str(run), ckpt='baseline_ema.pt', weights='ema',
                         d3il_root=str(root), data_dir=str(root),
                         contexts='test', contexts_file=str(context_file), export_contexts=None, split='val', raw_root='',
                         context_start=0, n_contexts=2, n_traj=2, ode_steps=10, execute_steps=8, max_steps=20, seed=7,
-                        check_obs=0, record_joints=True, tag=mode, device='cpu', postprocess=mode, lipo_blend_steps=4,
-                        lipo_blend_bound_m=.002, lipo_path_bound_m=.0003, paired_noise=True, output_root=str(output))
+                        check_obs=0, record_joints=True, tag=mode, device='cpu', postprocess=mode,
+                        lipo_path_bound_m=.0003, paired_noise=True, output_root=str(output))
                     boxes = [(np.zeros(3), np.array([1, 0, 0, 0]), 0.)] * (2 if task == 'pushing' else 3)
                     patches = dict(parse_args=lambda: args, load_model=lambda *a: (cfg.copy(), None, None, None, None, 0),
                                    setup_d3il=lambda *a: (Env, None), Policy=Policy,

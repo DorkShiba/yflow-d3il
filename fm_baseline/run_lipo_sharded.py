@@ -111,7 +111,7 @@ def main():
     root.mkdir(parents=True, exist_ok=False)
     jobs = []
     for start in range(0, args.n_contexts, args.shard_contexts):
-        for mode in ('none','blend','lipo'):
+        for mode in ('none','lipo'):
             name = f'{mode}_{start:03d}'
             cmd = [sys.executable, str(here/f'eval_{args.task}.py'), '--run-dir', str(here/'results'/f'{args.task}_baseline'),
                    '--ckpt', 'baseline_ema.pt', '--execute-steps','8','--ode-steps','10','--paired-noise',
@@ -129,7 +129,7 @@ def main():
         folders = list((root/'shards'/job['name']).glob('eval_*'))
         if len(folders)!=1: raise RuntimeError(f'Unexpected output count: {job}')
         return job['mode'], folders[0]
-    folders = {m:[] for m in ('none','blend','lipo')}
+    folders = {m:[] for m in ('none','lipo')}
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         futures = {pool.submit(execute, job):job for job in jobs}
         for future in as_completed(futures):
@@ -137,7 +137,7 @@ def main():
             folders[mode].append(folder)
             print(f'completed {futures[future]["name"]} ({sum(map(len,folders.values()))}/{len(jobs)}) elapsed {time.time()-began:.0f}s',flush=True)
     combined = {mode:merge_shards(paths,root/'combined'/mode) for mode,paths in folders.items()}
-    for mode in ('blend','lipo'):
+    for mode in ('lipo',):
         (root/f'comparison_{mode}.json').write_text(json.dumps(compare(combined['none'],combined[mode]),indent=2,allow_nan=False)+'\n')
     (root/'COMPLETE.json').write_text(json.dumps({'wall_sec':time.time()-began,'completed_utc':datetime.now(timezone.utc).isoformat(),'episodes_per_mode':args.n_contexts*args.n_traj,'workers':args.workers},indent=2)+'\n')
     print('COMPLETE',flush=True)

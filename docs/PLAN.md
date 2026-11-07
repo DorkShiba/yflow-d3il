@@ -310,6 +310,24 @@ Predict N회: v = FM(x,t) [+ ④ RTC guidance] [+ ② PF2MP] → Euler → [① 
 
 **유지**: `fm_baseline/models`, `fm_baseline/{train,sample,eval_*,lipo,rtc,smoothness}.py`, `fm_constraint/` 핵심 파일, `configs/`, `preprocess/`(추가 태스크 포함), `ood/`(3.1절로 통합), `visualizer/`, 각 방법·OOD의 단위 테스트.
 
+### 4단계 결과 (2026-11-08, 브랜치 `integrate/phase4-cleanup`)
+- **⑤ 하나로 통일**: `fm_baseline/lipo.py`의 blend 경로와 자체 QP(`minimum_jerk`)를 삭제하고 `fm_constraint/lipo.jerk_qp`를 호출하게 했다.
+  - baseline 평가는 `--postprocess none|lipo`, `--lipo-path-bound-m`만 받는다.
+  - `run_lipo_comparison.py`, `run_lipo_sharded.py`는 none 대 lipo만 비교한다.
+  - 합성 fixture의 목표 jerk RMS는 78.7 → 41.4 m/s³(약 47% 감소)다. 이전 blend+QP 정의는 21.7이었다. 테스트 기준을 50%에서 40% 감소로 바꿨다.
+- **삭제**:
+  - `experiments/`(blend 기준 2026-11-04 LiPo 보고 3개)
+  - `fm_constraint/results/legacy/`, `order_projection_pc_vlsa_validation.json`, `integration_validation.json`, `integration_source_manifest.json`, `method123_runner_validation.json`
+  - `docs/inserting_handoff_20261107.*`
+  - `requirements-lipo.txt`(clarabel은 `requirements.txt`에 있다)
+  - 참고 논문 PDF는 추적만 해제했다(`git rm --cached`, `docs/*.pdf` ignore). 로컬 파일은 그대로다.
+- **계획과 다르게 유지**: `fm_constraint/tests/test_local_models.py`. HardFlow 없이 동작하는 모델 수식·Euler·checkpoint 로드·외부 import 차단 테스트이므로 남겼다.
+- **이미 앞 단계에서 처리**: `fm_pc/`, ACG, PC 주석·호환 코드, GPU 분할 스크립트, `codex/`(master에 없음), L2C2(merge 안 함).
+- **검증**:
+  - pytest **151 passed**. visualizer 테스트를 처음 실행했다(scratchpad 가상환경에 `visualizer/requirements.txt`를 설치).
+  - D3IL `fm_baseline/eval_{pushing,inserting}.py --postprocess lipo` smoke 통과.
+- **결정 대기**: `visualizer/samples/`의 내장 대시보드는 2026-11-04 blend 정의의 Baseline/Blending/LiPo 기록이다. 재생은 그대로 되지만 현재 ⑤와 정의가 다르다(12절).
+
 ---
 
 ## 6. 5단계: 문서 정리
@@ -395,3 +413,12 @@ terminal 위치는 PC Correct 때문에 생겼다. PC는 Euler가 끝난 뒤 계
 3. **추가 태스크** (2026-11-07 결정): 실험 여부가 아직 미정이다. 이번 통합은 **Pushing·Inserting에만 집중**한다. 추가 태스크의 코드(`tasks.py`, `preprocess/prepare_task.py`)는 남기되, OOD 재생성·검증·5개 방법 연결은 Pushing·Inserting만 수행한다. checkpoint도 이 두 태스크만 있다.
 4. **진행 중인 실험** (2026-11-07 확인): 진행 중인 실험은 없다고 간주한다. 팀원마다 다른 실험 조건 방식을 통일하는 것이 이 통합의 목적이다. 실험 환경 통일의 세부 사항은 브랜치 통합 후에 사용자가 따로 전달한다.
 5. **PR 단위** — **결정 (2026-11-07): 단계별 PR**. 각 단계는 테스트가 통과하는 상태로 끝내고, 브랜치 `integrate/phase<N>-*`를 master 기준으로 만든다. push와 PR 생성은 사용자가 실행한다.
+
+---
+
+## 12. 남은 결정 (4단계 이후)
+1. **visualizer 내장 샘플**: 현재 6개 샘플(`visualizer/samples/`)은 이전 blend LiPo 기록이다. 선택지는 세 가지다.
+   - (a) 이력 데모로 유지하고 README에 표시한다.
+   - (b) 삭제한다.
+   - (c) 현재 ⑤로 다시 기록한다(D3IL 재실행과 관절 기록 필요).
+

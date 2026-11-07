@@ -11,9 +11,7 @@ from smoothness import rollout_metrics, summarize_metrics
 
 
 def add_arguments(parser):
-    parser.add_argument('--postprocess', choices=['none', 'blend', 'lipo'], default='none')
-    parser.add_argument('--lipo-blend-steps', type=int, default=4)
-    parser.add_argument('--lipo-blend-bound-m', type=float, default=0.002)
+    parser.add_argument('--postprocess', choices=['none', 'lipo'], default='none')
     parser.add_argument('--lipo-path-bound-m', type=float, default=0.0003)
     parser.add_argument('--paired-noise', action='store_true', help='Independent per-episode RNG, shared across ablation arms')
     parser.add_argument('--output-root', default=None)
@@ -37,11 +35,9 @@ def git_head(path):
 class EvaluationDiagnostics:
     def __init__(self, args, cfg, env, run_dir, context_source, d3il_root):
         self.args = args
-        self.config = LipoConfig(args.lipo_blend_steps, args.lipo_blend_bound_m, args.lipo_path_bound_m)
+        self.config = LipoConfig(args.lipo_path_bound_m)
         if not 1 <= args.execute_steps <= cfg['horizon']:
             raise ValueError('execute_steps must be in [1, horizon]')
-        if args.postprocess != 'none' and self.config.blend_steps > cfg['horizon'] - args.execute_steps:
-            raise ValueError('LiPo blend window must fit the unexecuted overlap')
         self.dt = float(env.scene.dt) * int(env.n_substeps)
         if not np.isfinite(self.dt) or self.dt <= 0:
             raise ValueError('Invalid simulator control period')

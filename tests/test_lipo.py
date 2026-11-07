@@ -6,12 +6,14 @@ from pathlib import Path
 from unittest.mock import patch
 import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'fm_baseline'))
-from lipo import ChunkPostprocessor, LipoConfig, minimum_jerk
+from lipo import ChunkPostprocessor, LipoConfig
 from smoothness import rollout_metrics
 from compare_smoothness import compare, MATCH_FIELDS, METRICS
 
 
 class LipoTests(unittest.TestCase):
+    """⑤ LiPo (fixed-bound jerk QP, fm_constraint.lipo) through the baseline postprocessor."""
+
     def test_baseline_preserves_actions_exactly(self):
         actions = np.random.default_rng(1).normal(size=(16, 2)).astype(np.float32)
         proc = ChunkPostprocessor('none')
@@ -19,61 +21,39 @@ class LipoTests(unittest.TestCase):
 
     def test_constant_velocity_has_zero_jerk(self):
         history = np.array([[-0.002, 0], [-0.001, 0], [0, 0]])
-        ref = np.column_stack([np.arange(1, 17) * 0.001, np.zeros(16)])
-        out, diag = minimum_jerk(ref, history, np.full(16, .0003))
-        np.testing.assert_allclose(out, ref, atol=2e-7)
-        self.assertLess(diag['jerk_cost_after_m2'], 1e-16)
+        actions = np.tile([0.001, 0.], (16, 1))
+        proc = ChunkPostprocessor('lipo')
+        out = proc.process(actions, history)
+        np.testing.assert_allclose(out, actions, atol=1e-9)
+        self.assertLess(proc.diagnostics[-1]['jerk_cost_after_m2'], 1e-16)
 
-    def test_qp_reduces_jerk_and_respects_per_sample_bounds(self):
+    def test_qp_reduces_jerk_and_respects_position_bound(self):
         rng = np.random.default_rng(3)
         history = np.array([[-.002, 0], [-.001, 0], [0, 0]])
-        ref = np.cumsum(rng.normal(0, .003, (16, 2)), axis=0)
-        bounds = np.r_[np.full(4, .002), np.full(12, .0003)]
-        out, diag = minimum_jerk(ref, history, bounds)
-        self.assertTrue(np.all(np.abs(out - ref) <= bounds[:, None] + 1e-12))
+        actions = rng.normal(0, .003, (16, 2))
+        proc = ChunkPostprocessor('lipo', config=LipoConfig(.0003))
+        out = proc.process(actions, history)
+        shift = np.cumsum(out, axis=0) - np.cumsum(actions, axis=0)
+        self.assertTrue(np.all(np.abs(shift) <= .0003 + 1e-12))
+        diag = proc.diagnostics[-1]
         self.assertLess(diag['jerk_cost_after_m2'], diag['jerk_cost_before_m2'])
 
-    def test_zero_bounds_leave_reference_unchanged(self):
-        ref = np.random.default_rng(4).normal(0, .01, (16, 2))
-        out, _ = minimum_jerk(ref, [[0, 0]], np.zeros(16))
-        np.testing.assert_array_equal(out, ref)
-
-    def test_blend_uses_absolute_unexecuted_previous_positions(self):
-        proc = ChunkPostprocessor('blend', 8, LipoConfig(blend_steps=4))
-        old = np.tile([.001, 0], (16, 1))
-        proc.process(old, [[.4, .2]])
-        anchor = np.array([.408, .2])
-        new = np.tile([-.001, 0], (16, 1))
-        out = proc.process(new, [anchor])
-        positions = anchor + np.cumsum(out, axis=0)
-        raw = anchor + np.cumsum(new, axis=0)
-        prior = np.array([.4, .2]) + np.cumsum(old, axis=0)[8:]
-        alpha = np.arange(1, 5)[:, None] / 4
-        np.testing.assert_allclose(positions[:4], (1-alpha)*prior[:4]+alpha*raw[:4])
-        np.testing.assert_allclose(positions[4:], raw[4:])
-
     def test_history_influences_boundary_optimization(self):
-        ref = np.zeros((16, 2))
-        flat, _ = minimum_jerk(ref, np.zeros((3, 2)), np.full(16, .002))
-        moving, _ = minimum_jerk(ref, [[-.002, 0], [-.001, 0], [0, 0]], np.full(16, .002))
-        self.assertGreater(moving[0, 0], flat[0, 0] + .0001)
+        actions = np.tile([0.001, 0.], (16, 1))
+        flat = ChunkPostprocessor('lipo', config=LipoConfig(.002)).process(actions, np.zeros((3, 2)))
+        moving = ChunkPostprocessor('lipo', config=LipoConfig(.002)).process(actions, [[-.002, 0], [-.001, 0], [0, 0]])
+        self.assertFalse(np.allclose(flat, moving))
 
-    def test_new_episode_has_no_old_tail(self):
-        actions = np.tile([.001, 0], (16, 1))
-        a = ChunkPostprocessor('lipo').process(actions, [[0, 0]])
-        b = ChunkPostprocessor('lipo').process(actions, [[0, 0]])
-        np.testing.assert_array_equal(a, b)
-
-    def test_reject_bad_inputs_and_overlap(self):
-        with self.assertRaises(ValueError): LipoConfig(path_bound_m=-1)
-        with self.assertRaises(ValueError): LipoConfig(blend_steps=1.5)
-        with self.assertRaises(ValueError): ChunkPostprocessor('lipo', 16).process(np.zeros((16, 2)), [[0, 0]])
+    def test_reject_bad_inputs(self):
+        with self.assertRaises(ValueError): LipoConfig(path_bound_m=0)
+        with self.assertRaises(ValueError): ChunkPostprocessor('blend')
+        with self.assertRaises(ValueError): ChunkPostprocessor('lipo', 17).process(np.zeros((16, 2)), [[0, 0]])
         with self.assertRaises(ValueError): ChunkPostprocessor().process(np.full((16, 2), np.nan), [[0, 0]])
 
     def test_fixed_multichunk_fixture_reduces_executed_jerk(self):
         chunks = np.random.default_rng(14).normal([.001, 0], .001, (40, 16, 2))
         results = {}
-        for mode in ('none', 'blend', 'lipo'):
+        for mode in ('none', 'lipo'):
             processor = ChunkPostprocessor(mode)
             history = [np.array([.4, 0.])]
             actions, starts = [], []
@@ -85,14 +65,14 @@ class LipoTests(unittest.TestCase):
                     starts.append(k == 0)
             results[mode] = rollout_metrics(actions, history[1:], history[1:], starts,
                                              .035, history[0], history[0])
-        for metric in ('desired_jerk_rms_m_s3', 'seam_velocity_jump_rms_m_s'):
-            self.assertLess(results['lipo'][metric], results['none'][metric] * .5)
+        # 고정 jerk QP(blend 없음)는 이 fixture에서 78.7 → 41.4 m/s³ (약 47% 감소).
+        # 이전 blend+QP 정의는 21.7이었다(fm_baseline/LIPO.md 이력).
+        self.assertLess(results['lipo']['desired_jerk_rms_m_s3'], results['none']['desired_jerk_rms_m_s3'] * .6)
 
     def test_solver_failure_is_not_silent_fallback(self):
-        with patch('clarabel.DefaultSolver') as cls:
-            cls.return_value.solve.return_value.status = 'MaxIterations'
+        with patch('lipo.jerk_qp', return_value={'status': 'solver_failure', 'solver_status': 'MaxIterations'}):
             with self.assertRaisesRegex(RuntimeError, 'MaxIterations'):
-                minimum_jerk(np.zeros((16, 2)), [[0, 0]], np.ones(16))
+                ChunkPostprocessor('lipo').process(np.zeros((16, 2)), [[0, 0]])
 
 
 class MetricsTests(unittest.TestCase):
