@@ -22,7 +22,7 @@ def main():
     baseline = import_baseline('eval_pushing')
     with checkpoint_reads():
         mc, model, norm, conditioning, solver, checkpoint_step = baseline.load_model(
-            paths['run_dir'], v['eval']['checkpoint'], v['eval']['weights'], paths['hardflow_root'], v['device'])
+            paths['run_dir'], v['eval']['checkpoint'], v['eval']['weights'], v['device'])
     base = baseline.Policy(model, norm, mc, conditioning, solver, v['sampling']['predict_steps'], v['device'])
     policy = Policy(base, cfg, prepare_potential(cfg))
     files = trainer.find_split_files(str(Path(paths['data_root']) / f'{cfg.task}_sincos_v1'), v['sample']['split'])

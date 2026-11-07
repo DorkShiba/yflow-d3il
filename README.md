@@ -2,7 +2,7 @@
 
 연세대학교 인공지능종합설계 Y-Flow 팀의 D3IL 실험 저장소다. 상태 기반 플로우 매칭 정책을 D3IL **Pushing**과 **Inserting** 태스크로 학습하고, 물리 제약 주입 방식들을 조합해 비교하는 것이 목표다.
 
-현재는 **물리 제약 보정이 없는 순수 플로우 매칭 베이스라인**까지 완성됐다. 이 문서는 이 베이스라인을 불러와 제약 실험을 붙일 사람을 위한 안내다.
+순수 플로우 매칭 베이스라인과 Projection·PF2MP·실행 직전 행동 필터를 구현했다. 모델·CFM·Euler 샘플러는 `fm_baseline/models/`에서 제공하며 외부 HardFlow checkout이나 패키지 설치는 필요하지 않다.
 
 - 데이터 출처, 전처리, 분할: [`data/README.md`](data/README.md)
 - 베이스라인 학습·평가의 상세 기록과 실패 분석: [`fm_baseline/README.md`](fm_baseline/README.md)
@@ -15,6 +15,7 @@ yflow-d3il/
 │   ├── pushing_sincos_v1/      # train 1,800 / val 200
 │   └── inserting_sincos_v1/    # train 718 / val 82
 ├── fm_baseline/
+│   ├── models/                 # 내부 TemporalUnet·CFM·조건부 Euler
 │   ├── train.py                # 학습
 │   ├── sample.py               # 오프라인 생성 검사
 │   ├── eval_pushing.py         # Pushing 시뮬레이터 평가
@@ -45,7 +46,7 @@ yflow-d3il/
 
 ## 3. 모델 개요
 
-- 백본은 HardFlow 공식 저장소(`d3il` 브랜치, commit `a85105080dd0a28dca76b49ac0414f275de146ed`)의 `TemporalUnet`과 `FlowMatcher`(CFM)이며 코드를 수정하지 않고 import한다.
+- 백본과 CFM은 `fm_baseline/models/`의 `TemporalUnet`, `FlowMatcher`를 사용한다. HardFlow `d3il` 커밋 `a85105080dd0a28dca76b49ac0414f275de146ed`에서 필요한 구성만 내부로 이관했으며, 기존 EMA checkpoint의 파라미터 이름·연산·학습 RNG 순서를 유지한다. 출처는 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)에 기록했다.
 - 모델은 길이 16의 궤적 `x ∈ R^{16 × (2 + obs_dim)}`를 생성한다. 각 시점은 `[행동 2개, 관측 obs_dim개]` 순서다.
 - 첫 시점(t=0)의 관측을 현재 관측으로 고정한 상태에서 노이즈를 Euler ODE 10스텝으로 적분해 궤적을 만든다.
 - **모델은 정규화 공간에서 동작한다.** 원래 단위 값은 `raw = x * scale + center`이고, `center`와 `scale`은 실행 폴더의 `normalizer.npz`에 있다(길이 `2 + obs_dim`, 위 순서와 같음).
@@ -80,7 +81,6 @@ ODE 10스텝, 8스텝 실행, context 구성, context당 4회, 시드는 베이�
 ```text
 /root/d3il-work/
 ├── yflow-d3il/    # 이 저장소
-├── HardFlow/      # HardFlow d3il 브랜치 (지정 commit)
 ├── d3il/          # D3IL 공식 저장소 (시뮬레이터, Pushing 테스트 context)
 └── venv/
 ```
@@ -88,9 +88,8 @@ ODE 10스텝, 8스텝 실행, context 구성, context당 4회, 시드는 베이�
 ```bash
 mkdir -p /root/d3il-work && cd /root/d3il-work
 git clone https://github.com/DorkShiba/yflow-d3il.git
-git clone -b d3il https://github.com/azizanlab/HardFlow.git
-git -C HardFlow checkout a85105080dd0a28dca76b49ac0414f275de146ed
 git clone https://github.com/ALRhub/d3il.git
+git -C d3il checkout 1d9c71850d4fc1477cee17b557c8b97d70b13071
 python3 -m venv venv
 source venv/bin/activate
 pip install -r yflow-d3il/requirements.txt
@@ -98,8 +97,8 @@ pip install -r yflow-d3il/requirements.txt
 
 이후 터미널을 열 때마다 `source /root/d3il-work/venv/bin/activate`만 하면 된다.
 
-- Python 3.10 또는 3.11을 쓴다. `pin`(Pinocchio)은 3.12 이상용 wheel이 없어 설치가 실패할 수 있다.
-- HardFlow와 D3IL은 받기만 하고 수정하거나 `pip install` 하지 않는다. HardFlow의 `requirements.txt`는 버전이 달라 설치하지 않는다.
+- **Python 3.11** 환경을 사용한다. `requirements.txt`는 현재 검증한 Linux x86_64 환경의 패키지 버전을 고정하며, 테스트용 pytest와 PNG/GIF용 Pillow도 포함한다.
+- 외부 모델 패키지는 필요하지 않다. D3IL은 checkout하여 경로로 사용하며 `pip install`하지 않는다. D3IL 모델 폴더는 시뮬레이터의 임시 XML 생성용 쓰기 권한이 필요하다.
 - D3IL 데이터 ZIP(약 17GB)은 받지 않아도 된다. 학습 데이터는 `data/`에, Inserting 평가 초기 배치는 `fm_baseline/contexts/`에, Pushing 테스트 context는 D3IL 저장소에 들어 있다.
 - 확인된 버전: PyTorch 2.3.1, NumPy 1.26.4, Gym 0.23.1, MuJoCo 2.3.2, Pinocchio 2.6.21, einops 0.8.1. NumPy 2.x가 설치되면 안 된다.
 - `ImportError: libGL.so.1`이 나면 `apt-get update && apt-get install -y libgl1 libglib2.0-0`을 실행한다. 시스템 패키지는 워크스페이스를 재시작하면 사라진다.
@@ -115,7 +114,7 @@ python eval_pushing.py --run-dir results/pushing_baseline --ckpt baseline_ema.pt
 
 첫 명령은 `CHECK PASSED`, 두 번째는 `check summary  max`가 1e-4 이하, 세 번째는 대부분 `success 1`이 나오면 정상이다. Pushing의 `--check-obs`는 원본 시연 pkl이 있어야 해서 새 워크스페이스에서는 쓰지 않는다.
 
-경로 결정 규칙: `config.json`에 기록된 경로가 있으면 그것을, 없으면 저장소 기준 위치(`<저장소>/data/...`, `<저장소>/../HardFlow`, `<저장소>/../d3il`)를 쓴다. 다른 배치를 쓰면 `--hardflow-root`, `--data-dir`, `--d3il-root`(학습은 `--data-root`, `--hardflow-root`)로 지정한다.
+모델 코드는 항상 저장소 내부에서 import한다. 데이터와 D3IL은 저장된 경로 또는 저장소 기준 `<저장소>/data/...`, `<저장소>/../d3il`을 사용한다. 통합 설정은 `paths.data_root`, `paths.d3il_root`로 지정한다. Baseline CLI는 `--data-dir`, `--d3il-root`(학습은 `--data-root`)를 지원한다. 이전 `--hardflow-root` 옵션은 제거했다.
 
 ## 6. 베이스라인 체크포인트
 
@@ -126,7 +125,7 @@ python eval_pushing.py --run-dir results/pushing_baseline --ckpt baseline_ema.pt
 
 `baseline_ema.pt`는 원본 `last.pt`(100만 스텝)에서 **EMA 가중치만** 꺼내 저장한 파일이다(`{"ema", "step", "config"}`). 평가와 추론 시점 제약 실험에는 이것만 있으면 된다. 같은 폴더의 `config.json`과 `normalizer.npz`가 함께 있어야 불러올 수 있으므로 폴더 단위로 다룬다.
 
-`config.json`의 `hardflow_root`, `data_dir`는 원래 학습한 워크스페이스의 경로지만, 그 경로가 없으면 스크립트가 5절의 규칙으로 찾으므로 고칠 필요가 없다. 학습을 이어서 하려면 옵티마이저 상태가 든 원본 `last.pt`가 필요하다.
+기존 `config.json`의 `hardflow_root`는 이력 metadata로만 남고 사용하지 않는다. `data_dir`가 없는 경로를 가리키면 저장소의 데이터를 찾는다. 원본 checkpoint·normalizer·설정 파일은 수정하지 않아도 된다. 학습을 이어서 하려면 옵티마이저 상태가 든 원본 `last.pt`가 필요하다.
 
 ## 7. 불러와서 쓰기
 
@@ -137,8 +136,7 @@ import numpy as np
 from eval_pushing import load_model, Policy
 
 run = "/root/d3il-work/yflow-d3il/fm_baseline/results/pushing_baseline"
-hardflow = "/root/d3il-work/HardFlow"
-cfg, model, norm, apply_conditioning, Solver, step = load_model(run, "baseline_ema.pt", "ema", hardflow, "cuda:0")
+cfg, model, norm, apply_conditioning, Solver, step = load_model(run, "baseline_ema.pt", "ema", device="cuda:0")
 policy = Policy(model, norm, cfg, apply_conditioning, Solver, ode_steps=10, device="cuda:0")
 
 obs = np.zeros(cfg["obs_dim"], dtype=np.float32)
@@ -154,7 +152,7 @@ actions = plan[:, :2]
 
 | 적용 시점 | 위치 | 예 |
 |---|---|---|
-| ODE 적분 중 (매 스텝) | `Policy.plan`의 `solver(x, t_span=...)` 부분. HardFlow `ConditionedODESolver.forward` 루프와 같은 구조로 직접 적분하면서 각 스텝에 보정을 넣는다. t=0 관측 위치는 매 스텝 고정해야 한다. | 매 스텝 투영, 가이던스 |
+| ODE 적분 중 (매 스텝) | `Policy.plan`의 `solver(x, t_span=...)` 부분. 내부 `fm_baseline/models/ode.py`의 Euler 구조로 적분하면서 각 스텝에 보정을 넣는다. t=0 관측 위치는 매 스텝 고정해야 한다. | 매 스텝 투영, 가이던스 |
 | 생성 직후 | `Policy.plan`이 반환하기 전, 또는 `plan` 반환 직후 | 종단 위치 보정, 궤적 투영 |
 | 실행 직전 | `eval_*.py` 메인 루프의 `des = des + a` 직전 | 행동 필터, 작업 공간 경계 |
 | 학습 손실 | `train.py`의 `flow.loss(...)` 이후 | 평활화 정규화 등. 체크포인트를 새로 학습해야 한다 |

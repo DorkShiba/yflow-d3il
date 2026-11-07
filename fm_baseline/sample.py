@@ -9,7 +9,8 @@ import numpy as np
 import torch
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from train import Normalizer, add_spectral_norm, find_split_files, load_split, resolve_data_dir, resolve_hardflow, set_seed, window_index
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from train import Normalizer, add_spectral_norm, find_split_files, load_split, resolve_data_dir, set_seed, window_index
 
 
 def parse_args():
@@ -20,7 +21,6 @@ def parse_args():
     p.add_argument("--batch-size", type=int, default=64)
     p.add_argument("--ode-steps", type=int, default=10)
     p.add_argument("--seed", type=int, default=0)
-    p.add_argument("--hardflow-root", default=None)
     p.add_argument("--data-dir", default=None)
     p.add_argument("--ckpt", default=None)
     p.add_argument("--weights", choices=["auto", "ema", "model"], default="auto")
@@ -33,12 +33,8 @@ def main():
     args = parse_args()
     with open(os.path.join(args.run_dir, "config.json"), encoding="utf-8") as f:
         cfg = json.load(f)
-    hardflow_root = resolve_hardflow(args.hardflow_root, cfg)
     cfg["data_dir"] = resolve_data_dir(args.data_dir, cfg)
-    sys.path.insert(0, hardflow_root)
-    from hardflow.models_flow.flow_matcher import apply_conditioning
-    from hardflow.models_flow.flow_policy import ConditionedODESolver
-    from hardflow.models_flow.unet import TemporalUnet
+    from fm_baseline.models import apply_conditioning, ConditionedODESolver, TemporalUnet
 
     set_seed(args.seed)
     obs_dim, act_dim, horizon = cfg["obs_dim"], cfg["act_dim"], cfg["horizon"]

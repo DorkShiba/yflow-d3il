@@ -1,0 +1,40 @@
+{
+  "upstream": "https://github.com/azizanlab/HardFlow",
+  "branch": "d3il",
+  "commit": "a85105080dd0a28dca76b49ac0414f275de146ed",
+  "copied_components": [
+    "SinusoidalPosEmb",
+    "Downsample1d",
+    "Upsample1d",
+    "Conv1dBlock",
+    "Residual",
+    "LayerNorm",
+    "PreNorm",
+    "LinearAttention",
+    "ResidualTemporalBlock",
+    "TemporalUnet",
+    "FlowMatcher",
+    "ConditionalFlowMatcher",
+    "ConditionedODESolver"
+  ],
+  "source_files": {
+    "hardflow/models_flow/unet.py": "e7077f3a5ebbe28d481763b7ed3aab435ee08d06c7eca723204dd78311817946",
+    "hardflow/models_flow/flow_matcher.py": "96466d4695facad80340dade9ee9ddfea1dc91de57934b6352a976798a477fa1",
+    "hardflow/models_flow/flow_policy.py": "c050ec2103d8b7a435c135a97682a93efe9da26776b11be538efaca801df6129"
+  },
+  "source_components_match_upstream_commit": {
+    "SinusoidalPosEmb": true,
+    "Downsample1d": true,
+    "Upsample1d": true,
+    "Conv1dBlock": true,
+    "Residual": true,
+    "LayerNorm": true,
+    "PreNorm": true,
+    "LinearAttention": true,
+    "ResidualTemporalBlock": true,
+    "TemporalUnet": true,
+    "FlowMatcher": true,
+    "ConditionalFlowMatcher": true,
+    "ConditionedODESolver": true
+  }
+}

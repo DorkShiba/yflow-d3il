@@ -20,6 +20,8 @@ TASK_DIMS = {"pushing": (12, 2), "inserting": (16, 2)}
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
 WORK = os.path.dirname(REPO)
+# 파일 직접 실행과 python -m 양쪽에서 저장소 내부 모델을 찾는다.
+sys.path.insert(0, REPO)
 
 
 def first_dir(*paths):
@@ -27,12 +29,6 @@ def first_dir(*paths):
         if p and os.path.isdir(p):
             return p
     return next((p for p in paths if p), None)
-
-
-def resolve_hardflow(arg=None, cfg=None):
-    if arg:
-        return arg
-    return first_dir((cfg or {}).get("hardflow_root"), os.environ.get("HARDFLOW_ROOT"), os.path.join(WORK, "HardFlow"), "/root/d3il-work/codex/HardFlow")
 
 
 def resolve_data_dir(arg=None, cfg=None):
@@ -72,7 +68,6 @@ def parse_args():
     p.add_argument("--resume", default=None)
     p.add_argument("--work-root", default="/root/d3il-work/codex")
     p.add_argument("--data-root", default=None)
-    p.add_argument("--hardflow-root", default=None)
     p.add_argument("--out-root", default=None)
     p.add_argument("--device", default="cuda:0" if torch.cuda.is_available() else "cpu")
     return p.parse_args()
@@ -272,11 +267,8 @@ def main():
                 setattr(args, k, v)
 
     data_root = args.data_root or first_dir(os.path.join(REPO, "data"), os.path.join(args.work_root, "processed"))
-    hardflow_root = args.hardflow_root or first_dir(os.path.join(args.work_root, "HardFlow"), os.path.join(WORK, "HardFlow"))
     out_root = args.out_root or os.path.join(HERE, "runs")
-    sys.path.insert(0, hardflow_root)
-    from hardflow.models_flow.flow_matcher import FlowMatcher
-    from hardflow.models_flow.unet import TemporalUnet
+    from fm_baseline.models import FlowMatcher, TemporalUnet
 
     set_seed(args.seed)
     obs_dim, act_dim = TASK_DIMS[args.task]
@@ -353,7 +345,7 @@ def main():
             "val_batches": args.val_batches,
             "val_seed": args.val_seed,
             "data_dir": task_dir,
-            "hardflow_root": hardflow_root,
+            "model_implementation": "fm_baseline.models.v1",
             "n_train_files": len(train_files),
             "n_val_files": len(val_files),
             "n_train_windows": train_s.n,

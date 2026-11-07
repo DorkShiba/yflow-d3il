@@ -12,7 +12,8 @@ import torch
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from train import Normalizer, add_spectral_norm, resolve_d3il, resolve_data_dir, resolve_hardflow
+sys.path.insert(0, os.path.dirname(HERE))
+from train import Normalizer, add_spectral_norm, resolve_d3il, resolve_data_dir
 
 
 def parse_args():
@@ -21,7 +22,6 @@ def parse_args():
     p.add_argument("--ckpt", default="last.pt")
     p.add_argument("--weights", choices=["ema", "model"], default="ema")
     p.add_argument("--d3il-root", default=None)
-    p.add_argument("--hardflow-root", default=None)
     p.add_argument("--data-dir", default=None)
     p.add_argument("--raw-dir", default="/root/d3il-work/raw/pushing/all_data")
     p.add_argument("--contexts", choices=["test", "train"], default="test")
@@ -47,13 +47,10 @@ def setup_d3il(root):
     return Block_Push_Env, quat2euler
 
 
-def load_model(run_dir, ckpt_name, weights, hardflow_root, device):
+def load_model(run_dir, ckpt_name, weights, device="cpu"):
     with open(os.path.join(run_dir, "config.json"), encoding="utf-8") as f:
         cfg = json.load(f)
-    sys.path.insert(0, hardflow_root)
-    from hardflow.models_flow.flow_matcher import apply_conditioning
-    from hardflow.models_flow.flow_policy import ConditionedODESolver
-    from hardflow.models_flow.unet import TemporalUnet
+    from fm_baseline.models import apply_conditioning, ConditionedODESolver, TemporalUnet
 
     obs_dim, act_dim, horizon = cfg["obs_dim"], cfg["act_dim"], cfg["horizon"]
     model = TemporalUnet(
@@ -153,9 +150,8 @@ def main():
         cfg0 = json.load(f)
     if cfg0["task"] != "pushing":
         raise SystemExit("This script evaluates pushing runs only")
-    hardflow_root = resolve_hardflow(args.hardflow_root, cfg0)
     args.d3il_root = resolve_d3il(args.d3il_root)
-    cfg, model, norm, apply_conditioning, Solver, ckpt_step = load_model(run_dir, args.ckpt, args.weights, hardflow_root, args.device)
+    cfg, model, norm, apply_conditioning, Solver, ckpt_step = load_model(run_dir, args.ckpt, args.weights, args.device)
     cfg["data_dir"] = resolve_data_dir(args.data_dir, cfg)
 
     Block_Push_Env, quat2euler = setup_d3il(args.d3il_root)

@@ -5,7 +5,6 @@ paths:
   run_dir: fm_baseline/results/inserting_baseline
   output_root: fm_constraint/runs
   data_root: data
-  hardflow_root: ../HardFlow
   d3il_root: ../d3il
   raw_root: /root/d3il-work/raw/inserting
   contexts_file: fm_baseline/contexts/inserting_val.pkl

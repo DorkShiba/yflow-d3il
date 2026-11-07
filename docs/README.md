@@ -1,3 +1,5 @@
+> 현재 모델·CFM·조건부 Euler 구현은 `fm_baseline/models/`로 이관되어 외부 HardFlow 설치/checkout 없이 실행된다. 아래의 초기 구현 설명에서 외부 모델 경로는 이력이며, 현재 기준은 루트 README와 `PLAN.md` 9절을 따른다.
+
 # 1. Dataset: d3il
 
 아래 설명은 `data/`에 저장된 상태 기반 전처리 데이터(`sincos_v1`)를 기준으로 한다. 이미지 대신 로봇 손과 블록의 위치·방향을 사용하며, 입력 항목과 분할의 기준은 각 데이터셋의 `manifest.json`이다.

@@ -16,8 +16,9 @@ import torch
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+sys.path.insert(0, os.path.dirname(HERE))
 from eval_pushing import Policy, load_model
-from train import resolve_d3il, resolve_data_dir, resolve_hardflow
+from train import resolve_d3il, resolve_data_dir
 
 CONTEXTS_FILE = os.path.join(HERE, "contexts", "inserting_val.pkl")
 
@@ -28,7 +29,6 @@ def parse_args():
     p.add_argument("--ckpt", default="last.pt")
     p.add_argument("--weights", choices=["ema", "model"], default="ema")
     p.add_argument("--d3il-root", default=None)
-    p.add_argument("--hardflow-root", default=None)
     p.add_argument("--data-dir", default=None)
     p.add_argument("--raw-root", default="/root/d3il-work/raw/inserting")
     p.add_argument("--contexts-file", default=CONTEXTS_FILE)
@@ -137,12 +137,10 @@ def load_contexts(cfg, split, raw_root, quat2euler, n, contexts_file=None):
 def main():
     args = parse_args()
     run_dir = os.path.abspath(args.run_dir)
-    with open(os.path.join(run_dir, "config.json"), encoding="utf-8") as f:
-        cfg0 = json.load(f)
     if cfg0["task"] != "inserting":
         raise SystemExit("This script evaluates inserting runs only")
     run_cwd = os.getcwd()
-    cfg, model, norm, apply_conditioning, Solver, ckpt_step = load_model(run_dir, args.ckpt, args.weights, resolve_hardflow(args.hardflow_root, cfg0), args.device)
+    cfg, model, norm, apply_conditioning, Solver, ckpt_step = load_model(run_dir, args.ckpt, args.weights, args.device)
     cfg["data_dir"] = resolve_data_dir(args.data_dir, cfg)
 
     Env, quat2euler = setup_d3il(resolve_d3il(args.d3il_root))

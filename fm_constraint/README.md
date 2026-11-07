@@ -37,7 +37,7 @@ Potential은 `log p(q) + distance_alpha * distance(q, safe_grid_points)`다. 거
 
 ## 실행
 
-저장소 루트에서 HardFlow·D3IL과 Python 환경을 준비한다. 기본 설정은 CPU다.
+저장소 루트에서 D3IL checkout과 Python 환경을 준비한다. 모델은 `fm_baseline/models/`를 사용하므로 외부 HardFlow는 필요하지 않다. 기본 설정은 CPU다.
 
 ```bash
 # 기존 baseline과 같은 all-off
@@ -123,3 +123,10 @@ bash scripts/run_method123.sh --stage main --inserting-set all-val \
 출력에는 동결한 설정·코드/데이터/모델 hash, 조합별 console 로그, `results.json`, `rollouts.json`, 초기 조건 snapshot, 완료 표식이 포함된다. 마지막에 `summary.md`/`summary.json`으로 성공률·실행 step 위반율·행동 변화·명령 jerk·조건별 entropy와 2,000회 context bootstrap CI·대응 차이·Δ를 집계한다. Δ 분해는 PF+Filter, Projection+Filter, Projection+PF 및 `(Projection+PF)+Filter`로 사전 고정한다. 실제 접촉 계측이 없으면 안전 성공률은 null이다.
 
 동일 옵션과 `--output`으로 재실행하면 검증된 완료 조합은 건너뛴다. 코드·입력·의존 패키지가 달라지면 결과 혼합을 막기 위해 중단한다. 프로세스 실패 시 후속 조합을 중단하고, 재개 시 부분 출력은 `*.interrupted.*`로 보존한다. 방법 자체의 계획/필터 실패는 성공률 분모에 포함하여 완료 결과로 저장한다. 기본 스크립트는 본실험을 실제로 시작하므로 명령 확인에는 `--dry-run`을 사용한다.
+
+
+## 내부 모델 이관 (2026-11-07)
+
+모델·CFM·조건부 Euler는 `fm_baseline/models/`로 이관했다. 외부 모델 경로·설치 없이 기존 EMA checkpoint를 읽는다. 구 YAML의 `paths.hardflow_root`는 읽을 때 제외하며 기존 checkpoint config의 같은 이름도 실행에 사용하지 않는다. 출처는 [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md), 수치 비교 근거는 [검증 요약](results/local_models_validation.json)에 기록한다.
+
+새 순차 실험 manifest는 내부 모델 파일과 baseline 로더·trainer의 hash도 동결한다. **이관 전 manifest의 코드 hash를 무시하거나 갱신하지 않는다.** 기존 결과는 보존되며 집계·재생할 수 있다. 이전 동결 실험의 실행 재개는 원래 코드 snapshot에서 수행하고, 이관된 코드의 새 실행은 새 `--output` 경로를 사용한다.

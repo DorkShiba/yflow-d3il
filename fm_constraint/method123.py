@@ -55,7 +55,7 @@ def prepare(root, stage, inserting_set, device, split_seed, max_steps=None, cont
         raise ValueError('max_steps/context_limit overrides are only allowed for smoke checks')
     root.mkdir(parents=True, exist_ok=True)
     seeds = list(range(5)) if stage == 'main' else [100, 101] if stage == 'smoke' else [100, 101, 102]
-    manifest = {'protocol_version': 'method123_v1', 'request': request,
+    manifest = {'protocol_version': 'method123_v1', 'model_implementation': 'fm_baseline.models.v1', 'request': request,
                 'created_at': datetime.now(timezone.utc).isoformat(), 'sampling_seeds': seeds,
                 'seeding': 'SHA256 JSON [task,context_id,sampling_seed], independent per rollout FM generator',
                 'rtc': False, 'lipo': False, 'terminal_vlsa': False, 'tasks': {}, 'source_hashes': {},
@@ -63,7 +63,10 @@ def prepare(root, stage, inserting_set, device, split_seed, max_steps=None, cont
                 'complementarity': {str(k): list(v) for k, v in COMPLEMENTARITY.items()}}
     for relative in ['fm_constraint/method123.py', 'fm_constraint/evaluation.py', 'fm_constraint/policy.py',
                      'fm_constraint/pf2mp.py', 'fm_constraint/constraints.py', 'fm_constraint/qp.py',
-                     'configs/config.py', 'fm_constraint/method123_metrics.py', 'scripts/run_method123.sh']:
+                     'configs/config.py', 'fm_constraint/method123_metrics.py', 'scripts/run_method123.sh',
+                     'fm_baseline/train.py', 'fm_baseline/eval_pushing.py',
+                     'fm_baseline/models/__init__.py', 'fm_baseline/models/temporal_unet.py',
+                     'fm_baseline/models/flow_matching.py', 'fm_baseline/models/ode.py']:
         manifest['source_hashes'][relative] = file_hash(REPO / relative)
     manifest['git_commit'] = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=REPO, text=True).strip()
     for task in ['pushing', 'inserting']:

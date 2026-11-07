@@ -246,7 +246,7 @@ def evaluate(cfg, *, execution_filter=False, sampling_seeds=None, context_ids=No
     try:
         with checkpoint_reads():
             model_cfg, model, norm, conditioning, solver, checkpoint_step = pushing.load_model(
-                paths['run_dir'], settings['checkpoint'], settings['weights'], paths['hardflow_root'], v['device'])
+                paths['run_dir'], settings['checkpoint'], settings['weights'], v['device'])
         model_cfg['data_dir'] = str(Path(paths['data_root']) / f'{cfg.task}_sincos_v1')
         Env, quat2euler = module.setup_d3il(paths['d3il_root'])
         if settings['export_contexts']:

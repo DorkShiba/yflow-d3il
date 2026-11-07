@@ -1,5 +1,9 @@
 # FM Constraint 단계별 통합 구현 계획
 
+## 모델 코드 독립화 (2026-11-07)
+
+현재 실행은 `fm_baseline/models/`의 모델·CFM·조건부 Euler를 사용한다. 외부 HardFlow 의존성을 제거했으며 원본 출처는 `THIRD_PARTY_NOTICES.md`, 검증 근거는 `fm_constraint/results/local_models_validation.json`에 기록한다. 아래 이전 구현·실험 기록의 HardFlow 경로는 이력이다. 자세한 내용은 **9절**을 따른다.
+
 ## PF2MP 교체 구현 완료 (2026-11-06, 기능 검증)
 
 이번 변경의 기준은 **8절**이다. 기존 PC Correct를 주석으로 보존하고 실행 경로에서 제외한 뒤, PF2MP를 Predict의 벡터장 보정으로 넣는다. 새 흐름은 **Predict 내부 `[FM + PF2MP → Euler → Projection]` → terminal VLSA**이며, Projection·PF2MP·VLSA는 독립적으로 on/off한다. schema v3 코드·설정·KDE 캐시를 구현하고 기능 검증을 완료했다. 근거와 범위는 **8.9절** 및 `fm_constraint/results/pf2mp_validation.json`을 따른다. 전체 성공률·충돌률 본실험은 별도다.
@@ -708,3 +712,25 @@ python -m fm_constraint.sample --config configs/pushing.yaml --pf2mp --projectio
   --set sample.n_windows=4
 MUJOCO_GL=disable python -m fm_constraint.eval_inserting --config configs/inserting.yaml --pf2mp --vlsa
 ```
+
+
+## 9. 모델·학습·샘플러 코드 독립화 (2026-11-07)
+
+현재 실험에 필요한 TemporalUnet과 구성 블록, CFM 학습 및 조건 고정, value=None 조건부 Euler를 `fm_baseline/models/`로 이관한다. 모델의 모듈·파라미터 이름, convolution·정규화·attention 계산, CFM의 sigma=0에서도 소비하던 epsilon 난수와 Euler 보폭·detach·chain 순서를 유지한다. 외부 FlowPolicy·QP solver·GuideFlow/SafeFlow/UniConFlow/YFlow는 가져오지 않는다.
+
+학습·baseline sample/eval·통합 sample/eval·16개 순차 실행이 동일한 내부 모델을 import한다. `--hardflow-root`, `HARDFLOW_ROOT` 탐색 및 sys.path 추가를 제거한다. 이전 YAML의 경로 키는 이력으로 읽어 제외하고, 기존 checkpoint의 같은 metadata는 사용하지 않는다. 기존 모델·normalizer·원본 config 및 실험 출력 파일을 수정하지 않는다.
+
+이관 전 실제 두 checkpoint에서 상태 dict 키, 모델 벡터장, Euler sample·chain, CFM loss·대표 파라미터 gradient·학습 RNG, baseline plan·RNG, PF/Projection 네 조합의 계획을 저장하여 이관 후와 비교한다. 외부 패키지 import를 차단한 별도 프로세스에서도 학습·샘플링·실제 두 태스크의 실행을 확인한다. 검증 결과는 `results/local_models_validation.json`에 요약한다.
+
+새 실험 manifest는 내부 모델 및 baseline 로더·trainer의 코드 hash도 포함한다. 기존 본실험의 manifest나 완료 표식은 덮어쓰지 않는다. 이관 전 동결 manifest의 재개가 코드 변경을 거부하는 것은 의도된 동작이며, 이전 실행의 재개는 원래 코드 snapshot, 이관 코드의 새 실행은 새 출력 경로를 사용한다. 이전 결과의 집계·재생은 계속 가능하다.
+
+### 9.1. 완료 기록
+
+- [x] 필요한 모델 구성만 내부 모듈로 이관하고 출처·원본 파일 hash·기준 커밋을 기록했다. 이관 대상 원본 클래스는 로컬 수정본에서도 기준 커밋의 클래스와 같음을 AST로 대조했다.
+- [x] 두 실제 EMA checkpoint의 키·벡터장·Euler sample/chain·CFM loss·대표 gradient·RNG·baseline 계획·PF/Projection 네 조합의 계획이 이관 전후 **배열 단위로 정확히 일치**했다.
+- [x] **97개 테스트 통과**. 외부 패키지를 차단한 새 프로세스에서 두 checkpoint를 읽고 상태·행동 shape과 CFM 수식·gradient·RNG를 확인했다.
+- [x] 외부 HardFlow 형제 폴더가 없는 `/tmp` 격리 복사본에서 두 태스크의 PF+Projection 샘플링을 확인했다. 데이터·checkpoint만 입력으로 연결하고 외부 패키지 namespace를 차단했다.
+- [x] 내부 모델로 실제 학습 2 update와 baseline/통합 sample CLI를 확인했다. 원본 checkpoint·normalizer의 hash는 그대로다.
+- [x] 외부 import를 차단한 실제 D3IL에서 두 태스크 × 8개 조합을 각각 1개 context·2개 seed·최대 2 step으로 실행하고 집계까지 완료했다. 기존 본실험 결과는 수정하지 않았다.
+
+검증 요약은 [`local_models_validation.json`](../fm_constraint/results/local_models_validation.json), 상세 배열·이관 전 원본·독립 실행 스크립트·16개 짧은 실행 결과는 `fm_constraint/runs/hardflow_independence/`에 저장했다. CPU 기능 검증이며 GPU와 전체 태스크 성공률은 다시 평가하지 않았다. 시뮬레이터용 D3IL checkout은 계속 필요하다.

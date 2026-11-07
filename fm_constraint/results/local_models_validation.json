@@ -1,0 +1,263 @@
+{
+  "external_import_blocked": true,
+  "tasks": {
+    "pushing": {
+      "state_dict_keys_match": true,
+      "velocity_exact": true,
+      "solver_and_chain_exact": true,
+      "cfm_loss_exact": true,
+      "selected_parameter_gradients_exact": true,
+      "training_rng_exact": true,
+      "baseline_plan_and_rng_exact": true,
+      "four_pf_projection_combinations_exact": true,
+      "loss": 9.916267395019531
+    },
+    "inserting": {
+      "state_dict_keys_match": true,
+      "velocity_exact": true,
+      "solver_and_chain_exact": true,
+      "cfm_loss_exact": true,
+      "selected_parameter_gradients_exact": true,
+      "training_rng_exact": true,
+      "baseline_plan_and_rng_exact": true,
+      "four_pf_projection_combinations_exact": true,
+      "loss": 4.358961582183838
+    }
+  },
+  "status": "complete",
+  "scope": "CPU functional migration; full success-rate experiment not rerun",
+  "tests_passed": 97,
+  "test_command": "OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 python -m pytest fm_constraint/tests -q",
+  "source_provenance": {
+    "upstream": "https://github.com/azizanlab/HardFlow",
+    "branch": "d3il",
+    "commit": "a85105080dd0a28dca76b49ac0414f275de146ed",
+    "copied_components": [
+      "SinusoidalPosEmb",
+      "Downsample1d",
+      "Upsample1d",
+      "Conv1dBlock",
+      "Residual",
+      "LayerNorm",
+      "PreNorm",
+      "LinearAttention",
+      "ResidualTemporalBlock",
+      "TemporalUnet",
+      "FlowMatcher",
+      "ConditionalFlowMatcher",
+      "ConditionedODESolver"
+    ],
+    "source_files": {
+      "hardflow/models_flow/unet.py": "e7077f3a5ebbe28d481763b7ed3aab435ee08d06c7eca723204dd78311817946",
+      "hardflow/models_flow/flow_matcher.py": "96466d4695facad80340dade9ee9ddfea1dc91de57934b6352a976798a477fa1",
+      "hardflow/models_flow/flow_policy.py": "c050ec2103d8b7a435c135a97682a93efe9da26776b11be538efaca801df6129"
+    },
+    "source_components_match_upstream_commit": {
+      "SinusoidalPosEmb": true,
+      "Downsample1d": true,
+      "Upsample1d": true,
+      "Conv1dBlock": true,
+      "Residual": true,
+      "LayerNorm": true,
+      "PreNorm": true,
+      "LinearAttention": true,
+      "ResidualTemporalBlock": true,
+      "TemporalUnet": true,
+      "FlowMatcher": true,
+      "ConditionalFlowMatcher": true,
+      "ConditionedODESolver": true
+    }
+  },
+  "before": {
+    "checkpoint_hashes": {
+      "pushing": {
+        "baseline_ema.pt": "e79b67ce3926691014676e67dab1795ef35a14f77ccdbcab16153fea6b886059",
+        "normalizer.npz": "d38a5508d93e6c6a24ce93d7656606293caabf6ae1e5f7992a3169f0745aa922"
+      },
+      "inserting": {
+        "baseline_ema.pt": "312144c0d3c3f569a0e07fdd4f6a13f9d085183b4e105ed5bf78f839e7082640",
+        "normalizer.npz": "2a254daee11ac83a9640d3d58bb6cca79c1650f58b9f4e70e93c93d01107eb9a"
+      }
+    },
+    "source_hashes": {
+      "hardflow/models_flow/unet.py": "e7077f3a5ebbe28d481763b7ed3aab435ee08d06c7eca723204dd78311817946",
+      "hardflow/models_flow/flow_matcher.py": "96466d4695facad80340dade9ee9ddfea1dc91de57934b6352a976798a477fa1",
+      "hardflow/models_flow/flow_policy.py": "c050ec2103d8b7a435c135a97682a93efe9da26776b11be538efaca801df6129"
+    },
+    "pushing": {
+      "loss": 9.916267395019531,
+      "parameter_count": 3683918,
+      "state_keys": 148
+    },
+    "inserting": {
+      "loss": 4.358961582183838,
+      "parameter_count": 15790994,
+      "state_keys": 196
+    }
+  },
+  "isolated_copy": {
+    "isolated_root": "/tmp/yflow-models-isolated-zkeufmdm",
+    "external_HardFlow_sibling_exists": false,
+    "external_namespace_blocked": true,
+    "copied_packages": [
+      "fm_baseline",
+      "fm_constraint",
+      "configs"
+    ],
+    "data_checkpoint_symlinks_only": true,
+    "commands": [
+      {
+        "task": "pushing",
+        "returncode": 0
+      },
+      {
+        "task": "inserting",
+        "returncode": 0
+      }
+    ]
+  },
+  "artifact_root": "fm_constraint/runs/hardflow_independence",
+  "original_checkpoint_and_normalizer_hashes_unchanged": true,
+  "blocked_external_import_smoke": {
+    "jobs": [
+      {
+        "id": "P00",
+        "attempts": 2,
+        "model_calls": 20,
+        "pf_calls": 0,
+        "qp_calls": 0
+      },
+      {
+        "id": "P04",
+        "attempts": 2,
+        "model_calls": 20,
+        "pf_calls": 0,
+        "qp_calls": 4
+      },
+      {
+        "id": "P08",
+        "attempts": 2,
+        "model_calls": 20,
+        "pf_calls": 20,
+        "qp_calls": 0
+      },
+      {
+        "id": "P12",
+        "attempts": 2,
+        "model_calls": 20,
+        "pf_calls": 20,
+        "qp_calls": 4
+      },
+      {
+        "id": "P16",
+        "attempts": 2,
+        "model_calls": 20,
+        "pf_calls": 0,
+        "qp_calls": 20
+      },
+      {
+        "id": "P20",
+        "attempts": 2,
+        "model_calls": 20,
+        "pf_calls": 0,
+        "qp_calls": 24
+      },
+      {
+        "id": "P24",
+        "attempts": 2,
+        "model_calls": 20,
+        "pf_calls": 20,
+        "qp_calls": 20
+      },
+      {
+        "id": "P28",
+        "attempts": 2,
+        "model_calls": 20,
+        "pf_calls": 20,
+        "qp_calls": 24
+      },
+      {
+        "id": "I00",
+        "attempts": 2,
+        "model_calls": 20,
+        "pf_calls": 0,
+        "qp_calls": 0
+      },
+      {
+        "id": "I04",
+        "attempts": 2,
+        "model_calls": 20,
+        "pf_calls": 0,
+        "qp_calls": 4
+      },
+      {
+        "id": "I08",
+        "attempts": 2,
+        "model_calls": 20,
+        "pf_calls": 20,
+        "qp_calls": 0
+      },
+      {
+        "id": "I12",
+        "attempts": 2,
+        "model_calls": 20,
+        "pf_calls": 20,
+        "qp_calls": 4
+      },
+      {
+        "id": "I16",
+        "attempts": 2,
+        "model_calls": 20,
+        "pf_calls": 0,
+        "qp_calls": 20
+      },
+      {
+        "id": "I20",
+        "attempts": 2,
+        "model_calls": 20,
+        "pf_calls": 0,
+        "qp_calls": 24
+      },
+      {
+        "id": "I24",
+        "attempts": 2,
+        "model_calls": 20,
+        "pf_calls": 20,
+        "qp_calls": 20
+      },
+      {
+        "id": "I28",
+        "attempts": 2,
+        "model_calls": 20,
+        "pf_calls": 20,
+        "qp_calls": 24
+      }
+    ],
+    "total_combinations": 16,
+    "rollouts": 32,
+    "max_steps": 2,
+    "summary": "fm_constraint/runs/hardflow_independence/smoke16/summary.json"
+  },
+  "train_smoke": {
+    "steps": 2,
+    "metrics": "fm_constraint/runs/train_20261107T011035809865Z/pushing_local_model_check_nosn_20261107T011038Z/metrics.csv"
+  },
+  "standalone_baseline_sample": {
+    "task": "pushing",
+    "windows": 2,
+    "check_passed": true
+  },
+  "integration_sample": {
+    "task": "inserting",
+    "windows": 2,
+    "pf2mp": true,
+    "projection": true
+  },
+  "source_sha256": {
+    "fm_baseline/models/__init__.py": "ebd728cb6261cb01ace8885f44680f67c03293c39e05c01b214cd8b95a8a875c",
+    "fm_baseline/models/temporal_unet.py": "c567000823010375f4da0cfff936b37849ca223b469b79ed940ab7661cacbb17",
+    "fm_baseline/models/flow_matching.py": "e936f7e719da560b0223f2ec4a960e97598d7c2772e84218a9b06f48763a79a9",
+    "fm_baseline/models/ode.py": "7a567aac4f04f9118e2fac66867688a3b6910207bce966a7fc8f2241129231f4"
+  },
+  "frozen_runs_policy": "Existing manifests and results are unchanged; resume old frozen runs with their original code snapshot. Use a new output directory for local-model code."
+}

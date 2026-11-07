@@ -49,7 +49,7 @@ class ExperimentConfig:
             'paths': {
                 'run_dir': f'fm_baseline/results/{task}_baseline',
                 'output_root': 'fm_constraint/runs', 'data_root': 'data',
-                'hardflow_root': '../HardFlow', 'd3il_root': '../d3il',
+                'd3il_root': '../d3il',
                 'raw_root': f'/root/d3il-work/raw/{task}' + ('/all_data' if not inserting else ''),
                 'contexts_file': 'fm_baseline/contexts/inserting_val.pkl',
             },
@@ -99,6 +99,8 @@ class ExperimentConfig:
         }
         if 'pc' in supplied.get('methods', {}) or any(k.startswith('methods.pc') for k in (overrides or {})):
             raise ValueError('PC is retired; select methods.pf2mp explicitly (schema v3)')
+        # 구 설정의 외부 모델 경로는 더 이상 사용하지 않는 이력이다.
+        supplied.get('paths', {}).pop('hardflow_root', None)
         _merge_settings(values, supplied)
         for dotted, value in (overrides or {}).items():
             parts = dotted.split('.')
@@ -245,7 +247,7 @@ class ExperimentConfig:
             raise ValueError(f'Outputs/resume must be inside {owned}: {path}')
         # Resolve symlinks and also protect custom input directories.
         for source in [REPO / 'fm_baseline', REPO / 'data', REPO / 'preprocess',
-                       *(Path(self.values['paths'][key]) for key in ('data_root', 'hardflow_root', 'd3il_root'))]:
+                       *(Path(self.values['paths'][key]) for key in ('data_root', 'd3il_root'))]:
             if path.is_relative_to(source.resolve()):
                 raise ValueError(f'Output overlaps a protected input: {source}')
         return path
@@ -271,12 +273,11 @@ class ExperimentConfig:
         v, paths = self.values, self.values['paths']
         if command == 'train':
             options = {**v['train'], **v['model'], 'task': self.task, 'device': v['device'],
-                       'data_root': paths['data_root'], 'hardflow_root': paths['hardflow_root'],
+                       'data_root': paths['data_root'],
                        'out_root': paths['output_root']}
             options['dim_mults'] = ','.join(map(str, options['dim_mults']))
         elif command == 'sample':
             options = {**v['sample'], 'run_dir': paths['run_dir'],
-                       'hardflow_root': paths['hardflow_root'],
                        'data_dir': str(Path(paths['data_root']) / f'{self.task}_sincos_v1'),
                        'device': v['device'], 'ode_steps': v['sampling']['predict_steps'],
                        'ckpt': v['eval']['checkpoint'], 'weights': v['eval']['weights']}

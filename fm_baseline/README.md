@@ -1,3 +1,5 @@
+> 2026-11-07: 아래 학습·성능 기록은 보존하고, 현재 모델·CFM·조건부 Euler 구현은 `fm_baseline/models/`를 사용한다. 외부 HardFlow 설치/checkout은 필요하지 않다. 현재 설치 방법은 루트 README와 `THIRD_PARTY_NOTICES.md`를 참고한다.
+
 # 순수 플로우 매칭 베이스라인 (Pushing · Inserting)
 
 작성일: 2026-10-16
@@ -24,7 +26,7 @@
 
 ## 2. 공통 설정
 
-- 백본: HardFlow 공식 저장소 `d3il` 브랜치, commit `a85105080dd0a28dca76b49ac0414f275de146ed`의 `TemporalUnet`과 `FlowMatcher`(CFM)를 수정 없이 사용.
+- 백본: HardFlow 공식 저장소 `d3il` 브랜치, commit `a85105080dd0a28dca76b49ac0414f275de146ed`에서 유래한 `TemporalUnet`과 `FlowMatcher`(CFM)를 사용. 현재 구현은 `models/`로 이관하여 외부 checkout 없이 동작하며, 기존 파라미터 이름과 연산 순서는 유지한다.
 - 입력: `[actions, obs]` 순서의 horizon 16 윈도우. 시연 경계를 넘는 윈도우와 패딩은 사용하지 않음.
 - 조건: t=0 관측을 `apply_conditioning`으로 고정. 이는 조건부 생성이며 물리 제약이 아니다.
 - 정규화: 학습 분할만으로 차원별 min-max를 계산해 [-1, 1]로 변환. 범위가 1e-8보다 작은 채널은 스케일 1.
@@ -118,7 +120,7 @@ Inserting 본 평가는 시드 0과 1로 각각 82 × 2회를 동시에 실행�
 - 워크스페이스를 재시작하면 시스템 패키지가 사라진다. 시뮬레이터 평가 전에 `apt-get update && apt-get install -y libgl1 libglib2.0-0`이 필요할 수 있다. tmux도 같은 방식으로 다시 설치한다.
 - D3IL 공식 Inserting 환경 파일은 `d3il_sim.*` 경로로 import하고 시뮬레이터 내부는 `environments.d3il.d3il_sim.*`를 사용해, 수정하지 않은 저장소에서는 모듈이 두 벌 로드되어 `'Box' object has no attribute 'mj_load'` 오류가 난다. `eval_inserting.py`는 D3IL 코드를 바꾸지 않고 두 경로를 같은 모듈로 연결한다.
 - Inserting 평가 초기 배치는 `contexts/inserting_val.pkl`(검증 분할 82개 시연의 `context`, 첫 관절 자세, 목표 손 궤적)에서 읽는다. 이 파일은 `eval_inserting.py --export-contexts contexts/inserting_val.pkl`로 원본 pkl에서 만들었다. 파일에 없는 시연은 `--raw-root`(기본 `/root/d3il-work/raw/inserting`) 아래 원본을 재귀 검색한다.
-- `config.json`의 경로가 없는 환경에서는 저장소 기준 위치(`<저장소>/data`, `<저장소>/../HardFlow`, `<저장소>/../d3il`)를 쓴다. 학습 결과는 기본으로 `fm_baseline/runs/`에 저장된다.
+- `config.json`의 경로가 없는 환경에서는 저장소 기준 위치(`<저장소>/data`, `<저장소>/../d3il`)를 쓴다. 학습 결과는 기본으로 `fm_baseline/runs/`에 저장된다.
 
 ## 9. 남은 작업
 

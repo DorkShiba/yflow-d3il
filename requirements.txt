@@ -1,15 +1,42 @@
+# 검증 환경: Linux x86_64 / Python 3.11 (2026-11-07).
+# 내부 fm_baseline.models를 사용하므로 외부 HardFlow 설치는 필요 없다.
+# 직접 의존성과 Pinocchio의 네이티브 라이브러리 버전을 고정한다.
+# 전체 transitive lock 또는 OS/CUDA 드라이버 설치 파일은 아니다.
+
+# 모델·CFM·PF2MP
 numpy==1.26.4
 torch==2.3.1
 einops==0.8.1
+
+# 수치 계산·QP·설정
+scipy==1.16.3
+osqp==1.1.3
+PyYAML==6.0.3
+
+# D3IL Pushing / Inserting 시뮬레이터
 gym==0.23.1
 mujoco==2.3.2
-pin==2.6.21
+gin-config==0.5.0
+pybullet==3.2.7
 opencv-python-headless==4.9.0.80
-pybullet
-scipy
-pandas
-matplotlib
-imageio
-pyyaml
-gin-config
-osqp==1.1.3
+
+# Pinocchio 및 같은 ABI로 검증한 네이티브 의존성
+pin==2.6.21
+hpp-fcl==2.4.4
+eigenpy==3.5.1
+cmeel==0.61.0
+cmeel-boost==1.83.0
+cmeel-console-bridge==1.0.2.3
+cmeel-tinyxml==2.6.2.3
+cmeel-urdfdom==3.1.1.1
+cmeel-assimp==5.4.3.1
+cmeel-octomap==1.10.0
+cmeel-qhull==8.0.2.1
+
+# 지표 시각화·D3IL renderer·저장 궤적 PNG/GIF
+matplotlib==3.11.1
+imageio==2.38.1
+Pillow==12.3.0
+
+# 회귀·독립 실행 검증
+pytest==9.1.1
