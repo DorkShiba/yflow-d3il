@@ -80,6 +80,22 @@ HEAD 테스트는 `pytest fm_constraint/tests`에서 **102개 모두 통과**한
 
 ---
 
+### 1단계 결과 (2026-11-07, 브랜치 `integrate/phase1-hardflow`)
+- 해결한 충돌: `.gitignore`, `README.md`, `fm_baseline/eval_{pushing,inserting}.py`. `fm_pc/`는 master 버전 전체를 복원했다(HEAD가 지운 `constraints/{pc,qp,sets}.py`, `check_constraints.py`, `compute_metrics.py`, `render_rollouts.py` 포함). `fm_pc/results/`는 `fm_constraint/results/legacy/pc`와 중복이라 복원하지 않았다.
+- HardFlow 제거:
+  - `fm_baseline`: `eval_smoothness`(provenance를 `model_source_sha256`로 바꿈), `compare_smoothness`, `run_lipo_*`, `train`
+  - `fm_pc`: `eval_*`, `check_*`, docstring
+  - `visualizer`: app, UI, README
+  - `tests`
+  - `configs/config.py`의 호환 pop, `results/*_baseline/config.json`의 키
+  - `fm_constraint/tests/test_local_models.py`의 호환 테스트
+- `eval_inserting.py`의 `cfg0` 버그를 고쳤다.
+- 검증:
+  - `pytest fm_constraint/tests tests`: **119 passed**. visualizer 테스트 2개는 실행 환경에 `fastapi`가 없어 실행하지 못했다.
+  - master + HardFlow와 merge 결과의 baseline 계획(`Policy.plan`, 두 태스크 × 4개, 고정 generator)이 **비트 단위로 일치**한다.
+  - D3IL smoke(24 step)가 통과했다: `fm_baseline` pushing + LiPo, inserting, `fm_pc/eval_task` OOD `A_mid`, `fm_constraint.eval_inserting` PF2MP + Projection.
+  - 남은 HardFlow 언급은 출처 표기(README, `fm_baseline/README.md`, `THIRD_PARTY_NOTICES.md`, `requirements.txt` 주석)와, HardFlow import를 차단하는지 검사하는 테스트뿐이다.
+
 ## 3. 2단계: master의 fm_pc 기능 이관
 
 `fm_pc`의 PC Correct는 schema v3에서 이미 폐기됐다. 남길 가치가 있는 것은 OOD 평가 기반과 추가 태스크다.

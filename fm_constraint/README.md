@@ -127,7 +127,7 @@ bash scripts/run_method123.sh --stage main --inserting-set all-val \
 
 ## 내부 모델 이관 (2026-11-07)
 
-모델·CFM·조건부 Euler는 `fm_baseline/models/`로 이관했다. 외부 모델 경로·설치 없이 기존 EMA checkpoint를 읽는다. 구 YAML의 `paths.hardflow_root`는 읽을 때 제외하며 기존 checkpoint config의 같은 이름도 실행에 사용하지 않는다. 출처는 [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md), 수치 비교 근거는 [검증 요약](results/local_models_validation.json)에 기록한다.
+모델·CFM·조건부 Euler는 `fm_baseline/models/`로 이관했다. 외부 모델 경로·설치 없이 기존 EMA checkpoint를 읽는다. 출처는 [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md), 수치 비교 근거는 [검증 요약](results/local_models_validation.json)에 기록한다.
 
 새 순차 실험 manifest는 내부 모델 파일과 baseline 로더·trainer의 hash도 동결한다. **이관 전 manifest의 코드 hash를 무시하거나 갱신하지 않는다.** 기존 결과는 보존되며 집계·재생할 수 있다. 이전 동결 실험의 실행 재개는 원래 코드 snapshot에서 수행하고, 이관된 코드의 새 실행은 새 `--output` 경로를 사용한다.
 

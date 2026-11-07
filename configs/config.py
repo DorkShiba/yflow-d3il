@@ -99,8 +99,6 @@ class ExperimentConfig:
         }
         if 'pc' in supplied.get('methods', {}) or any(k.startswith('methods.pc') for k in (overrides or {})):
             raise ValueError('PC is retired; select methods.pf2mp explicitly (schema v3)')
-        # 구 설정의 외부 모델 경로는 더 이상 사용하지 않는 이력이다.
-        supplied.get('paths', {}).pop('hardflow_root', None)
         _merge_settings(values, supplied)
         for dotted, value in (overrides or {}).items():
             parts = dotted.split('.')

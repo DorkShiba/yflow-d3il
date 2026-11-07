@@ -16,7 +16,10 @@ import torch
 import torch.nn as nn
 from torch.nn.utils.parametrizations import spectral_norm
 
-TASK_DIMS = {"pushing": (12, 2), "inserting": (16, 2)}
+TASK_DIMS = {"pushing": (12, 2), "inserting": (16, 2),
+             # OOD-benchmark tasks (preprocess/prepare_task.py layouts)
+             "avoiding": (4, 2), "aligning": (14, 3), "sorting_2": (12, 2), "sorting_4": (20, 2),
+             "sorting_6": (28, 2), "stacking": (23, 8)}
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
 WORK = os.path.dirname(REPO)
@@ -261,7 +264,7 @@ def main():
     if args.resume:
         with open(os.path.join(args.resume, "config.json"), encoding="utf-8") as f:
             saved = json.load(f)
-        keep = {"device", "resume", "time_limit_hours", "work_root", "data_root", "hardflow_root", "out_root"}
+        keep = {"device", "resume", "time_limit_hours", "work_root", "data_root", "out_root"}
         for k, v in saved["args"].items():
             if k not in keep:
                 setattr(args, k, v)

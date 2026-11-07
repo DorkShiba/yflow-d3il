@@ -84,10 +84,3 @@ assert not any(n == 'hardflow' or n.startswith('hardflow.') for n in sys.modules
 '''.replace('TASK', task)
     subprocess.run([sys.executable, '-c', code], cwd=REPO, check=True, capture_output=True)
 
-
-def test_legacy_config_model_path_is_ignored_without_filesystem_access(tmp_path):
-    config = tmp_path / 'legacy.yaml'
-    config.write_text('task: pushing\npaths:\n  hardflow_root: /nonexistent/unused\nconstraints:\n  acceleration:\n    enabled: false\n')
-    cfg = ExperimentConfig.from_yaml(config)
-    assert 'hardflow_root' not in cfg.values['paths']
-    assert '--hardflow-root' not in cfg.baseline_argv('train')

@@ -13,6 +13,7 @@ import torch
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.dirname(HERE))
+from eval_smoothness import add_arguments, EvaluationDiagnostics
 from train import Normalizer, add_spectral_norm, resolve_d3il, resolve_data_dir
 
 
@@ -25,6 +26,7 @@ def parse_args():
     p.add_argument("--data-dir", default=None)
     p.add_argument("--raw-dir", default="/root/d3il-work/raw/pushing/all_data")
     p.add_argument("--contexts", choices=["test", "train"], default="test")
+    p.add_argument("--context-start", type=int, default=0, help="First context index; preserves global episode RNG when sharding")
     p.add_argument("--n-contexts", type=int, default=30)
     p.add_argument("--n-traj", type=int, default=1)
     p.add_argument("--ode-steps", type=int, default=10)
@@ -34,6 +36,12 @@ def parse_args():
     p.add_argument("--check-obs", type=int, default=0)
     p.add_argument("--tag", default="")
     p.add_argument("--device", default="cuda:0" if torch.cuda.is_available() else "cpu")
+    add_arguments(p)
+    p.add_argument("--record-joints", action="store_true", help="Store post-step Panda arm joint positions for browser replay")
+    p.add_argument("--timing-file", default=None)
+    p.add_argument("--capture-dir", default=None)
+    p.add_argument("--capture-camera", choices=["top", "oblique"], default="oblique")
+    p.add_argument("--replan-noise", choices=["fresh", "fixed"], default="fresh")
     return p.parse_args()
 
 
@@ -89,12 +97,12 @@ class Policy:
         self.scale = torch.from_numpy(norm.scale).to(device)
 
     @torch.no_grad()
-    def plan(self, obs):
+    def plan(self, obs, generator=None):
         o = torch.from_numpy(np.asarray(obs, dtype=np.float32)).to(self.device)[None]
         o_n = (o - self.center[self.act_dim:]) / self.scale[self.act_dim:]
         cond = {0: o_n}
         solver = self.Solver(self.model, cond, action_dim=self.act_dim, value=None, ode_method="euler")
-        x = torch.randn(1, self.horizon, self.obs_dim + self.act_dim, device=self.device)
+        x = torch.randn(1, self.horizon, self.obs_dim + self.act_dim, device=self.device, generator=generator)
         x = self.apply_conditioning(x, cond, self.act_dim)
         x = solver(x, t_span=self.t_span)
         x = x * self.scale + self.center
@@ -144,7 +152,15 @@ def check_obs(env, quat2euler, cfg, raw_dir, n):
 
 def main():
     args = parse_args()
+    for name in ("timing_file", "capture_dir"):
+        value = getattr(args, name, None)
+        if value:
+            setattr(args, name, os.path.abspath(value))
+    if args.output_root:
+        args.output_root = os.path.abspath(args.output_root)
     cfg_path = os.path.join(args.run_dir, "config.json")
+    if getattr(args, "replan_noise", "fresh") == "fixed" and not args.paired_noise:
+        raise ValueError("Fixed noise requires --paired-noise")
     run_dir = os.path.abspath(args.run_dir)
     with open(cfg_path, encoding="utf-8") as f:
         cfg0 = json.load(f)
@@ -157,6 +173,15 @@ def main():
     Block_Push_Env, quat2euler = setup_d3il(args.d3il_root)
     env = Block_Push_Env(render=False, n_substeps=35, max_steps_per_episode=args.max_steps)
     env.start()
+    if getattr(args, 'timing_file', None):
+        with open(args.timing_file, "w") as timing:
+            json.dump({"dt": float(env.scene.dt) * 35, "substeps": 35}, timing)
+    capture = None
+    if getattr(args, 'capture_dir', None):
+        sys.path.insert(0, os.path.dirname(HERE))
+        from visualizer.capture import Capture
+        capture = Capture(env, args.capture_dir, args.capture_camera)
+
 
     if args.check_obs > 0:
         check_obs(env, quat2euler, cfg, args.raw_dir, args.check_obs)
@@ -164,14 +189,20 @@ def main():
 
     ctx_file = os.path.join(args.d3il_root, "environments/dataset/data/pushing", f"{args.contexts}_contexts.pkl")
     contexts = np.load(ctx_file, allow_pickle=True)
+    if args.context_start < 0:
+        raise ValueError("context_start must be nonnegative")
+    contexts = contexts[args.context_start:]
     n_ctx = min(args.n_contexts, len(contexts))
+    if n_ctx < 1 or args.n_traj < 1:
+        raise ValueError("Evaluation needs at least one context and trajectory")
+    diagnostics = EvaluationDiagnostics(args, cfg, env, run_dir, ctx_file, args.d3il_root)
     policy = Policy(model, norm, cfg, apply_conditioning, Solver, args.ode_steps, args.device)
 
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
 
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    out_dir = os.path.join(run_dir, f"eval_pushing_{args.contexts}_{args.tag + '_' if args.tag else ''}{stamp}")
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+    out_dir = os.path.join(args.output_root or run_dir, f"eval_pushing_{args.contexts}_{args.tag + '_' if args.tag else ''}{stamp}")
     os.makedirs(out_dir)
 
     successes = np.zeros((n_ctx, args.n_traj))
@@ -185,23 +216,33 @@ def main():
 
     for ci in range(n_ctx):
         for ti in range(args.n_traj):
+            processor, generator = diagnostics.start(ci, ti, env, contexts[ci])
+            fixed_rng = generator.get_state() if getattr(args, "replan_noise", "fresh") == "fixed" else None
             env.reset(random=False, context=copy.deepcopy(contexts[ci]))
             c, boxes = read_state(env, quat2euler)
             fixed_z = c[2:3].copy()
             des = c[:2].copy()
+            initial_des, initial_actual = des.copy(), c[:2].copy()
+            plan_starts = []
             done = False
             info = {}
             step = 0
             log_des, log_c, log_b, log_act = [], [], [], []
+            log_joints, log_boxes_xyz = [], []
             queue = []
             while not done:
                 obs = build_obs(des, c, boxes)
+                plan_starts.append(not queue)
                 if not queue:
                     tp = time.time()
-                    plan = policy.plan(obs)
+                    if fixed_rng is not None:
+                        generator.set_state(fixed_rng)
+                    plan = policy.plan(obs, generator=generator)
                     plan_time += time.time() - tp
                     n_plans += 1
-                    queue = [plan[k, :2].astype(np.float64) for k in range(min(args.execute_steps, plan.shape[0]))]
+                    history = np.vstack([initial_des, *log_des[-3:]])[-3:]
+                    actions = processor.process(plan[:, :2], history)
+                    queue = [actions[k].copy() for k in range(args.execute_steps)]
                 a = queue.pop(0)
                 des = des + a
                 command = np.concatenate([des, fixed_z, [0.0, 1.0, 0.0, 0.0]])
@@ -209,16 +250,29 @@ def main():
                 c, boxes = read_state(env, quat2euler)
                 log_des.append(des.copy()); log_c.append(c.copy()); log_act.append(a.copy())
                 log_b.append(np.concatenate([boxes[0][0][:2], [boxes[0][2]], boxes[1][0][:2], [boxes[1][2]]]))
+                if getattr(args, 'record_joints', False):
+                    log_boxes_xyz.append(np.concatenate([b[0] for b in boxes]).copy())
+                    log_joints.append(np.asarray(env.robot.current_j_pos, dtype=np.float64)[:7].copy())
+                if capture:
+                    capture.save(ci, ti, step)
                 step += 1
             successes[ci, ti] = float(info.get("success", False))
             modes[ci, ti] = int(info.get("mode", -1))
             mean_dist[ci, ti] = float(info.get("mean_distance", np.nan))
             lengths[ci, ti] = step
             key = f"c{ci:03d}_t{ti}"
-            rollouts[key + "_des"] = np.asarray(log_des, dtype=np.float32)
-            rollouts[key + "_c"] = np.asarray(log_c, dtype=np.float32)
+            diagnostics.finish(key, processor, log_act, log_des, log_c, plan_starts,
+                               initial_des, initial_actual, rollouts)
+            if getattr(args, 'record_joints', False):
+                rollouts[key + "_goals"] = np.asarray([env.scene.get_obj_pos(g) for g in [env.target_box_1, env.target_box_2]], dtype=np.float64)
+                rollouts[key + "_goal_threshold"] = np.asarray(env.target_min_dist)
+                rollouts[key + "_goal_rule"] = np.asarray("any_permutation")
+                rollouts[key + "_boxes_xyz"] = np.asarray(log_boxes_xyz, dtype=np.float64)
+                rollouts[key + "_joints"] = np.asarray(log_joints, dtype=np.float64)
+            rollouts[key + "_des"] = np.asarray(log_des, dtype=np.float64)
+            rollouts[key + "_c"] = np.asarray(log_c, dtype=np.float64)
             rollouts[key + "_boxes"] = np.asarray(log_b, dtype=np.float32)
-            rollouts[key + "_act"] = np.asarray(log_act, dtype=np.float32)
+            rollouts[key + "_act"] = np.asarray(log_act, dtype=np.float64)
             print(f"context {ci:3d} traj {ti}  success {int(successes[ci, ti])}  mode {modes[ci, ti]:2d}  mean_dist {mean_dist[ci, ti]:.4f}  steps {step}  elapsed {time.time() - t0:.0f}s", flush=True)
 
     n_modes = 4
@@ -241,6 +295,7 @@ def main():
         "execute_steps": args.execute_steps,
         "max_steps": args.max_steps,
         "seed": args.seed,
+        "replan_noise": getattr(args, "replan_noise", "fresh"),
         "success_rate": float(successes.mean()),
         "entropy": entropy,
         "score": 0.5 * (float(successes.mean()) + entropy),
@@ -250,8 +305,11 @@ def main():
         "plan_ms": 1000.0 * plan_time / max(n_plans, 1),
         "wall_sec": time.time() - t0,
     }
+    diagnostics.save(results, out_dir)
     with open(os.path.join(out_dir, "results.json"), "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
+    if capture:
+        capture.close()
     np.savez_compressed(os.path.join(out_dir, "rollouts.npz"), successes=successes, modes=modes, mean_distance=mean_dist, lengths=lengths, **rollouts)
     print(json.dumps(results, indent=2))
     print(f"saved: {out_dir}")

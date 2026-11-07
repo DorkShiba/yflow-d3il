@@ -30,7 +30,6 @@
   "val_batches": 8,
   "val_seed": 1234,
   "data_dir": "/root/d3il-work/codex/processed/pushing_sincos_v1",
-  "hardflow_root": "/root/d3il-work/codex/HardFlow",
   "n_train_files": 1800,
   "n_val_files": 200,
   "n_train_windows": 390518,
@@ -57,7 +56,6 @@
     "resume": null,
     "work_root": "/root/d3il-work/codex",
     "data_root": null,
-    "hardflow_root": null,
     "out_root": null,
     "device": "cuda:0"
   }

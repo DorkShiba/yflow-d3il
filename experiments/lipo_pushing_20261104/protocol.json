@@ -1,0 +1,41 @@
+{
+  "task": "pushing",
+  "base_commit": "13a41edb0c9e25257ffbda74c333bc48b0265ca2",
+  "branch": "codex/lipo-smoothness",
+  "modes": [
+    "none",
+    "blend",
+    "lipo"
+  ],
+  "checkpoint_sha256": "e79b67ce3926691014676e67dab1795ef35a14f77ccdbcab16153fea6b886059",
+  "seed": 0,
+  "n_contexts": 30,
+  "n_traj": 4,
+  "execute_steps": 8,
+  "ode_steps": 10,
+  "blend_steps": 4,
+  "blend_bound_m": 0.002,
+  "path_bound_m": 0.0003,
+  "paired_noise": true,
+  "primary_metrics": [
+    "success_rate",
+    "actual_jerk_rms_m_s3",
+    "desired_jerk_rms_m_s3",
+    "seam_velocity_jump_rms_m_s"
+  ],
+  "selection": "fixed starting configuration, no parameter search",
+  "source_sha256": {
+    "eval_smoothness.py": "3ff5dec4c7b8f36eb0e0706af165a3f924725d4718228a7d7d7e7f015f6040d7",
+    "run_lipo_sharded.py": "b86060f1a4b8a757b6b1ab9c99754735f233dc85d6e2fb2ab79eb17b12f8bbb1",
+    "smoothness.py": "b12dab955d92c7445317b7b97ee46d87a0d729ad90824563bce61376350cdaa6",
+    "compare_smoothness.py": "62eec629e5d76d3d72e90539a8a9fb9ad559879479a580a371b9e02012d59928",
+    "train.py": "5d999516f24484b36374092285761b255d9a89f5a0e758abb539d32f8bc82fb8",
+    "sample.py": "ea41efea1170ae4abc7fe02c9b3e4b75be2686d715a27ee7d4a68d70dd06b128",
+    "eval_pushing.py": "eeeed06f7d68fede723a2a98f28716222aeab0b5a198f799c3ff9baf292fc880",
+    "lipo.py": "c70ced272c9eb88bceacd1d8649ff9885286bf7171c6e5efd374159353f169d4",
+    "run_lipo_comparison.py": "a6211629b38a1ae57464e2c4c10dc9344bfeebee4e63ecd3a246a7a5a196c7f5",
+    "eval_inserting.py": "82ab0ccb53dfdec179ffaddc86f56893de8cd60a9104e59e903f16dbb70ca936"
+  },
+  "workers": 9,
+  "shard_contexts": 3
+}

@@ -1,0 +1,107 @@
+{
+  "default_task": "pushing",
+  "tasks": {
+    "pushing": {
+      "title": "Pushing · Baseline / Blending / LiPo",
+      "panels": [
+        {
+          "job": "4eb4382aebd73cb21a6e2a542ec44fd4",
+          "key": "c000_t0",
+          "label": "Baseline",
+          "view": "scene"
+        },
+        {
+          "job": "f285a1b7c30d62a9e2e14bb021b7dc3d",
+          "key": "c000_t0",
+          "label": "Blending",
+          "view": "scene"
+        },
+        {
+          "job": "3ab33f60182ea6db87ef2a43e19de828",
+          "key": "c000_t0",
+          "label": "LiPo",
+          "view": "scene"
+        }
+      ],
+      "note": "동일 context 0 / trajectory 0 · 사전 고정한 첫 사례 · 원본 손·블록 좌표와 정확히 일치한 명령 replay에서 관절 기록 · 한 장면은 전체 성능을 대표하지 않습니다. 벽은 D3IL 원본 배치, 로봇·작업대는 웹 표시용 모델입니다.",
+      "metric_rows": [
+        [
+          "성공률",
+          "88.33%",
+          "95.00%",
+          "95.83%"
+        ],
+        [
+          "손 jerk RMS (m/s³)",
+          "36.25",
+          "36.78",
+          "27.08"
+        ],
+        [
+          "청크 경계 명령 속도 변화 RMS (m/s)",
+          "0.1604",
+          "0.0706",
+          "0.0648"
+        ],
+        [
+          "계산 시간 (ms/chunk)",
+          "63.75",
+          "63.96",
+          "65.38"
+        ]
+      ],
+      "metric_note": "전체 30 contexts × 4회 / 방법 · 시뮬레이터 XY · 지연 0 · 계산 시간은 병렬 평가 환경"
+    },
+    "inserting": {
+      "title": "Inserting · Baseline / Blending / LiPo",
+      "panels": [
+        {
+          "job": "4943acd0bd560d4904d9c241b2a65118",
+          "key": "c000_t0",
+          "label": "Baseline",
+          "view": "scene"
+        },
+        {
+          "job": "85f3645d68388ad59312544385977616",
+          "key": "c000_t0",
+          "label": "Blending",
+          "view": "scene"
+        },
+        {
+          "job": "d8740a9c547d8a38ae7381f0abbac5b0",
+          "key": "c000_t0",
+          "label": "LiPo",
+          "view": "scene"
+        }
+      ],
+      "note": "동일 context 0 / trajectory 0 · 사전 고정한 첫 사례 · 원본 손·블록 좌표와 정확히 일치한 명령 replay에서 관절 기록 · 한 장면은 전체 성능을 대표하지 않습니다. 벽은 D3IL 원본 배치, 로봇·작업대는 웹 표시용 모델입니다.",
+      "metric_rows": [
+        [
+          "성공률",
+          "80.18%",
+          "80.49%",
+          "78.05%"
+        ],
+        [
+          "손 jerk RMS (m/s³)",
+          "44.45",
+          "46.98",
+          "36.76"
+        ],
+        [
+          "청크 경계 명령 속도 변화 RMS (m/s)",
+          "0.1912",
+          "0.0857",
+          "0.0786"
+        ],
+        [
+          "계산 시간 (ms/chunk)",
+          "89.28",
+          "89.34",
+          "91.05"
+        ]
+      ],
+      "metric_note": "전체 82 contexts × 4회 / 방법 · 시뮬레이터 XY · 지연 0 · 계산 시간은 병렬 평가 환경"
+    }
+  }
+}

@@ -1,0 +1,2 @@
+# Add to the existing D3IL runtime; no policy training dependencies change.
+clarabel==0.11.1

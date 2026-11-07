@@ -18,6 +18,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.dirname(HERE))
 from eval_pushing import Policy, load_model
+from eval_smoothness import add_arguments, EvaluationDiagnostics
 from train import resolve_d3il, resolve_data_dir
 
 CONTEXTS_FILE = os.path.join(HERE, "contexts", "inserting_val.pkl")
@@ -34,6 +35,7 @@ def parse_args():
     p.add_argument("--contexts-file", default=CONTEXTS_FILE)
     p.add_argument("--export-contexts", default=None)
     p.add_argument("--split", choices=["val", "train"], default="val")
+    p.add_argument("--context-start", type=int, default=0)
     p.add_argument("--n-contexts", type=int, default=0)
     p.add_argument("--n-traj", type=int, default=1)
     p.add_argument("--ode-steps", type=int, default=10)
@@ -43,6 +45,11 @@ def parse_args():
     p.add_argument("--check-obs", type=int, default=0)
     p.add_argument("--tag", default="")
     p.add_argument("--device", default="cuda:0" if torch.cuda.is_available() else "cpu")
+    add_arguments(p)
+    p.add_argument("--record-joints", action="store_true", help="Store post-step Panda arm joint positions for browser replay")
+    p.add_argument("--timing-file", default=None)
+    p.add_argument("--capture-dir", default=None)
+    p.add_argument("--capture-camera", choices=["top", "oblique"], default="oblique")
     return p.parse_args()
 
 
@@ -113,9 +120,12 @@ def slim(data):
     return {"robot": {"des_c_pos": np.asarray(data["robot"]["des_c_pos"]), "j_pos": np.asarray(data["robot"]["j_pos"][:1])}}
 
 
-def load_contexts(cfg, split, raw_root, quat2euler, n, contexts_file=None):
+def load_contexts(cfg, split, raw_root, quat2euler, n, contexts_file=None, start=0):
     split_dir = os.path.join(cfg["data_dir"], split)
     files = sorted(f for f in os.listdir(split_dir) if f.endswith(".npz"))
+    if start < 0:
+        raise ValueError("context_start must be nonnegative")
+    files = files[start:]
     if n > 0:
         files = files[:n]
     stored = {}
@@ -136,7 +146,15 @@ def load_contexts(cfg, split, raw_root, quat2euler, n, contexts_file=None):
 
 def main():
     args = parse_args()
+    for name in ("timing_file", "capture_dir"):
+        value = getattr(args, name, None)
+        if value:
+            setattr(args, name, os.path.abspath(value))
+    if args.output_root:
+        args.output_root = os.path.abspath(args.output_root)
     run_dir = os.path.abspath(args.run_dir)
+    with open(os.path.join(run_dir, "config.json"), encoding="utf-8") as f:
+        cfg0 = json.load(f)
     if cfg0["task"] != "inserting":
         raise SystemExit("This script evaluates inserting runs only")
     run_cwd = os.getcwd()
@@ -157,6 +175,15 @@ def main():
 
     env = Env(render=False, n_substeps=35, max_steps_per_episode=args.max_steps)
     env.start()
+    if getattr(args, 'timing_file', None):
+        with open(args.timing_file, "w") as timing:
+            json.dump({"dt": float(env.scene.dt) * 35, "substeps": 35}, timing)
+    capture = None
+    if getattr(args, 'capture_dir', None):
+        sys.path.insert(0, os.path.dirname(HERE))
+        from visualizer.capture import Capture
+        capture = Capture(env, args.capture_dir, args.capture_camera)
+
 
     if args.check_obs > 0:
         items = load_contexts(cfg, "val", args.raw_root, quat2euler, args.check_obs, args.contexts_file)
@@ -175,14 +202,18 @@ def main():
         print(f"check summary  max {errs.max():.2e}  mean per-dim {np.round(errs.mean(0), 5).tolist()}", flush=True)
         return
 
-    items = load_contexts(cfg, args.split, args.raw_root, quat2euler, args.n_contexts, args.contexts_file)
+    items = load_contexts(cfg, args.split, args.raw_root, quat2euler, args.n_contexts, args.contexts_file, start=args.context_start)
     n_ctx = len(items)
+    if n_ctx < 1 or args.n_traj < 1:
+        raise ValueError("Evaluation needs at least one context and trajectory")
+    diagnostics = EvaluationDiagnostics(args, cfg, env, run_dir, args.contexts_file,
+                                        resolve_d3il(args.d3il_root))
     policy = Policy(model, norm, cfg, apply_conditioning, Solver, args.ode_steps, args.device)
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
 
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    out_dir = os.path.join(run_dir, f"eval_inserting_{args.split}_{args.tag + '_' if args.tag else ''}{stamp}")
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+    out_dir = os.path.join(args.output_root or run_dir, f"eval_inserting_{args.split}_{args.tag + '_' if args.tag else ''}{stamp}")
     os.makedirs(out_dir)
 
     successes = np.zeros((n_ctx, args.n_traj))
@@ -199,23 +230,30 @@ def main():
     for ci, (fname, data, ctx, _) in enumerate(items):
         demo_len[ci] = len(data["robot"]["des_c_pos"])
         for ti in range(args.n_traj):
+            processor, generator = diagnostics.start(ci, ti, env, ctx)
             env.reset(random=False, context=copy.deepcopy(ctx))
             c, boxes = read_state(env, quat2euler)
             fixed_z = c[2:3].copy()
             des = c[:2].copy()
+            initial_des, initial_actual = des.copy(), c[:2].copy()
+            plan_starts = []
             done = False
             info = {}
             step = 0
             log_des, log_c, log_b, log_act = [], [], [], []
+            log_joints, log_boxes_xyz = [], []
             queue = []
             while not done:
                 obs = build_obs(des, c, boxes)
+                plan_starts.append(not queue)
                 if not queue:
                     tp = time.time()
-                    plan = policy.plan(obs)
+                    plan = policy.plan(obs, generator=generator)
                     plan_time += time.time() - tp
                     n_plans += 1
-                    queue = [plan[k, :2].astype(np.float64) for k in range(min(args.execute_steps, plan.shape[0]))]
+                    history = np.vstack([initial_des, *log_des[-3:]])[-3:]
+                    actions = processor.process(plan[:, :2], history)
+                    queue = [actions[k].copy() for k in range(args.execute_steps)]
                 a = queue.pop(0)
                 des = des + a
                 command = np.concatenate([des, fixed_z, [0.0, 1.0, 0.0, 0.0]])
@@ -223,6 +261,11 @@ def main():
                 c, boxes = read_state(env, quat2euler)
                 log_des.append(des.copy()); log_c.append(c.copy()); log_act.append(a.copy())
                 log_b.append(np.concatenate([np.r_[bx[0][:2], bx[2]] for bx in boxes]))
+                if getattr(args, 'record_joints', False):
+                    log_boxes_xyz.append(np.concatenate([b[0] for b in boxes]).copy())
+                    log_joints.append(np.asarray(env.robot.current_j_pos, dtype=np.float64)[:7].copy())
+                if capture:
+                    capture.save(ci, ti, step)
                 step += 1
             successes[ci, ti] = float(info.get("success", False))
             modes[ci, ti] = int(info.get("mode", 0))
@@ -230,10 +273,18 @@ def main():
             mean_dist[ci, ti] = float(info.get("mean_distance", np.nan))
             lengths[ci, ti] = step
             key = f"c{ci:03d}_t{ti}"
-            rollouts[key + "_des"] = np.asarray(log_des, dtype=np.float32)
-            rollouts[key + "_c"] = np.asarray(log_c, dtype=np.float32)
+            diagnostics.finish(key, processor, log_act, log_des, log_c, plan_starts,
+                               initial_des, initial_actual, rollouts)
+            if getattr(args, 'record_joints', False):
+                rollouts[key + "_goals"] = np.asarray([env.scene.get_obj_pos(g) for g in [env.target_box1, env.target_box2, env.target_box3]], dtype=np.float64)
+                rollouts[key + "_goal_threshold"] = np.asarray(env.target_min_dist)
+                rollouts[key + "_goal_rule"] = np.asarray("matched")
+                rollouts[key + "_boxes_xyz"] = np.asarray(log_boxes_xyz, dtype=np.float64)
+                rollouts[key + "_joints"] = np.asarray(log_joints, dtype=np.float64)
+            rollouts[key + "_des"] = np.asarray(log_des, dtype=np.float64)
+            rollouts[key + "_c"] = np.asarray(log_c, dtype=np.float64)
             rollouts[key + "_boxes"] = np.asarray(log_b, dtype=np.float32)
-            rollouts[key + "_act"] = np.asarray(log_act, dtype=np.float32)
+            rollouts[key + "_act"] = np.asarray(log_act, dtype=np.float64)
             print(f"context {ci:3d} {fname} traj {ti}  success {int(successes[ci, ti])}  boxes {n_boxes[ci, ti]}  mode {modes[ci, ti]}  mean_dist {mean_dist[ci, ti]:.4f}  steps {step} (demo {demo_len[ci]})  elapsed {time.time() - t0:.0f}s", flush=True)
 
     n_modes = 6
@@ -272,8 +323,11 @@ def main():
         "wall_sec": time.time() - t0,
         "context_files": [it[0] for it in items],
     }
+    diagnostics.save(results, out_dir)
     with open(os.path.join(out_dir, "results.json"), "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
+    if capture:
+        capture.close()
     np.savez_compressed(os.path.join(out_dir, "rollouts.npz"), successes=successes, modes=modes, n_boxes=n_boxes, mean_distance=mean_dist, lengths=lengths, demo_len=demo_len, **rollouts)
     print(json.dumps({k: v for k, v in results.items() if k != "context_files"}, indent=2))
     print(f"saved: {out_dir}")

@@ -1,0 +1,50 @@
+{
+  "checks": [
+    {
+      "task": "inserting",
+      "mode": "none",
+      "jerk_rms": 42.53360270963628,
+      "seam_velocity_rms": 0.18246051517025721,
+      "passed": true
+    },
+    {
+      "task": "pushing",
+      "mode": "none",
+      "jerk_rms": 41.28542141930042,
+      "seam_velocity_rms": 0.16711134647349618,
+      "passed": true
+    },
+    {
+      "task": "inserting",
+      "mode": "blend",
+      "jerk_rms": 46.962338266647244,
+      "seam_velocity_rms": 0.0842384792759091,
+      "passed": true
+    },
+    {
+      "task": "pushing",
+      "mode": "blend",
+      "jerk_rms": 30.758434821909752,
+      "seam_velocity_rms": 0.05485043536073896,
+      "passed": true
+    },
+    {
+      "task": "pushing",
+      "mode": "lipo",
+      "jerk_rms": 23.24744663597678,
+      "seam_velocity_rms": 0.06463525125622079,
+      "passed": true
+    },
+    {
+      "task": "inserting",
+      "mode": "lipo",
+      "jerk_rms": 36.883338706044945,
+      "seam_velocity_rms": 0.07470416867126072,
+      "passed": true
+    }
+  ],
+  "definition": "XY norm of third backward finite difference of initial + post-step achieved positions / dt^3; raw unfiltered samples",
+  "dt": 0.035,
+  "time_alignment": "sample i plotted at (i+1)*dt; first two jerk values unavailable",
+  "chart": "shared global maxima across three methods, trailing 2s window, dashed chunk starts, 1s RMS; playback speed does not change metric"
+}

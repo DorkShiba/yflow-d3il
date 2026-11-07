@@ -114,7 +114,7 @@ python eval_pushing.py --run-dir results/pushing_baseline --ckpt baseline_ema.pt
 
 첫 명령은 `CHECK PASSED`, 두 번째는 `check summary  max`가 1e-4 이하, 세 번째는 대부분 `success 1`이 나오면 정상이다. Pushing의 `--check-obs`는 원본 시연 pkl이 있어야 해서 새 워크스페이스에서는 쓰지 않는다.
 
-모델 코드는 항상 저장소 내부에서 import한다. 데이터와 D3IL은 저장된 경로 또는 저장소 기준 `<저장소>/data/...`, `<저장소>/../d3il`을 사용한다. 통합 설정은 `paths.data_root`, `paths.d3il_root`로 지정한다. Baseline CLI는 `--data-dir`, `--d3il-root`(학습은 `--data-root`)를 지원한다. 이전 `--hardflow-root` 옵션은 제거했다.
+모델 코드는 항상 저장소 내부에서 import한다. 데이터와 D3IL은 저장된 경로 또는 저장소 기준 `<저장소>/data/...`, `<저장소>/../d3il`을 사용한다. 통합 설정은 `paths.data_root`, `paths.d3il_root`로 지정한다. Baseline CLI는 `--data-dir`, `--d3il-root`(학습은 `--data-root`)를 지원한다.
 
 ## 6. 베이스라인 체크포인트
 
@@ -125,7 +125,7 @@ python eval_pushing.py --run-dir results/pushing_baseline --ckpt baseline_ema.pt
 
 `baseline_ema.pt`는 원본 `last.pt`(100만 스텝)에서 **EMA 가중치만** 꺼내 저장한 파일이다(`{"ema", "step", "config"}`). 평가와 추론 시점 제약 실험에는 이것만 있으면 된다. 같은 폴더의 `config.json`과 `normalizer.npz`가 함께 있어야 불러올 수 있으므로 폴더 단위로 다룬다.
 
-기존 `config.json`의 `hardflow_root`는 이력 metadata로만 남고 사용하지 않는다. `data_dir`가 없는 경로를 가리키면 저장소의 데이터를 찾는다. 원본 checkpoint·normalizer·설정 파일은 수정하지 않아도 된다. 학습을 이어서 하려면 옵티마이저 상태가 든 원본 `last.pt`가 필요하다.
+`data_dir`가 없는 경로를 가리키면 저장소의 데이터를 찾는다. 원본 checkpoint·normalizer·설정 파일은 수정하지 않아도 된다. 학습을 이어서 하려면 옵티마이저 상태가 든 원본 `last.pt`가 필요하다.
 
 ## 7. 불러와서 쓰기
 
@@ -190,3 +190,7 @@ python eval_inserting.py --run-dir $I --ckpt baseline_ema.pt --n-traj 2 --seed 1
 ```bash
 python -m fm_constraint.sample --config configs/pushing.yaml --projection --vlsa --pf2mp --set sample.n_windows=4
 ```
+
+## LiPo smoothness and rollout viewer
+
+Training-free Baseline / Blending / LiPo comparisons for Pushing and Inserting: [implementation and evaluation](fm_baseline/LIPO.md). Run `./visualizer/run.sh` for the [local 3D viewer](visualizer/README.md), including verified sample replays, live XY jerk plots and video export. Full evaluation summaries are under `experiments/lipo_pushing_20261104` and `experiments/lipo_inserting_20261104`.
