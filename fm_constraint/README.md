@@ -39,17 +39,14 @@ python -m pytest fm_constraint/tests tests -q
 
 CLI > YAML > 기본값 순서다. `--no-<method>`로 개별 해제한다. 학습에서는 모든 방법을 꺼야 한다. 출력은 `fm_constraint/runs/` 안에만 저장한다.
 
-## 32조합 순차 실험
+## 32조합 본실험 (ID)
 
 ```bash
-bash scripts/run_suite.sh --dry-run                     # 공통 context·seed 계획과 64개 명령만 확인
-bash scripts/run_suite.sh --stage smoke                 # 태스크별 5 context × seed 2개 × 32조합
-bash scripts/run_suite.sh --stage main --output fm_constraint/runs/suite_main
+bash scripts/run_experiment.sh --name <이름> --contexts <번호>          # 맡은 context, 두 태스크 × 32조합
+bash scripts/run_experiment.sh --name <이름> --contexts 0-1 --smoke 24  # 동작 확인(결과는 로컬에만)
 ```
 
-조합 ID는 `P00`~`P31`, `I00`~`I31`이다(비트 ①16 ②8 ③4 ④2 ⑤1). 이전 method123 실험의 `P00 P04 … P28`은 ④⑤ OFF인 같은 번호이며, 2026-11-07 기준 코드에서 이 8조합의 실행 행동은 이전 코드와 비트 단위로 같다. Complementarity Δ의 비교 쌍은 실행 전에 고정했다: 조합에서 가장 낮은 비트의 방법을 B, 나머지를 A로 둔다(예: 28 = (24, 4), 31 = (30, 1)).
-
-같은 `--output`으로 재실행하면 검증된 완료 조합은 건너뛰고, 코드·입력·의존 패키지가 바뀌었으면 중단한다. 실험 조건 통일(OOD 조건을 runner에 넣는 방식 포함)은 브랜치 통합 이후에 정한다.
+평가 목록은 `configs/experiment_contexts.json`(태스크마다 30 context, noise seed 0·1·2)에 고정되어 있다. 분담과 결과 공유 방법은 루트 `README.md`의 "실험 분담"을, 프로토콜은 `docs/report.md`를 본다. 조합 ID는 `P00`~`P31`, `I00`~`I31`(비트 ①16 ②8 ③4 ④2 ⑤1)이다. Complementarity Δ의 비교 쌍은 실행 전에 고정했다: 가장 낮은 비트의 방법을 B, 나머지를 A로 둔다(예: 28 = (24, 4), 31 = (30, 1)).
 
 ## 명시 제약
 
@@ -73,7 +70,7 @@ bash scripts/run_suite.sh --stage main --output fm_constraint/runs/suite_main
 | `rtc.py`, `lipo.py`, `pf2mp.py` | ④ soft mask·guidance, ⑤ jerk QP, ② KDE·거리장·캐시 |
 | `constraints.py`, `qp.py` | 공통 workspace·가속도·물체 영역 행렬, OSQP 투영 |
 | `evaluation.py`, `eval_*.py`, `sample.py` | D3IL 평가 루프(③, ④ 참조, 지연, OOD), 오프라인 계획 |
-| `suite.py`, `suite_metrics.py` | 32조합 순차 실험과 context bootstrap 집계 |
+| `experiment.py` | 본실험 평가 목록 선택, 단위 실행·저장, 팀원 보고서, 통합 집계(context bootstrap) |
 | `tasks.py` | D3IL 8개 태스크 정의(OOD 기하, 추가 태스크 baseline 평가) |
 | `compute_metrics.py`, `render_rollouts.py`, `check_constraints.py`, `train.py` | 결과 비교·재생, 제약 통계, baseline 학습 위임 |
 

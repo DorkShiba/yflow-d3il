@@ -34,7 +34,8 @@ yflow-d3il/
 ├── fm_constraint/              # train-free 5개 방법, D3IL 평가 루프, 32조합 runner
 ├── configs/                    # 5개 방법·제약 설정 (schema v4, pushing/inserting.yaml)
 ├── ood/                        # OOD 조건 정의·생성·검증·지표
-├── scripts/run_suite.sh        # 32조합 × 2태스크 순차 실험
+├── scripts/run_experiment.sh   # 본실험: 맡은 context × 원하는 조합 순차 실행
+├── experiments/id_v1/          # 본실험 결과 (git 추적)
 ├── visualizer/                 # 로컬 3D rollout viewer
 ├── preprocess/                 # data/를 만든 전처리·검증 스크립트
 ├── tests/, fm_constraint/tests/
@@ -171,7 +172,7 @@ actions = plan[:, :2]
 ```bash
 MUJOCO_GL=disable python -m fm_constraint.eval_pushing --config configs/pushing.yaml --projection --rtc --lipo
 MUJOCO_GL=disable python -m fm_constraint.eval_inserting --config configs/inserting.yaml --pf2mp --filter --ood D_mid
-bash scripts/run_suite.sh --dry-run          # 태스크당 32조합(P00~P31, I00~I31) 순차 실험
+bash scripts/run_experiment.sh --name <이름> --contexts 0-6   # 본실험 (아래 "실험 분담")
 ```
 
 정의와 상호작용 규칙은 [`docs/METHODS.md`](docs/METHODS.md)에 있다. 모든 방법을 끄면 베이스라인과 같은 계획을 만든다. 평가 프로토콜(4절)은 바꾸지 않는다.
@@ -203,3 +204,29 @@ python eval_inserting.py --run-dir $I --ckpt baseline_ema.pt --n-traj 2 --seed 1
 python -m pytest fm_constraint/tests tests -q     # visualizer 테스트는 visualizer/requirements.txt 필요
 ./visualizer/run.sh                                # 로컬 3D rollout viewer (visualizer/README.md)
 ```
+
+## 11. 실험 분담 (ID 본실험)
+
+프로토콜은 [`docs/report.md`](docs/report.md)에 있다. 태스크마다 30개 context(`configs/experiment_contexts.json`, 번호 0~29)를 고정해 두었고, context마다 FM 입력 noise seed 0·1·2로 3회 실행한다. **Pushing과 Inserting은 같은 번호를 쓴다.** 각자 맡은 context에 대해 32조합을 모두 실행하므로, 같은 context의 조합 비교는 항상 같은 장비에서 이루어진다.
+
+| 담당 | context 번호 | 개수 | 실행 명령 |
+|---|---|---:|---|
+| 형빈 | 0–6 | 7 | `bash scripts/run_experiment.sh --name hyeongbin --contexts 0-6` |
+| 준혁 | 7–16 | 10 | `bash scripts/run_experiment.sh --name junhyuk --contexts 7-16` |
+| 재엽 | 17–19 | 3 | `bash scripts/run_experiment.sh --name jaeyeop --contexts 17-19` |
+| 성민 | 20–29 | 10 | `bash scripts/run_experiment.sh --name seongmin --contexts 20-29` |
+
+- **같은 실험 보장:** 스크립트는 다음을 확인한 뒤에만 실행한다.
+  - 커밋하지 않은 코드 변경이 없다.
+  - 요청한 GPU에서 실제로 계산이 된다(쓸 수 없으면 CPU로 넘어가지 않고 멈춘다).
+  - D3IL에서 읽은 초기 상태가 목록 파일과 같다(D3IL은 커밋 `1d9c718`로 맞춘다).
+  - noise는 장비와 무관하게 같은 값이 생성된다.
+- **나눠서 실행:** 맡은 범위를 여러 번에 나눠도 된다. 예: `--contexts 0-3`과 `--contexts 4-6`을 다른 GPU(`--device cuda:1`)나 다른 날 실행. 태스크만(`--task inserting`) 또는 조합 일부만(`--combos 16-31`) 실행할 수도 있다. 단, **같은 context의 32조합은 같은 장비에서** 끝낸다.
+- **중단·재실행:** 같은 명령을 다시 실행하면 완료된 단위(task × 조합 × context)는 건너뛰고, 중단된 단위만 처음부터 다시 실행한다.
+- **동작 확인:** `--smoke 24`(24 step만, 결과는 로컬에만 저장)와 `--dry-run`을 먼저 실행한다.
+- **결과 공유:**
+  - 끝나면 `docs/report_<이름>.md`가 생성된다.
+  - `experiments/id_v1/`(단위마다 `result.json`과 작은 `trajectories.npz`)와 보고서를 commit해서 push한다. 스크립트가 마지막에 명령을 출력한다.
+  - 전체 계획 로그(`rollouts.json`, Inserting rollout 1개에 최대 약 8 MB)는 `fm_constraint/runs/experiment_id_v1/full/`에 로컬로만 남는다.
+- **통합(팀장):** 모든 결과가 push되면 `python -m fm_constraint.experiment merge`로 30 context 전체의 `추정값 [95% CI]`와 Complementarity Δ를 `docs/report_results.md`에 만든 뒤 `docs/report.md`에 옮긴다. 코드 버전이 섞였거나 누락된 context가 있으면 표시하거나 멈춘다.
+- **예상 시간(baseline 기준, 방법을 켜면 더 길다):** Pushing은 context 1개 × 32조합에 약 20분, Inserting은 약 4시간이다. 예를 들어 10개를 맡으면 Inserting에 약 40시간이 걸린다. 첫 실행 로그의 단위별 시간으로 다시 계산한다.

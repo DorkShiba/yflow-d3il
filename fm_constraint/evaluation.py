@@ -71,7 +71,9 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
                 else:
                     payload = json.dumps([task, item['id'], sampling_seed], separators=(',', ':'))
                     noise_seed = int.from_bytes(hashlib.sha256(payload.encode()).digest()[:8], 'big') % (2**63 - 1)
-                generator = torch.Generator(device=policy.base.device).manual_seed(noise_seed)
+                # noise는 장비와 무관하게 CPU 난수로 만든 뒤 옮긴다. CUDA 난수열은 CPU와 달라서
+                # 장비가 다른 팀원 사이에 같은 seed의 noise가 달라지는 것을 막는다.
+                generator = torch.Generator(device='cpu').manual_seed(noise_seed)
             episode = Episode(case, ti, spec, env, settings['execute_steps'])
             env.reset(random=False, context=copy.deepcopy(item['context']))
             if episode.robot_start is not None:
@@ -117,7 +119,7 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
                     else:
                         base = policy.base
                         noise = torch.randn(1, base.horizon, base.act_dim + base.obs_dim,
-                                            generator=generator, device=base.device, dtype=base.center.dtype)
+                                            generator=generator, dtype=base.center.dtype).to(base.device)
                         plan = policy.plan(obs, previous.copy(), noise=noise, **extra)
                     plan_seconds += perf_counter() - started
                     plan_count += 1
