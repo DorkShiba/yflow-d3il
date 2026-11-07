@@ -42,7 +42,13 @@ def replay_camera(directory, episode, rows, indices, size, config_path=None):
     images, q_error, p_error = {}, 0., 0.
     try:
         Env, quat = module.setup_d3il(paths['d3il_root'])
-        if cfg.task == 'pushing':
+        snapshot = directory / 'evaluation_contexts.pkl'
+        if snapshot.exists():
+            import pickle
+            with snapshot.open('rb') as handle:
+                recorded_contexts = pickle.load(handle)
+            context = next(item['context'] for item in recorded_contexts if item['id'] == entry['context_id'])
+        elif cfg.task == 'pushing':
             source = Path(paths['d3il_root']) / 'environments/dataset/data/pushing' / f"{settings['contexts']}_contexts.pkl"
             contexts = np.load(source, allow_pickle=True)
             context = contexts[entry['context_index']]

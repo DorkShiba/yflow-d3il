@@ -1,0 +1,180 @@
+{
+  "scope": "CPU script integration smoke only; full experiment not run",
+  "tests_passed": 92,
+  "test_command": "OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 python -m pytest fm_constraint/tests -q",
+  "bash_syntax_check": "bash -n scripts/run_method123.sh",
+  "run_root": "fm_constraint/runs/method123_smoke_check",
+  "combinations": 16,
+  "rollouts": 32,
+  "manifest_sha256": "f2d0f086303e4f5c5918cc93c34e52762f1ac8d324cdd12b49516b792f99c1e9",
+  "common_context_seed_lists_verified": true,
+  "independent_executed_filter_verified": true,
+  "terminal_vlsa_off_verified": true,
+  "completed_job_resume_verified": "P00 skipped without reexecution",
+  "summary_files": [
+    "summary.json",
+    "summary.md"
+  ],
+  "jobs": [
+    {
+      "id": "P00",
+      "rollouts": 2,
+      "steps_per_rollout": 2,
+      "model_calls": 20,
+      "pf_calls": 0,
+      "qp_calls": 0,
+      "execution_filter": false,
+      "terminal_vlsa": false
+    },
+    {
+      "id": "P04",
+      "rollouts": 2,
+      "steps_per_rollout": 2,
+      "model_calls": 20,
+      "pf_calls": 0,
+      "qp_calls": 4,
+      "execution_filter": true,
+      "terminal_vlsa": false
+    },
+    {
+      "id": "P08",
+      "rollouts": 2,
+      "steps_per_rollout": 2,
+      "model_calls": 20,
+      "pf_calls": 20,
+      "qp_calls": 0,
+      "execution_filter": false,
+      "terminal_vlsa": false
+    },
+    {
+      "id": "P12",
+      "rollouts": 2,
+      "steps_per_rollout": 2,
+      "model_calls": 20,
+      "pf_calls": 20,
+      "qp_calls": 4,
+      "execution_filter": true,
+      "terminal_vlsa": false
+    },
+    {
+      "id": "P16",
+      "rollouts": 2,
+      "steps_per_rollout": 2,
+      "model_calls": 20,
+      "pf_calls": 0,
+      "qp_calls": 20,
+      "execution_filter": false,
+      "terminal_vlsa": false
+    },
+    {
+      "id": "P20",
+      "rollouts": 2,
+      "steps_per_rollout": 2,
+      "model_calls": 20,
+      "pf_calls": 0,
+      "qp_calls": 24,
+      "execution_filter": true,
+      "terminal_vlsa": false
+    },
+    {
+      "id": "P24",
+      "rollouts": 2,
+      "steps_per_rollout": 2,
+      "model_calls": 20,
+      "pf_calls": 20,
+      "qp_calls": 20,
+      "execution_filter": false,
+      "terminal_vlsa": false
+    },
+    {
+      "id": "P28",
+      "rollouts": 2,
+      "steps_per_rollout": 2,
+      "model_calls": 20,
+      "pf_calls": 20,
+      "qp_calls": 24,
+      "execution_filter": true,
+      "terminal_vlsa": false
+    },
+    {
+      "id": "I00",
+      "rollouts": 2,
+      "steps_per_rollout": 2,
+      "model_calls": 20,
+      "pf_calls": 0,
+      "qp_calls": 0,
+      "execution_filter": false,
+      "terminal_vlsa": false
+    },
+    {
+      "id": "I04",
+      "rollouts": 2,
+      "steps_per_rollout": 2,
+      "model_calls": 20,
+      "pf_calls": 0,
+      "qp_calls": 4,
+      "execution_filter": true,
+      "terminal_vlsa": false
+    },
+    {
+      "id": "I08",
+      "rollouts": 2,
+      "steps_per_rollout": 2,
+      "model_calls": 20,
+      "pf_calls": 20,
+      "qp_calls": 0,
+      "execution_filter": false,
+      "terminal_vlsa": false
+    },
+    {
+      "id": "I12",
+      "rollouts": 2,
+      "steps_per_rollout": 2,
+      "model_calls": 20,
+      "pf_calls": 20,
+      "qp_calls": 4,
+      "execution_filter": true,
+      "terminal_vlsa": false
+    },
+    {
+      "id": "I16",
+      "rollouts": 2,
+      "steps_per_rollout": 2,
+      "model_calls": 20,
+      "pf_calls": 0,
+      "qp_calls": 20,
+      "execution_filter": false,
+      "terminal_vlsa": false
+    },
+    {
+      "id": "I20",
+      "rollouts": 2,
+      "steps_per_rollout": 2,
+      "model_calls": 20,
+      "pf_calls": 0,
+      "qp_calls": 24,
+      "execution_filter": true,
+      "terminal_vlsa": false
+    },
+    {
+      "id": "I24",
+      "rollouts": 2,
+      "steps_per_rollout": 2,
+      "model_calls": 20,
+      "pf_calls": 20,
+      "qp_calls": 20,
+      "execution_filter": false,
+      "terminal_vlsa": false
+    },
+    {
+      "id": "I28",
+      "rollouts": 2,
+      "steps_per_rollout": 2,
+      "model_calls": 20,
+      "pf_calls": 20,
+      "qp_calls": 24,
+      "execution_filter": true,
+      "terminal_vlsa": false
+    }
+  ]
+}

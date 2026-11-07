@@ -19,7 +19,7 @@ from .qp import solve_qp
 
 
 def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
-                   task, settings, config, observe_safety=None):
+                   task, settings, config, observe_safety=None, execution_filter=False):
     """계획 실패를 실행하지 않고, 실제 실행 행동으로만 이전 행동을 갱신한다.
 
     config는 schema v3의 resolved 값이다. 접촉 관측이 없으면 물리적
@@ -28,7 +28,11 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
     if not contexts:
         raise ValueError('No evaluation contexts')
     methods, definitions = config['methods'], config['constraints']
-    recheck = methods['vlsa']['enabled'] and methods['vlsa']['execution_recheck']
+    recheck = execution_filter or (methods['vlsa']['enabled'] and methods['vlsa']['execution_recheck'])
+    seeds = settings.get('sampling_seeds')
+    if seeds is not None and (not seeds or len(set(seeds)) != len(seeds)
+                              or any(type(seed) is not int or seed < 0 for seed in seeds)):
+        raise ValueError('sampling_seeds must contain distinct nonnegative integers')
     dt, tolerance = config['control']['dt_s'], config['solver']['feasibility_tolerance_m']
     ws = definitions['workspace']
     low = np.asarray(ws['low_m']) + ws['margin_m'] if ws['enabled'] else None
@@ -40,7 +44,16 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
     acceleration_violations = 0
 
     for ci, item in enumerate(contexts):
-        for ti in range(settings['n_traj']):
+        for ti in range(len(seeds) if seeds is not None else settings['n_traj']):
+            # 조합·이전 rollout의 길이와 독립적인 FM 전용 RNG를 사용한다.
+            generator = None
+            sampling_seed = seeds[ti] if seeds is not None else None
+            noise_seed = None
+            if seeds is not None:
+                import torch
+                payload = json.dumps([task, item['id'], sampling_seed], separators=(',', ':'))
+                noise_seed = int.from_bytes(hashlib.sha256(payload.encode()).digest()[:8], 'big') % (2**63 - 1)
+                generator = torch.Generator(device=policy.base.device).manual_seed(noise_seed)
             env.reset(random=False, context=copy.deepcopy(item['context']))
             c, boxes = read_state(env, quat2euler)
             fixed_z, des = c[2:3].copy(), c[:2].copy()
@@ -61,11 +74,20 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
                 new_plan_report = None
                 if not queue:
                     started = perf_counter()
-                    plan = policy.plan(obs, previous.copy())
+                    if generator is None:
+                        plan = policy.plan(obs, previous.copy())
+                    else:
+                        base = policy.base
+                        noise = torch.randn(1, base.horizon, base.act_dim + base.obs_dim,
+                                            generator=generator, device=base.device, dtype=base.center.dtype)
+                        plan = policy.plan(obs, previous.copy(), noise=noise)
                     plan_seconds += perf_counter() - started
                     plan_count += 1
                     plan_id += 1
                     new_plan_report = copy.deepcopy(policy.last_report)
+                    if generator is not None:
+                        new_plan_report.update(sampling_seed=sampling_seed, noise_seed=noise_seed,
+                                               noise_index=plan_id)
                     model_calls += new_plan_report.get('model_calls', 0)
                     qp_calls += new_plan_report.get('qp_calls', 0)
                     pf_calls += new_plan_report.get('pf_calls', 0)
@@ -141,6 +163,7 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
             success = bool(info.get('success', False)) and failure is None
             distance = float(info.get('mean_distance', float('nan')))
             episodes.append({'context_id': item['id'], 'context_index': ci, 'trajectory': ti,
+                             'sampling_seed': sampling_seed, 'noise_seed': noise_seed,
                              'success': success, 'mode': int(info.get('mode', -1 if task == 'pushing' else 0)),
                              'mean_distance': distance if np.isfinite(distance) else None,
                              'steps': steps, 'failure': failure,
@@ -152,6 +175,17 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
                              'measured_workspace_violation': measured_min_h < -tolerance if low is not None else None,
                              'n_boxes': sum(int(info.get(k, 0)) for k in ('one_box_success', 'two_box_success', 'three_box_success'))})
             key = f'c{ci:03d}_t{ti}'
+            # 문서 지표는 실제 실행 step과 rollout 내부의 유효 차분으로 계산한다.
+            performed = [row for row in logs if row.get('safe_action') is not None]
+            violations = [row['latest_executed_violation'] for row in performed]
+            action_array = np.asarray([row['safe_action'] for row in performed], dtype=float).reshape(-1, 2)
+            episodes[-1].update(
+                constraint_violation_steps=sum(row['qp_max_m'] > tolerance for row in violations),
+                constraint_evaluated_steps=len(performed),
+                constraint_violation_steps_by_type={name: sum(row[f'{name}_qp_max_m'] > tolerance for row in violations)
+                                                    for name in ('workspace', 'acceleration', 'object_envelope')},
+                action_change_m=float(np.linalg.norm(np.diff(action_array, axis=0), axis=-1).mean()) if len(action_array) > 1 else None,
+                command_jerk_m_s3=float(np.linalg.norm(np.diff(action_array, n=2, axis=0), axis=-1).mean() / dt**3) if len(action_array) > 2 else None)
             rollouts[key] = logs
             print(f'{key} success={int(success)} steps={steps} failure={failure}', flush=True)
 
@@ -163,10 +197,16 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
         probs = counts / (counts.sum() + 1e-12)
         entropies.append(float(-(probs * np.log(probs + 1e-12) / np.log(len(mode_values))).sum()))
     entropy = float(np.mean(entropies)) if task == 'pushing' or settings['n_traj'] > 1 else None
+    if seeds is not None:
+        # 프로토콜 실행에서는 무성공 context를 entropy 0으로 채우지 않는다.
+        valid = [value for ci, value in enumerate(entropies)
+                 if any(e['success'] and e['context_index'] == ci for e in episodes)]
+        entropy = float(np.mean(valid)) if valid else None
     success_rate = float(np.mean([e['success'] for e in episodes]))
     distances = [e['mean_distance'] for e in episodes if e['mean_distance'] is not None]
     results = {'schema_version': 3, 'pipeline_order': list(PIPELINE_ORDER), **PIPELINE_METADATA,
-               'task': task, 'n_contexts': len(contexts), 'n_traj': settings['n_traj'],
+               'task': task, 'n_contexts': len(contexts), 'n_traj': len(seeds) if seeds is not None else settings['n_traj'],
+               'sampling_seeds': seeds, 'executed_action_filter': bool(execution_filter),
                'methods': {name: m['enabled'] for name, m in methods.items()},
                'execution_recheck': bool(recheck), 'success_rate': success_rate, 'entropy': entropy,
                'score': 0.5 * (success_rate + entropy) if entropy is not None else None,
@@ -193,7 +233,8 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
     return results, rollouts
 
 
-def evaluate(cfg):
+def evaluate(cfg, *, execution_filter=False, sampling_seeds=None, context_ids=None,
+             output_directory=None, experiment_metadata=None):
     """baseline 환경·모델 로더를 재사용해 두 태스크를 동일한 평가 루프로 실행한다."""
     cfg.validate('eval')
     v, paths, settings = cfg.values, cfg.values['paths'], cfg.values['eval']
@@ -244,13 +285,24 @@ def evaluate(cfg):
                 return
             items = [{'id': name, 'context': ctx, 'demo_length': len(data['robot']['des_c_pos'])}
                      for name, data, ctx, _ in raw_items]
+        if context_ids is not None:
+            available = {item['id']: item for item in items}
+            if len(set(context_ids)) != len(context_ids) or any(key not in available for key in context_ids):
+                raise ValueError('Invalid or unavailable evaluation context IDs')
+            items = [available[key] for key in context_ids]
+        settings = {**settings}
+        if sampling_seeds is not None:
+            settings.update(sampling_seeds=list(sampling_seeds), n_traj=len(sampling_seeds))
         base = pushing.Policy(model, norm, model_cfg, conditioning, solver, v['sampling']['predict_steps'], v['device'])
         policy = Policy(base, cfg, prepare_potential(cfg))
         import torch
         torch.manual_seed(settings['seed'])
         np.random.seed(settings['seed'])
         stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
-        output = Path(paths['output_root']) / f'eval_{cfg.task}_{stamp}'
+        output = (cfg.require_output(output_directory) if output_directory is not None else
+                  Path(paths['output_root']) / f'eval_{cfg.task}_{stamp}')
+        if (output / 'results.json').exists():
+            raise FileExistsError(f'Results already exist: {output}')
         cfg.save(output)
         checkpoint = Path(paths['run_dir']) / settings['checkpoint']
         metadata = {'task': cfg.task, 'checkpoint': str(checkpoint.resolve()),
@@ -264,8 +316,16 @@ def evaluate(cfg):
                     'execute_steps': settings['execute_steps'], 'max_steps': settings['max_steps']}
         (output / 'model_config.json').write_text((Path(paths['run_dir']) / 'config.json').read_text())
         results, rollouts = run_evaluation(env, policy, items, module.read_state, module.build_obs,
-                                          quat2euler, cfg.task, settings, config=v)
+                                          quat2euler, cfg.task, settings, config=v,
+                                          execution_filter=execution_filter)
         results.update(metadata)
+        if experiment_metadata:
+            results.update(experiment_metadata)
+        if context_ids is not None or sampling_seeds is not None or execution_filter:
+            replay = {'context_ids': [item['id'] for item in items],
+                      'sampling_seeds': sampling_seeds, 'executed_action_filter': bool(execution_filter)}
+            (output / 'evaluation_protocol.json').write_text(json.dumps(replay, indent=2))
+            (output / 'evaluation_contexts.pkl').write_bytes(pickle.dumps(items))
         (output / 'results.json').write_text(json.dumps(results, indent=2, allow_nan=False))
         (output / 'rollouts.json').write_text(json.dumps(rollouts, allow_nan=False))
         print(f'Saved: {output}')

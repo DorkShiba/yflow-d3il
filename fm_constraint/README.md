@@ -89,3 +89,37 @@ MUJOCO_GL=egl PYOPENGL_PLATFORM=egl python -m fm_constraint.render_rollouts \
 ```
 
 과거 schema v2 결과는 기존 순서 metadata로 읽으며 PF 결과로 재해석하지 않는다. 2026-10-29 PC 통합 검증은 `results/order_projection_pc_vlsa_validation.json`, 이전 이관 결과는 `results/legacy/`에 보존한다. PF2MP 설계·구현 진행은 [PLAN 8절](../docs/PLAN.md), 논문 요약은 [PF2MP.md](../docs/PF2MP.md)를 따른다.
+
+## ①·②·③의 16개 순차 실험
+
+[scripts/run_method123.sh](../scripts/run_method123.sh)는 Pushing 8개 → Inserting 8개를 순차 실행한다. ④ RTC·⑤ LiPo와 terminal VLSA는 OFF다. ③은 별도 `execution_filter` 옵션으로 **실행 직전 H=1 QP만** 사용한다. 필터 수정이 허용 오차를 넘으면 해당 행동 실행 후 남은 큐를 폐기한다.
+
+```bash
+conda activate yflow
+
+# 실행하지 않고 공통 context·seed 계획과 16개 명령만 확인
+bash scripts/run_method123.sh --dry-run
+
+# 동작 확인: 각 5 context × seed 100,101 × 8조합, 총 160 rollout
+bash scripts/run_method123.sh --stage smoke
+
+# 예비 비교: 각 10 tuning context × seed 100,101,102, 총 480 rollout
+bash scripts/run_method123.sh --stage pilot
+
+# 본실험: 각 60 context × seed 0..4 × 8조합, 총 4,800 rollout
+bash scripts/run_method123.sh --stage main --output fm_constraint/runs/method123_main
+
+# 전체 Inserting val 82개를 사용할 경우: 총 5,680 rollout, validation 평가로 표시
+bash scripts/run_method123.sh --stage main --inserting-set all-val \
+  --output fm_constraint/runs/method123_all_val
+```
+
+활성 환경 대신 interpreter를 지정하려면 `PYTHON=/path/to/python`을 앞에 붙인다. `--device cuda:0`도 지원하지만 이 스크립트의 기능 검증은 CPU에서 수행했다. `MUJOCO_GL` 기본값은 `disable`이며, D3IL은 외부 checkout의 모델 폴더에 임시 XML을 쓸 수 있어야 한다.
+
+기본 Inserting 분할은 val의 80개 context group을 seed 2026으로 20개 조정용/60개 최종 평가용으로 나누고 그룹별 대표 1개를 선택한다. Pushing은 조정 시 train contexts, 본실험 시 test 60개를 사용한다. 이미 전체 val로 파라미터를 조정했다면 이 분할만으로 독립 최종 평가가 되지는 않는다. 목록은 `*_tuning_contexts.json`, `*_final_contexts.json`, `*_selected_contexts.json`에 저장한다.
+
+조합 ID는 보고서의 `P00 P04 P08 P12 P16 P20 P24 P28`, 이어서 같은 번호의 `I`다. 같은 `(task, context_id, sampling_seed)`에는 같은 FM RNG를 사용하며 조합 ID·이전 rollout 길이·캐시 생성과 독립적이다. 재계획 횟수가 달라지면 같은 계획 인덱스의 noise만 대응하며 이후 관측이 같다는 뜻은 아니다.
+
+출력에는 동결한 설정·코드/데이터/모델 hash, 조합별 console 로그, `results.json`, `rollouts.json`, 초기 조건 snapshot, 완료 표식이 포함된다. 마지막에 `summary.md`/`summary.json`으로 성공률·실행 step 위반율·행동 변화·명령 jerk·조건별 entropy와 2,000회 context bootstrap CI·대응 차이·Δ를 집계한다. Δ 분해는 PF+Filter, Projection+Filter, Projection+PF 및 `(Projection+PF)+Filter`로 사전 고정한다. 실제 접촉 계측이 없으면 안전 성공률은 null이다.
+
+동일 옵션과 `--output`으로 재실행하면 검증된 완료 조합은 건너뛴다. 코드·입력·의존 패키지가 달라지면 결과 혼합을 막기 위해 중단한다. 프로세스 실패 시 후속 조합을 중단하고, 재개 시 부분 출력은 `*.interrupted.*`로 보존한다. 방법 자체의 계획/필터 실패는 성공률 분모에 포함하여 완료 결과로 저장한다. 기본 스크립트는 본실험을 실제로 시작하므로 명령 확인에는 `--dry-run`을 사용한다.
