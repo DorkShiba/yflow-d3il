@@ -1,8 +1,8 @@
-"""Task definitions for the D3IL OOD benchmark (state-based flow-matching policies).
+"""Task definitions for the D3IL tasks (state-based flow-matching policies).
 
 One ``TaskSpec`` per D3IL task gathers everything that differs between tasks,
-so the episode loop (``benchmark.run_task_episode``), the OOD conditions
-(``ood.OOD``) and the metrics are shared:
+so the generic baseline evaluator (``fm_baseline/eval_task.py``), the OOD
+conditions (``ood/``, Pushing and Inserting) and the metrics are shared:
 
     environment class and constructor      make_env
     test contexts                          contexts
@@ -138,13 +138,13 @@ class TaskSpec:
     HAND_QUAT = [0.0, 1.0, 0.0, 0.0]               # rod pointing down (all rod tasks)
 
     def move_hand(self, env, xy, duration=2.0):
-        """OOD-B: drive the hand (same height and orientation) to xy before the episode starts
+        """OOD B: drive the hand (same height and orientation) to xy before the episode starts
         (2 s: the impedance controller settles within ~3 mm for a 10 cm move; 1 s leaves up to 2 cm)."""
         z = float(np.asarray(env.robot.current_c_pos)[2])
         env.robot.gotoCartPositionAndQuat(desiredPos=[float(xy[0]), float(xy[1]), z], desiredQuat=self.HAND_QUAT, duration=duration)
 
     def pushable(self, boxes, hand_xy):
-        """Indices of the blocks OOD-3 may teleport (default: all)."""
+        """Indices of the blocks OOD D (push) may teleport (default: all)."""
         return list(range(len(boxes)))
 
     def block_radii(self):
@@ -280,9 +280,7 @@ class Inserting(TaskSpec):
 # ======================================================================================
 class Avoiding(TaskSpec):
     """No movable objects; the start pose is fixed and nothing is randomised at reset.
-    A 'context' is one rollout index (None), or ``{"start": [x, y]}`` for OOD-1.
-    OOD on the hand: shift = start pose moved d away from the demo start,
-    obsnoise = noise on the measured hand xy, push = desired hand displaced by d."""
+    A 'context' is one rollout index (None), or ``{"start": [x, y]}`` for a moved start pose."""
     name, obs_dim, act_dim, n_boxes = "avoiding", 4, 2, 0
     START = (0.525, -0.28)
     # six static cylinders (centre, AABB half-extent = radius)
@@ -308,15 +306,6 @@ class Avoiding(TaskSpec):
 
     def walls(self, env):
         return [(np.asarray(c, dtype=float), np.array([r, r])) for c, r in self.OBSTACLES]
-
-    def shift_start(self, env, ctx, ood):
-        """OOD-1: start d away from the (fixed) demo start, sideways or backwards (seeded)."""
-        d = ood.args.ood_shift
-        dirs = [("x-", (-1.0, 0.0)), ("x+", (1.0, 0.0)), ("y-", (0.0, -1.0))]
-        name, v = dirs[int(ood.rng.integers(len(dirs)))]
-        start = [self.START[0] + d * v[0], self.START[1] + d * v[1]]
-        ood.events[ood.key] = {"shift": [{"face": name, "from": list(self.START), "to": start}]}
-        return {"start": start}
 
     def outcome(self, info):
         enc, succ = info if isinstance(info, tuple) else (np.zeros(9), False)

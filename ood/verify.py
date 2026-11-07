@@ -1,39 +1,71 @@
-"""Verify the complete candidate package; this is NOT simulator validation."""
-import argparse, hashlib, json, math
+"""data/ood의 해시·개수·조건·seed 규칙을 검사한다. 시뮬레이터는 쓰지 않는다.
+
+    python -m ood.verify [--root data/ood]
+"""
+import argparse
+import json
+import sys
 from pathlib import Path
-try:
-    from .generate import SORT_REGIONS, STACK_REGIONS, distance_to_support, valid_separation
-except ImportError:
-    from generate import SORT_REGIONS, STACK_REGIONS, distance_to_support, valid_separation
+
+from .apply import file_sha256
+from .conditions import conditions, context_seeds, factor_values
+
+REPO = Path(__file__).resolve().parents[1]
+
 
 def verify(root):
-    root=Path(root);m=json.loads((root/'manifest.json').read_text());seen=set();count=0
-    for name,digest in m['files'].items():
-        path=root/name
-        assert hashlib.sha256(path.read_bytes()).hexdigest()==digest,name
-        rows=[json.loads(line) for line in path.read_text().splitlines()]
-        assert len(rows)==m['task_counts'][path.stem]['cases']
-        for c in rows:
-            assert c['id'] not in seen;seen.add(c['id']);count+=1
-            assert c['validation']=={'analytical':'passed','simulator':'not_run','rollout_ready':False}
-            assert valid_separation(c['blocks'])
-            changed=c['perturbation'].get('block_index')
-            for i,b in enumerate(c['blocks']):
-                assert all(math.isfinite(v) for v in b['xy']+[b['yaw_rad']])
-                assert -math.pi/2 <= b['yaw_rad'] <= math.pi/2
-                regions=SORT_REGIONS if c['task'].startswith('sorting') else [STACK_REGIONS[i]]
-                d=distance_to_support(*b['xy'],regions)
-                expected=c['perturbation']['distance_outside_support_m'] if changed==i else 0.
-                assert abs(d-expected)<1e-9,(c['id'],i,d)
-            assert len(c['policy_seeds'])==c['repeats']
-        # Every family uses identical random policy seeds and canonical base ID.
-        groups={}
-        for c in rows:groups.setdefault(c['base_id'],[]).append(c)
-        for group in groups.values():
-            assert len({tuple(c['policy_seeds']) for c in group})==1
-            assert len({c['noise']['seed'] for c in group})==1
-    result={'verified_cases':count,'sha256':'passed','support_and_separation':'passed','paired_seeds':'passed','simulator_validation':'NOT RUN','rollout_ready_cases':0}
-    (root/'verification.json').write_text(json.dumps(result,indent=2)+'\n')
-    return result
-if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('root');a=p.parse_args();print(json.dumps(verify(a.root),indent=2))
+    root = Path(root)
+    manifest = json.loads((root / 'manifest.json').read_text())
+    names = [name for name, _ in conditions()]
+    errors = []
+    if manifest['conditions'] != names:
+        errors.append('condition list differs from ood.conditions')
+    for task, entry in manifest['tasks'].items():
+        path = root / entry['file']
+        if file_sha256(path) != entry['sha256']:
+            errors.append(f'{task}: sha256 mismatch')
+        rows = [json.loads(line) for line in path.open()]
+        if len(rows) != entry['n_rows'] or len(rows) != len(names) * entry['n_contexts']:
+            errors.append(f'{task}: row count {len(rows)}')
+        if len({row['id'] for row in rows}) != len(rows):
+            errors.append(f'{task}: duplicate ids')
+        selected = dict(conditions())
+        for row in rows:
+            seeds = context_seeds(task, row['context_id'])
+            if row['factors'] != factor_values(task, selected[row['cond']]):
+                errors.append(f'{row["id"]}: factors')
+            if row['policy_seeds'] != seeds['policy']:
+                errors.append(f'{row["id"]}: policy seeds')
+            if row['noise'] and row['noise']['seed'] != seeds['C']:
+                errors.append(f'{row["id"]}: noise seed')
+            if row['push'] and row['push']['seed'] != seeds['D']:
+                errors.append(f'{row["id"]}: push seed')
+            if bool(row['factors']['B']) != (row['robot'] is not None):
+                errors.append(f'{row["id"]}: robot start record')
+        by_context = {}
+        for row in rows:
+            by_context.setdefault(row['context_id'], {})[row['cond']] = row
+        for context_id, group in by_context.items():
+            # 조합 조건은 단일 요인과 같은 배치·방향·노이즈를 재사용해야 한다(common random numbers).
+            if group['AB_mid']['context'] != group['A_mid']['context']:
+                errors.append(f'{context_id}: AB_mid blocks differ from A_mid')
+            if group['BC_mid']['robot_start'] != group['B_mid']['robot_start']:
+                errors.append(f'{context_id}: BC_mid start differs from B_mid')
+            if group['C_mid']['context'] != group['id']['context']:
+                errors.append(f'{context_id}: C_mid changed the context')
+    return manifest, errors
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--root', default=str(REPO / 'data/ood'))
+    manifest, errors = verify(parser.parse_args().root)
+    for error in errors[:50]:
+        print('FAIL', error)
+    counts = {task: entry['n_rows'] for task, entry in manifest['tasks'].items()}
+    print('OK' if not errors else f'{len(errors)} errors', counts)
+    sys.exit(1 if errors else 0)
+
+
+if __name__ == '__main__':
+    main()

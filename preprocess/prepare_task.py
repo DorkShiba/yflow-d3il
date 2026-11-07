@@ -4,7 +4,7 @@ Same output format as prepare_pushing.py (one npz per demo with obs, actions,
 next_obs; manifest.json) and the same conventions: block yaw as (sin, cos),
 action = increment of the desired command.  The raw pickle keys are the ones the
 official D3IL loaders read (environments/dataset/*_dataset.py).  Layouts must
-match fm_pc/tasks.py (the evaluator builds the same observation online).
+match fm_constraint/tasks.py (the evaluator builds the same observation online).
 
   task       obs                                                         action
   avoiding   des xy, hand xy                                        (4)  Δ des xy (2)

@@ -15,9 +15,9 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
-sys.path[:0] = [HERE, os.path.join(REPO, "fm_pc"), os.path.join(REPO, "fm_baseline")]
+sys.path[:0] = [HERE, REPO, os.path.join(REPO, "fm_baseline")]
 import prepare_task
-from tasks import get_task
+from fm_constraint.tasks import get_task
 from train import resolve_d3il
 
 RAW_KEYS = {

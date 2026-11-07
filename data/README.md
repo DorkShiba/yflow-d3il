@@ -1,6 +1,6 @@
-## OOD 평가 초기 조건
+## OOD 평가 조건
 
-Sorting-2/4/6, Stacking, Avoiding의 생성 후보 7,440개와 초기화 검사 목록은 [ood_sas_v1_20261106](ood_sas_v1_20261106/README.md)에 있습니다. 전문가 시연이 아닌 초기 배치·노이즈 명세입니다.
+Pushing·Inserting의 OOD 평가 사례는 `ood/`(`data/ood/<task>.jsonl`, `manifest.json`)에 있습니다. 생성 `python -m ood.generate`, 검증 `python -m ood.verify`, 평가 `python -m fm_constraint.eval_pushing --config configs/pushing.yaml --ood A_mid`. 조건 정의와 seed 규칙은 `ood/conditions.py`와 `docs/PLAN.md` 3.1절을 따릅니다.
 
 ---
 

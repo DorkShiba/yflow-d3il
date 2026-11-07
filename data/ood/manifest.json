@@ -1,0 +1,655 @@
+{
+ "version": "v2",
+ "created_utc": "2026-11-07T14:21:20Z",
+ "root_seed": 20261106,
+ "policy_repeats": 4,
+ "push_phase": "mid",
+ "d3il_commit": "1d9c71850d4fc1477cee17b557c8b97d70b13071",
+ "conditions": [
+  "id",
+  "A_weak",
+  "A_mid",
+  "A_strong",
+  "B_weak",
+  "B_mid",
+  "B_strong",
+  "C_weak",
+  "C_mid",
+  "C_strong",
+  "AB_mid",
+  "AC_mid",
+  "BC_mid",
+  "ABC_mid",
+  "D_weak",
+  "D_mid",
+  "D_strong",
+  "E_weak",
+  "E_mid",
+  "E_strong"
+ ],
+ "seed_rule": "seed_for(root_seed, task, context_id, factor); noise value = gauss(seed_for(noise_seed, rollout, step, block, component)); policy_seeds = seed_for(root_seed, task, context_id, \"policy\", j)",
+ "tasks": {
+  "pushing": {
+   "file": "pushing.jsonl",
+   "sha256": "720f31be8a2ff3fdb6a8f287d3e133655459ff2523e65e52acfb2a4b95876b25",
+   "n_rows": 1200,
+   "n_contexts": 60,
+   "contexts": "d3il pushing test_contexts.pkl",
+   "demo_hand_start": [
+    0.5249284663407403,
+    -0.2797367275921444
+   ],
+   "push_step": 80,
+   "levels": {
+    "A": [
+     0.025,
+     0.05,
+     0.1
+    ],
+    "B": [
+     0.02,
+     0.05,
+     0.1
+    ],
+    "C": [
+     [
+      0.0025,
+      2.5
+     ],
+     [
+      0.005,
+      5.0
+     ],
+     [
+      0.01,
+      10.0
+     ]
+    ],
+    "D": [
+     0.02,
+     0.04,
+     0.08
+    ],
+    "E": [
+     1,
+     2,
+     4
+    ]
+   },
+   "conditions": {
+    "id": {
+     "factors": {
+      "A": null,
+      "B": null,
+      "C": null,
+      "D": null,
+      "E": null
+     }
+    },
+    "A_weak": {
+     "factors": {
+      "A": {
+       "shift_m": 0.025,
+       "level": "weak"
+      },
+      "B": null,
+      "C": null,
+      "D": null,
+      "E": null
+     }
+    },
+    "A_mid": {
+     "factors": {
+      "A": {
+       "shift_m": 0.05,
+       "level": "mid"
+      },
+      "B": null,
+      "C": null,
+      "D": null,
+      "E": null
+     }
+    },
+    "A_strong": {
+     "factors": {
+      "A": {
+       "shift_m": 0.1,
+       "level": "strong"
+      },
+      "B": null,
+      "C": null,
+      "D": null,
+      "E": null
+     }
+    },
+    "B_weak": {
+     "factors": {
+      "A": null,
+      "B": {
+       "dist_m": 0.02,
+       "level": "weak"
+      },
+      "C": null,
+      "D": null,
+      "E": null
+     }
+    },
+    "B_mid": {
+     "factors": {
+      "A": null,
+      "B": {
+       "dist_m": 0.05,
+       "level": "mid"
+      },
+      "C": null,
+      "D": null,
+      "E": null
+     }
+    },
+    "B_strong": {
+     "factors": {
+      "A": null,
+      "B": {
+       "dist_m": 0.1,
+       "level": "strong"
+      },
+      "C": null,
+      "D": null,
+      "E": null
+     }
+    },
+    "C_weak": {
+     "factors": {
+      "A": null,
+      "B": null,
+      "C": {
+       "pos_m": 0.0025,
+       "yaw_deg": 2.5,
+       "level": "weak"
+      },
+      "D": null,
+      "E": null
+     }
+    },
+    "C_mid": {
+     "factors": {
+      "A": null,
+      "B": null,
+      "C": {
+       "pos_m": 0.005,
+       "yaw_deg": 5.0,
+       "level": "mid"
+      },
+      "D": null,
+      "E": null
+     }
+    },
+    "C_strong": {
+     "factors": {
+      "A": null,
+      "B": null,
+      "C": {
+       "pos_m": 0.01,
+       "yaw_deg": 10.0,
+       "level": "strong"
+      },
+      "D": null,
+      "E": null
+     }
+    },
+    "AB_mid": {
+     "factors": {
+      "A": {
+       "shift_m": 0.05,
+       "level": "mid"
+      },
+      "B": {
+       "dist_m": 0.05,
+       "level": "mid"
+      },
+      "C": null,
+      "D": null,
+      "E": null
+     }
+    },
+    "AC_mid": {
+     "factors": {
+      "A": {
+       "shift_m": 0.05,
+       "level": "mid"
+      },
+      "B": null,
+      "C": {
+       "pos_m": 0.005,
+       "yaw_deg": 5.0,
+       "level": "mid"
+      },
+      "D": null,
+      "E": null
+     }
+    },
+    "BC_mid": {
+     "factors": {
+      "A": null,
+      "B": {
+       "dist_m": 0.05,
+       "level": "mid"
+      },
+      "C": {
+       "pos_m": 0.005,
+       "yaw_deg": 5.0,
+       "level": "mid"
+      },
+      "D": null,
+      "E": null
+     }
+    },
+    "ABC_mid": {
+     "factors": {
+      "A": {
+       "shift_m": 0.05,
+       "level": "mid"
+      },
+      "B": {
+       "dist_m": 0.05,
+       "level": "mid"
+      },
+      "C": {
+       "pos_m": 0.005,
+       "yaw_deg": 5.0,
+       "level": "mid"
+      },
+      "D": null,
+      "E": null
+     }
+    },
+    "D_weak": {
+     "factors": {
+      "A": null,
+      "B": null,
+      "C": null,
+      "D": {
+       "dist_m": 0.02,
+       "phase": "mid",
+       "level": "weak"
+      },
+      "E": null
+     }
+    },
+    "D_mid": {
+     "factors": {
+      "A": null,
+      "B": null,
+      "C": null,
+      "D": {
+       "dist_m": 0.04,
+       "phase": "mid",
+       "level": "mid"
+      },
+      "E": null
+     }
+    },
+    "D_strong": {
+     "factors": {
+      "A": null,
+      "B": null,
+      "C": null,
+      "D": {
+       "dist_m": 0.08,
+       "phase": "mid",
+       "level": "strong"
+      },
+      "E": null
+     }
+    },
+    "E_weak": {
+     "factors": {
+      "A": null,
+      "B": null,
+      "C": null,
+      "D": null,
+      "E": {
+       "delay_steps": 1,
+       "level": "weak"
+      }
+     }
+    },
+    "E_mid": {
+     "factors": {
+      "A": null,
+      "B": null,
+      "C": null,
+      "D": null,
+      "E": {
+       "delay_steps": 2,
+       "level": "mid"
+      }
+     }
+    },
+    "E_strong": {
+     "factors": {
+      "A": null,
+      "B": null,
+      "C": null,
+      "D": null,
+      "E": {
+       "delay_steps": 4,
+       "level": "strong"
+      }
+     }
+    }
+   }
+  },
+  "inserting": {
+   "file": "inserting.jsonl",
+   "sha256": "8615ee2d1d0b9cfd32fad703748e10b4ac69aa6ee43f64abb0b3ccbed6fdfd79",
+   "n_rows": 1640,
+   "n_contexts": 82,
+   "contexts": "fm_baseline/contexts/inserting_val.pkl",
+   "demo_hand_start": [
+    0.5249284663407403,
+    -0.2797367275921444
+   ],
+   "push_step": 300,
+   "levels": {
+    "A": [
+     0.025,
+     0.05,
+     0.1
+    ],
+    "B": [
+     0.02,
+     0.05,
+     0.1
+    ],
+    "C": [
+     [
+      0.0025,
+      2.5
+     ],
+     [
+      0.005,
+      5.0
+     ],
+     [
+      0.01,
+      10.0
+     ]
+    ],
+    "D": [
+     0.02,
+     0.04,
+     0.08
+    ],
+    "E": [
+     1,
+     2,
+     4
+    ]
+   },
+   "conditions": {
+    "id": {
+     "factors": {
+      "A": null,
+      "B": null,
+      "C": null,
+      "D": null,
+      "E": null
+     }
+    },
+    "A_weak": {
+     "factors": {
+      "A": {
+       "shift_m": 0.025,
+       "level": "weak"
+      },
+      "B": null,
+      "C": null,
+      "D": null,
+      "E": null
+     }
+    },
+    "A_mid": {
+     "factors": {
+      "A": {
+       "shift_m": 0.05,
+       "level": "mid"
+      },
+      "B": null,
+      "C": null,
+      "D": null,
+      "E": null
+     }
+    },
+    "A_strong": {
+     "factors": {
+      "A": {
+       "shift_m": 0.1,
+       "level": "strong"
+      },
+      "B": null,
+      "C": null,
+      "D": null,
+      "E": null
+     }
+    },
+    "B_weak": {
+     "factors": {
+      "A": null,
+      "B": {
+       "dist_m": 0.02,
+       "level": "weak"
+      },
+      "C": null,
+      "D": null,
+      "E": null
+     }
+    },
+    "B_mid": {
+     "factors": {
+      "A": null,
+      "B": {
+       "dist_m": 0.05,
+       "level": "mid"
+      },
+      "C": null,
+      "D": null,
+      "E": null
+     }
+    },
+    "B_strong": {
+     "factors": {
+      "A": null,
+      "B": {
+       "dist_m": 0.1,
+       "level": "strong"
+      },
+      "C": null,
+      "D": null,
+      "E": null
+     }
+    },
+    "C_weak": {
+     "factors": {
+      "A": null,
+      "B": null,
+      "C": {
+       "pos_m": 0.0025,
+       "yaw_deg": 2.5,
+       "level": "weak"
+      },
+      "D": null,
+      "E": null
+     }
+    },
+    "C_mid": {
+     "factors": {
+      "A": null,
+      "B": null,
+      "C": {
+       "pos_m": 0.005,
+       "yaw_deg": 5.0,
+       "level": "mid"
+      },
+      "D": null,
+      "E": null
+     }
+    },
+    "C_strong": {
+     "factors": {
+      "A": null,
+      "B": null,
+      "C": {
+       "pos_m": 0.01,
+       "yaw_deg": 10.0,
+       "level": "strong"
+      },
+      "D": null,
+      "E": null
+     }
+    },
+    "AB_mid": {
+     "factors": {
+      "A": {
+       "shift_m": 0.05,
+       "level": "mid"
+      },
+      "B": {
+       "dist_m": 0.05,
+       "level": "mid"
+      },
+      "C": null,
+      "D": null,
+      "E": null
+     }
+    },
+    "AC_mid": {
+     "factors": {
+      "A": {
+       "shift_m": 0.05,
+       "level": "mid"
+      },
+      "B": null,
+      "C": {
+       "pos_m": 0.005,
+       "yaw_deg": 5.0,
+       "level": "mid"
+      },
+      "D": null,
+      "E": null
+     }
+    },
+    "BC_mid": {
+     "factors": {
+      "A": null,
+      "B": {
+       "dist_m": 0.05,
+       "level": "mid"
+      },
+      "C": {
+       "pos_m": 0.005,
+       "yaw_deg": 5.0,
+       "level": "mid"
+      },
+      "D": null,
+      "E": null
+     }
+    },
+    "ABC_mid": {
+     "factors": {
+      "A": {
+       "shift_m": 0.05,
+       "level": "mid"
+      },
+      "B": {
+       "dist_m": 0.05,
+       "level": "mid"
+      },
+      "C": {
+       "pos_m": 0.005,
+       "yaw_deg": 5.0,
+       "level": "mid"
+      },
+      "D": null,
+      "E": null
+     }
+    },
+    "D_weak": {
+     "factors": {
+      "A": null,
+      "B": null,
+      "C": null,
+      "D": {
+       "dist_m": 0.02,
+       "phase": "mid",
+       "level": "weak"
+      },
+      "E": null
+     }
+    },
+    "D_mid": {
+     "factors": {
+      "A": null,
+      "B": null,
+      "C": null,
+      "D": {
+       "dist_m": 0.04,
+       "phase": "mid",
+       "level": "mid"
+      },
+      "E": null
+     }
+    },
+    "D_strong": {
+     "factors": {
+      "A": null,
+      "B": null,
+      "C": null,
+      "D": {
+       "dist_m": 0.08,
+       "phase": "mid",
+       "level": "strong"
+      },
+      "E": null
+     }
+    },
+    "E_weak": {
+     "factors": {
+      "A": null,
+      "B": null,
+      "C": null,
+      "D": null,
+      "E": {
+       "delay_steps": 1,
+       "level": "weak"
+      }
+     }
+    },
+    "E_mid": {
+     "factors": {
+      "A": null,
+      "B": null,
+      "C": null,
+      "D": null,
+      "E": {
+       "delay_steps": 2,
+       "level": "mid"
+      }
+     }
+    },
+    "E_strong": {
+     "factors": {
+      "A": null,
+      "B": null,
+      "C": null,
+      "D": null,
+      "E": {
+       "delay_steps": 4,
+       "level": "strong"
+      }
+     }
+    }
+   }
+  }
+ }
+}

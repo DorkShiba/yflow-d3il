@@ -16,14 +16,21 @@ from .constraints import PlanConstraints
 from .policy import PIPELINE_ORDER, PIPELINE_METADATA, Policy
 from .pf2mp import prepare_potential
 from .qp import solve_qp
+from .tasks import get_task
+from ood.apply import Episode, context_from_json, load_cases
 
 
 def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
-                   task, settings, config, observe_safety=None, execution_filter=False):
+                   task, settings, config, observe_safety=None, execution_filter=False, spec=None):
     """계획 실패를 실행하지 않고, 실제 실행 행동으로만 이전 행동을 갱신한다.
 
     config는 schema v3의 resolved 값이다. 접촉 관측이 없으면 물리적
     safe success는 null로 둔다. all-off에서는 제약 위반을 측정만 한다.
+
+    context에 'ood' 사례(data/ood JSONL 한 행)가 있으면 OOD 조건을 적용한다.
+    정책 seed는 사례의 policy_seeds를 쓰고, 관측 노이즈(C)는 정책과 실행 직전
+    필터가 보는 관측에만 넣는다. 제약 위반 측정은 항상 실제 상태로 한다.
+    지연(E)이 있으면 남은 행동이 d개일 때 다음 계획을 세우고 새 chunk는 index d부터 실행한다.
     """
     if not contexts:
         raise ValueError('No evaluation contexts')
@@ -43,24 +50,34 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
     pf_ms = 0.
     acceleration_violations = 0
 
+    walls = spec.walls(env) if spec is not None and any('ood' in item for item in contexts) else []
     for ci, item in enumerate(contexts):
-        for ti in range(len(seeds) if seeds is not None else settings['n_traj']):
+        case = item.get('ood')
+        item_seeds = case['policy_seeds'][:settings['n_traj']] if case else seeds
+        for ti in range(len(item_seeds) if item_seeds is not None else settings['n_traj']):
             # 조합·이전 rollout의 길이와 독립적인 FM 전용 RNG를 사용한다.
             generator = None
-            sampling_seed = seeds[ti] if seeds is not None else None
+            sampling_seed = item_seeds[ti] if item_seeds is not None else None
             noise_seed = None
-            if seeds is not None:
+            if item_seeds is not None:
                 import torch
-                payload = json.dumps([task, item['id'], sampling_seed], separators=(',', ':'))
-                noise_seed = int.from_bytes(hashlib.sha256(payload.encode()).digest()[:8], 'big') % (2**63 - 1)
+                if case:
+                    noise_seed = int(sampling_seed) % (2**63 - 1)
+                else:
+                    payload = json.dumps([task, item['id'], sampling_seed], separators=(',', ':'))
+                    noise_seed = int.from_bytes(hashlib.sha256(payload.encode()).digest()[:8], 'big') % (2**63 - 1)
                 generator = torch.Generator(device=policy.base.device).manual_seed(noise_seed)
+            episode = Episode(case, ti, spec, env, settings['execute_steps'])
             env.reset(random=False, context=copy.deepcopy(item['context']))
+            if episode.robot_start is not None:
+                spec.move_hand(env, episode.robot_start)
             c, boxes = read_state(env, quat2euler)
             fixed_z, des = c[2:3].copy(), c[:2].copy()
             # episode 시작만 0이다. 재계획에서는 직전 실제 행동을 계속 사용한다.
             previous = np.zeros(2)
             queue, logs = [], []
-            plan_id, steps, failure = -1, 0, None
+            pending, delay = None, episode.delay
+            plan_id, active_plan, steps, failure = -1, -1, 0, None
             info, done = {}, False
             command_min_h = float(np.min(np.r_[des - low, high - des])) if low is not None else None
             measured_min_h = float(np.min(np.r_[c[:2] - low, high - c[:2]])) if low is not None else None
@@ -70,9 +87,16 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
                 forbidden = bool(measured['forbidden_contact'])
                 min_distance = float(measured['min_distance'])
             while not done and steps < settings['max_steps']:
-                obs = build_obs(des, c, boxes)
+                if episode.push_due(steps, len(queue)):
+                    episode.push(steps, boxes, c[:2], walls)
+                    c, boxes = read_state(env, quat2euler)
+                # obs: 정책·필터가 보는 관측(C 노이즈 포함), true_obs: 위반 측정용 실제 상태.
+                true_obs = build_obs(des, c, boxes)
+                obs = build_obs(des, c, episode.observe_boxes(boxes, steps)) if episode.noise else true_obs
                 new_plan_report = None
-                if not queue:
+                seam = False
+                if (not queue and pending is None) or (
+                        delay and len(queue) == delay and pending is None and steps > 0):
                     started = perf_counter()
                     if generator is None:
                         plan = policy.plan(obs, previous.copy())
@@ -103,17 +127,27 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
                         logs.append({'step': steps, 'plan_id': plan_id, 'plan_report': new_plan_report,
                                      'safe_action': None, 'failure': failure})
                         break
-                    queue = [plan[k, :2].astype(np.float64) for k in range(settings['execute_steps'])]
+                    if not queue:
+                        queue = [plan[k, :2].astype(np.float64) for k in range(settings['execute_steps'])]
+                        active_plan, seam = plan_id, True
+                    else:
+                        # 지연: 남은 d개를 실행하는 동안 계산했다고 보고, 새 계획은 index d부터 쓴다.
+                        pending = (plan_id, plan)
+                if not queue and pending is not None:
+                    active_plan, plan = pending
+                    queue = [plan[k, :2].astype(np.float64) for k in range(delay, delay + settings['execute_steps'])]
+                    pending, seam = None, True
                 nominal = queue.pop(0)
                 attempts += 1
-                record = {'step': steps, 'plan_id': plan_id, 'measured_state': c.tolist(),
+                record = {'step': steps, 'plan_id': active_plan, 'seam': seam, 'measured_state': c.tolist(),
                           'command_state': des.tolist(), 'previous_action_m': previous.tolist(),
                           'nominal_action': nominal.tolist(), 'safe_action': None,
                           'plan_report': new_plan_report, 'queue_invalidated': False}
                 # 실행 시점 측정은 최신 블록을 기준으로 한다. 계획 중 고정한
                 # 기하의 보장은 plan_report에 남으며 이 값과 구분해 해석한다.
                 current = PlanConstraints(obs, previous, 1, definitions, dt)
-                record['latest_nominal_violation'] = current.violation(nominal[None])
+                measured_at = current if obs is true_obs else PlanConstraints(true_obs, previous, 1, definitions, dt)
+                record['latest_nominal_violation'] = measured_at.violation(nominal[None])
                 action = nominal
                 if recheck:
                     filtered = solve_qp(nominal, current.G, current.d, config['solver'])
@@ -129,14 +163,15 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
                     # 다음 행동부터 최신 관측으로 재계획하도록 큐를 폐기한다.
                     if np.linalg.norm(action - nominal) > config['solver']['intervention_tolerance_m']:
                         queue.clear()
+                        pending = None
                         record['queue_invalidated'] = True
                 modification = float(np.linalg.norm(action - nominal))
                 interventions += int(modification > config['solver']['intervention_tolerance_m'])
-                measurement = current.violation(action[None])
+                measurement = measured_at.violation(action[None])
                 acceleration_violations += int(measurement['acceleration_qp_max_m'] > tolerance)
                 record.update(safe_action=action.tolist(), intervention_norm_m=modification,
                               latest_executed_violation=measurement,
-                              execution_geometry=current.geometry())
+                              execution_geometry=measured_at.geometry())
                 des = des + action
                 command = np.concatenate([des, fixed_z, [0., 1., 0., 0.]])
                 _, _, done, info = env.step(command)
@@ -173,7 +208,9 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
                              'command_workspace_min_h': command_min_h, 'measured_workspace_min_h': measured_min_h,
                              'command_workspace_violation': command_min_h < -tolerance if low is not None else None,
                              'measured_workspace_violation': measured_min_h < -tolerance if low is not None else None,
-                             'n_boxes': sum(int(info.get(k, 0)) for k in ('one_box_success', 'two_box_success', 'three_box_success'))})
+                             'n_boxes': sum(int(info.get(k, 0)) for k in ('one_box_success', 'two_box_success', 'three_box_success')),
+                             'ood_case': case['id'] if case else None,
+                             'ood_events': episode.describe() if case else None})
             key = f'c{ci:03d}_t{ti}'
             # 문서 지표는 실제 실행 step과 rollout 내부의 유효 차분으로 계산한다.
             performed = [row for row in logs if row.get('safe_action') is not None]
@@ -285,6 +322,21 @@ def evaluate(cfg, *, execution_filter=False, sampling_seeds=None, context_ids=No
                 return
             items = [{'id': name, 'context': ctx, 'demo_length': len(data['robot']['des_c_pos'])}
                      for name, data, ctx, _ in raw_items]
+        ood_info, spec = None, None
+        if settings['ood'] is not None:
+            # OOD 사례는 context·로봇 시작·노이즈·push·지연·정책 seed를 모두 파일에서 가져온다.
+            cases, ood_info = load_cases(paths['ood_root'], cfg.task, settings['ood'])
+            if settings['n_contexts']:
+                cases = cases[:settings['n_contexts']]
+            delays = {case['delay_steps'] for case in cases}
+            if max(delays) + settings['execute_steps'] > v['model']['horizon']:
+                raise ValueError('OOD delay_steps + execute_steps must not exceed the horizon')
+            items = [{'id': case['context_id'], 'context': context_from_json(case['context']), 'ood': case}
+                     for case in cases]
+            spec = get_task(cfg.task)
+            spec.quat2euler = quat2euler
+            if sampling_seeds is not None:
+                raise ValueError('OOD evaluation uses the policy_seeds stored in the OOD file')
         if context_ids is not None:
             available = {item['id']: item for item in items}
             if len(set(context_ids)) != len(context_ids) or any(key not in available for key in context_ids):
@@ -317,8 +369,9 @@ def evaluate(cfg, *, execution_filter=False, sampling_seeds=None, context_ids=No
         (output / 'model_config.json').write_text((Path(paths['run_dir']) / 'config.json').read_text())
         results, rollouts = run_evaluation(env, policy, items, module.read_state, module.build_obs,
                                           quat2euler, cfg.task, settings, config=v,
-                                          execution_filter=execution_filter)
+                                          execution_filter=execution_filter, spec=spec)
         results.update(metadata)
+        results['ood'] = ood_info
         if experiment_metadata:
             results.update(experiment_metadata)
         if context_ids is not None or sampling_seeds is not None or execution_filter:

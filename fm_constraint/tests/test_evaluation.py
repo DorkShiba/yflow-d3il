@@ -206,3 +206,55 @@ def test_legacy_camera_config_is_read_only_and_not_migrated(config, tmp_path):
     assert loaded.values['methods']['pc']['enabled']
     assert 'pf2mp' not in loaded.values['methods']
     assert path.read_bytes() == before
+
+
+class PlanIndexPolicy(FakePolicy):
+    """계획마다 행동 값이 (계획 번호, index)를 담아 어떤 계획의 몇 번째 행동이 실행됐는지 보인다."""
+
+    def plan(self, obs, previous):
+        self.calls.append((obs.copy(), previous.copy()))
+        self.last_report = {'status': 'ok', 'model_calls': 10, 'qp_calls': 0}
+        result = np.zeros((16, 14))
+        result[:, 0] = 1e-4 * (len(self.calls) * 100 + np.arange(16))
+        return result
+
+
+def ood_case(**fields):
+    return {'id': 'pushing/X/test', 'factors': {}, 'noise': None, 'push': None, 'delay_steps': 0,
+            'policy_seeds': [11, 12, 13, 14], 'robot_start': None, **fields}
+
+
+def test_ood_delay_plans_early_and_starts_new_chunk_at_index_d(config):
+    import torch
+    env, policy = FakeEnv(), PlanIndexPolicy()
+    policy.base = type('Base', (), {'device': 'cpu', 'horizon': 16, 'act_dim': 2, 'obs_dim': 12,
+                                    'center': torch.zeros(14, dtype=torch.float64)})()
+    policy.plan = lambda obs, previous, noise=None: PlanIndexPolicy.plan(policy, obs, previous)
+    contexts = [{'id': 'test', 'context': {}, 'ood': ood_case(delay_steps=2)}]
+    settings = {'n_traj': 1, 'max_steps': 5, 'execute_steps': 4}
+    _, logs = run_evaluation(env, policy, contexts, read_state, build_obs, None, 'pushing', settings, config)
+    rows = logs['c000_t0']
+    executed = [round(r['safe_action'][0] / 1e-4) for r in rows]
+    # 계획 1의 0..3을 실행하는 동안 남은 행동이 2개일 때(step 2) 계획 2를 세우고, step 4부터 index 2를 실행한다.
+    assert executed == [100, 101, 102, 103, 202]
+    assert [r['seam'] for r in rows] == [True, False, False, False, True]
+    assert [r['plan_id'] for r in rows] == [0, 0, 0, 0, 1]
+    assert len(policy.calls) == 2
+
+
+def test_ood_noise_reaches_policy_but_violation_uses_true_state(config):
+    import torch
+    env, policy = FakeEnv(), PlanIndexPolicy()
+    policy.base = type('Base', (), {'device': 'cpu', 'horizon': 16, 'act_dim': 2, 'obs_dim': 12,
+                                    'center': torch.zeros(14, dtype=torch.float64)})()
+    policy.plan = lambda obs, previous, noise=None: PlanIndexPolicy.plan(policy, obs, previous)
+    case = ood_case(noise={'pos_m': 0.05, 'yaw_deg': 0.0, 'seed': 5})
+    settings = {'n_traj': 2, 'max_steps': 2, 'execute_steps': 2}
+    results, logs = run_evaluation(env, policy, [{'id': 'test', 'context': {}, 'ood': case}],
+                                   read_state, build_obs, None, 'pushing', settings, config)
+    seen = policy.calls[0][0]
+    assert not np.allclose(seen[4:6], [.4, 0.])            # 정책은 노이즈 블록 위치를 본다
+    true_obs = build_obs(np.array([.5, 0.]), np.array([.5, 0., .12]), read_state(env, None)[1])
+    assert np.allclose(true_obs[4:6], [.4, 0.])
+    assert [e['sampling_seed'] for e in results['episodes']] == [11, 12]
+    assert results['episodes'][0]['ood_case'] == 'pushing/X/test'

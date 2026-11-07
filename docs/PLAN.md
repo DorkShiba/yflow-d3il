@@ -175,6 +175,37 @@ HEAD 테스트는 `pytest fm_constraint/tests`에서 **102개 모두 통과**한
 
 ---
 
+### 2단계 결과 (2026-11-07, 브랜치 `integrate/phase2-ood`)
+- **삭제**:
+  - `fm_pc/` 전체(PC, ACG, OOD v1 코드 포함)
+  - `ood/`의 구현 2 도구(`validate_sim.py`, `summarize_sim.py`, 이전 `generate.py`/`verify.py`)
+  - `data/ood_sas_v1_20261106/`, `fm_baseline/ood_benchmark/`
+  - `tests/test_ood_generation.py`
+- **이관**:
+  - `fm_pc/tasks.py` → `fm_constraint/tasks.py`. 8개 태스크를 유지하고, 이전 OOD API를 쓰던 `Avoiding.shift_start`는 삭제했다.
+  - 추가 태스크용 baseline 평가기 → `fm_baseline/eval_task.py`(ID만 지원)
+  - `preprocess/check_prepare_task.py`의 import를 새 위치로 바꿨다.
+- **새 `ood/` 패키지**: `conditions.py`, `apply.py`, `generate.py`, `verify.py`, `metrics.py`, `README.md`.
+  - 조건은 20개다(A/B/C 14개 + D push 3개 + E 지연 3개).
+  - D·E 강도 기본값은 **D 2/4/8 cm(chunk 중간), E 1/2/4 step**이다. 확정 전이므로 `ood/conditions.py`의 `LEVELS`에서 조정한다.
+- **평가 연결**: `fm_constraint.eval_* --ood <조건>`(`eval.ood`, `paths.ood_root`).
+  - 정책 seed는 파일의 `policy_seeds`를 쓴다.
+  - C 노이즈는 정책과 실행 직전 필터에만 넣고, 위반 측정은 실제 상태로 한다.
+  - D push는 남은 큐가 4개일 때 적용한다.
+  - E 지연에서는 계획을 미리 세우고 index d부터 실행한다. ③이 행동을 수정하면 대기 중인 계획도 폐기한다.
+  - 기록: rollout마다 `seam`과 `ood_events`를 남긴다.
+- **데이터** `data/ood/`(v2): Pushing 60 context × 20 = 1,200행, Inserting 82 × 20 = 1,640행.
+  - A의 배치는 구현 1의 기존 pkl과 모든 context에서 일치한다(결정적 규칙).
+  - A·B의 실패(옮기지 못한 블록, 시작 위치를 찾지 못한 경우)는 0건이다.
+  - `python -m ood.verify` OK.
+- **검증**:
+  - `pytest fm_constraint/tests tests`: 127 passed(visualizer 2개 제외, fastapi 없음).
+  - D3IL smoke 통과:
+    - Pushing `id`, `B_mid`, `C_mid`+①, `D_mid`(step 84 push), `E_mid`(계획 30회 → 32회)
+    - Inserting `ABC_mid`+①②, `D_strong`(step 300 push)
+    - `ood.metrics` 집계, `fm_baseline/eval_task.py`(pushing)
+- **제외**: 구현 1의 학습 관측 최근접 거리(`OOD dist`) 지표. 계획 관측을 저장하지 않기 때문이다.
+
 ## 4. 3단계: 5개 방법 하나의 파이프라인으로 연결
 
 ### 4.1 설정 (schema v4)

@@ -52,6 +52,7 @@ class ExperimentConfig:
                 'd3il_root': '../d3il',
                 'raw_root': f'/root/d3il-work/raw/{task}' + ('/all_data' if not inserting else ''),
                 'contexts_file': 'fm_baseline/contexts/inserting_val.pkl',
+                'ood_root': 'data/ood',
             },
             'model': {'horizon': 16, 'dim': 64 if inserting else 32,
                       'dim_mults': [1, 2, 4, 8] if inserting else [1, 4, 8],
@@ -66,7 +67,7 @@ class ExperimentConfig:
             'eval': {'checkpoint': 'baseline_ema.pt', 'weights': 'ema',
                      'execute_steps': 8, 'max_steps': 2000 if inserting else 400,
                      'n_contexts': 0 if inserting else 30, 'n_traj': 4, 'seed': 0,
-                     'check_obs': 0, 'export_contexts': None,
+                     'check_obs': 0, 'export_contexts': None, 'ood': None,
                      **({'split': 'val'} if inserting else {'contexts': 'test'})},
             'control': {'dt_s': 0.035},
             'sampling': {'predict_steps': 10},
@@ -159,6 +160,8 @@ class ExperimentConfig:
             raise ValueError('eval.contexts must be train or test')
         if self.task == 'inserting' and ev['split'] not in ('train', 'val'):
             raise ValueError('eval.split must be train or val')
+        if ev['ood'] is not None and (not isinstance(ev['ood'], str) or not ev['ood']):
+            raise ValueError('eval.ood must be an OOD condition name or null')
         if not isinstance(ev['checkpoint'], str) or not ev['checkpoint']:
             raise ValueError('eval.checkpoint must be a nonempty path')
         if v['control']['dt_s'] <= 0:
@@ -307,6 +310,7 @@ def parse_config(command, task=None, argv=None):
     parser.add_argument('--pc', action=argparse.BooleanOptionalAction, default=None, help=argparse.SUPPRESS)
     parser.add_argument('--check-obs', type=int)
     parser.add_argument('--export-contexts')
+    parser.add_argument('--ood', help='OOD condition in data/ood (e.g. id, A_mid, D_strong)')
     args = parser.parse_args(argv)
     if args.pc is not None:
         parser.error('PC is retired; use --pf2mp / --no-pf2mp explicitly')
@@ -317,7 +321,7 @@ def parse_config(command, task=None, argv=None):
         key, value = item.split('=', 1)
         overrides[key] = yaml.safe_load(value)
     for key, value in [('device', args.device), ('eval.check_obs', args.check_obs),
-                       ('eval.export_contexts', args.export_contexts),
+                       ('eval.export_contexts', args.export_contexts), ('eval.ood', args.ood),
                        *[(f'methods.{name}.enabled', getattr(args, name))
                          for name in ('projection', 'vlsa', 'pf2mp')]]:
         if value is not None:
