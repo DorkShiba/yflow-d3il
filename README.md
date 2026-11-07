@@ -2,10 +2,16 @@
 
 연세대학교 인공지능종합설계 Y-Flow 팀의 D3IL 실험 저장소다. 상태 기반 플로우 매칭 정책을 D3IL **Pushing**과 **Inserting** 태스크로 학습하고, 물리 제약 주입 방식들을 조합해 비교하는 것이 목표다.
 
-순수 플로우 매칭 베이스라인과 Projection·PF2MP·실행 직전 행동 필터를 구현했다. 모델·CFM·Euler 샘플러는 `fm_baseline/models/`에서 제공하며 외부 HardFlow checkout이나 패키지 설치는 필요하지 않다.
+순수 플로우 매칭 베이스라인 위에 추론 시점에만 적용하는(train-free) 5개 방법 **① Projection, ② PF2MP, ③ 실행 직전 필터, ④ RTC, ⑤ LiPo**를 독립적으로 켜고 끌 수 있다. OOD 조건 20개에서도 평가할 수 있다. 모델·CFM·Euler 샘플러는 `fm_baseline/models/`에 있으며 외부 HardFlow는 필요하지 않다.
 
-- 데이터 출처, 전처리, 분할: [`data/README.md`](data/README.md)
-- 베이스라인 학습·평가의 상세 기록과 실패 분석: [`fm_baseline/README.md`](fm_baseline/README.md)
+| 문서 | 내용 |
+|---|---|
+| [`docs/METHODS.md`](docs/METHODS.md) | 5개 방법과 제약의 현재 정의, 실행 순서, 상호작용 규칙 |
+| [`fm_constraint/README.md`](fm_constraint/README.md) | 5개 방법 실행·설정, 32조합 runner |
+| [`ood/README.md`](ood/README.md) | OOD 조건(A 블록 위치, B 로봇 시작, C 관측 노이즈, D push, E 추론 지연)과 seed 규칙 |
+| [`fm_baseline/README.md`](fm_baseline/README.md) | 베이스라인 학습·평가 기록, 실패 분석 |
+| [`data/README.md`](data/README.md), [`docs/README.md`](docs/README.md) | 데이터 출처·전처리·분할, 관측·행동 정의 |
+| [`docs/PLAN.md`](docs/PLAN.md) | 브랜치 통합 계획과 결정 기록 |
 
 ## 1. 저장소 구조
 
@@ -13,19 +19,25 @@
 yflow-d3il/
 ├── data/                       # 전처리된 상태·행동 데이터 (시연별 npz)
 │   ├── pushing_sincos_v1/      # train 1,800 / val 200
-│   └── inserting_sincos_v1/    # train 718 / val 82
+│   ├── inserting_sincos_v1/    # train 718 / val 82
+│   └── ood/                    # OOD 평가 사례 (pushing/inserting.jsonl, manifest.json)
 ├── fm_baseline/
 │   ├── models/                 # 내부 TemporalUnet·CFM·조건부 Euler
-│   ├── train.py                # 학습
-│   ├── sample.py               # 오프라인 생성 검사
-│   ├── eval_pushing.py         # Pushing 시뮬레이터 평가
+│   ├── train.py, sample.py     # 학습, 오프라인 생성 검사
+│   ├── eval_pushing.py         # Pushing 시뮬레이터 평가 (--postprocess lipo로 ⑤만 적용 가능)
 │   ├── eval_inserting.py       # Inserting 시뮬레이터 평가
-│   ├── contexts/
-│   │   └── inserting_val.pkl   # Inserting 평가 초기 배치 82개 (원본 시연에서 추출)
+│   ├── eval_task.py            # 추가 태스크(avoiding·aligning·sorting·stacking) baseline 평가
+│   ├── contexts/               # Inserting 평가 초기 배치 82개, sorting context
 │   └── results/
-│       ├── pushing_baseline/   # baseline_ema.pt(학습된 가중치), config.json, normalizer.npz, metrics.csv, 평가 결과
+│       ├── pushing_baseline/   # baseline_ema.pt(학습된 가중치), config.json, normalizer.npz, metrics.csv
 │       └── inserting_baseline/ # 위와 같은 구성
+├── fm_constraint/              # train-free 5개 방법, D3IL 평가 루프, 32조합 runner
+├── configs/                    # 5개 방법·제약 설정 (schema v4, pushing/inserting.yaml)
+├── ood/                        # OOD 조건 정의·생성·검증·지표
+├── scripts/run_suite.sh        # 32조합 × 2태스크 순차 실험
+├── visualizer/                 # 로컬 3D rollout viewer
 ├── preprocess/                 # data/를 만든 전처리·검증 스크립트
+├── tests/, fm_constraint/tests/
 └── requirements.txt            # 학습·평가에 필요한 패키지
 ```
 
@@ -146,25 +158,30 @@ actions = plan[:, :2]
 
 `plan`은 원래 단위의 `(16, 2 + obs_dim)` 배열이다. `load_model`은 `config.json`을 읽어 모델 크기를 자동으로 맞춘다.
 
-## 8. 제약을 붙이는 위치
+## 8. train-free 5개 방법
 
-제약 조건은 원래 단위(m, rad)로 정의하고, 모델 내부에 적용할 때는 `normalizer.npz`로 정규화 공간으로 변환한다.
+| # | 방법 | 적용 위치 | CLI |
+|---|---|---|---|
+| ① | Projection | Predict 매 Euler 직후, 행동 공동 투영 | `--projection` |
+| ② | PF2MP | Predict 벡터장, train KDE potential(상태 위치) | `--pf2mp` |
+| ③ | Filter | 실행 직전 최신 관측으로 행동 하나 투영, 수정 시 재계획 | `--filter` |
+| ④ | RTC | Predict 벡터장, 직전 계획의 미실행 행동 inpainting | `--rtc` |
+| ⑤ | LiPo | 계획 끝 고정 한도 jerk QP(①이 켜져 있으면 ① 제약 포함) | `--lipo` |
 
-| 적용 시점 | 위치 | 예 |
-|---|---|---|
-| ODE 적분 중 (매 스텝) | `Policy.plan`의 `solver(x, t_span=...)` 부분. 내부 `fm_baseline/models/ode.py`의 Euler 구조로 적분하면서 각 스텝에 보정을 넣는다. t=0 관측 위치는 매 스텝 고정해야 한다. | 매 스텝 투영, 가이던스 |
-| 생성 직후 | `Policy.plan`이 반환하기 전, 또는 `plan` 반환 직후 | 종단 위치 보정, 궤적 투영 |
-| 실행 직전 | `eval_*.py` 메인 루프의 `des = des + a` 직전 | 행동 필터, 작업 공간 경계 |
-| 학습 손실 | `train.py`의 `flow.loss(...)` 이후 | 평활화 정규화 등. 체크포인트를 새로 학습해야 한다 |
+```bash
+MUJOCO_GL=disable python -m fm_constraint.eval_pushing --config configs/pushing.yaml --projection --rtc --lipo
+MUJOCO_GL=disable python -m fm_constraint.eval_inserting --config configs/inserting.yaml --pf2mp --filter --ood D_mid
+bash scripts/run_suite.sh --dry-run          # 태스크당 32조합(P00~P31, I00~I31) 순차 실험
+```
 
-추론 시점 제약은 베이스라인 체크포인트를 그대로 쓰고, 평가 스크립트의 실행 방식(4절)은 바꾸지 않는다.
+정의와 상호작용 규칙은 [`docs/METHODS.md`](docs/METHODS.md)에 있다. 모든 방법을 끄면 베이스라인과 같은 계획을 만든다. 평가 프로토콜(4절)은 바꾸지 않는다.
 
 ### 베이스라인 실패 유형 (제약이 겨냥할 수 있는 지점)
 
 - Pushing 실패 11/120: 목표 근처까지 밀었지만 5cm 안에 못 넣음 7건, 목표 손 위치가 실제 손에서 24~30cm까지 벌어짐 3건.
 - Inserting 실패 61/328: 손이 멈춤 34건, 목표–손 거리 10cm 초과 30건(미로 벽에 막힌 상태로 목표 위치만 이동하는 것으로 추정), 평균 거리 2cm 미만의 근소한 실패 16건.
 
-평가 폴더의 `rollouts.npz`에 rollout마다 목표 손 위치(`*_des`), 실제 손 위치(`*_c`), 블록 상태(`*_boxes`), 실행 행동(`*_act`)이 저장되므로, 제약 위반 지표는 이 파일로 계산할 수 있다.
+baseline 평가 폴더의 `rollouts.npz`에는 rollout마다 목표 손 위치(`*_des`), 실제 손 위치(`*_c`), 블록 상태(`*_boxes`), 실행 행동(`*_act`)이, `fm_constraint` 평가의 `rollouts.json`에는 step별 실행 행동·제약 잔차·계획 보고가 저장된다.
 
 ## 9. 자주 하는 명령
 
@@ -180,17 +197,9 @@ python eval_inserting.py --run-dir $I --ckpt baseline_ema.pt --n-traj 2 --seed 1
 
 평가 결과는 `--run-dir` 아래 `eval_*` 폴더에, 새로 학습한 실행 폴더는 `fm_baseline/runs/`에 저장되며 둘 다 git에서 제외된다. 평가 시간은 Pushing 120회 약 25분, Inserting 82 × 2회 약 3.3시간(시드 두 개를 동시에 실행)이다. 학습 명령과 옵션은 `fm_baseline/README.md` 7절에 있다.
 
-
-## 통합 training-free 제약
-
-`fm_constraint/`에서 Projection, 상태 위치 PF2MP, terminal VLSA를 독립적으로 선택할 수 있다. 공통 제약은 사각형 workspace, 목표 명령 가속도, 모든 블록을 포함하는 정n각형이다. 기존 `fm_pc/`, `fm_projection/` 코드는 통합 후 제거했으며 결과는 `fm_constraint/results/legacy/`에 보존했다.
-
-실행·설정·검증 근거는 [통합 README](fm_constraint/README.md), [구현 계획과 진행 기록](docs/PLAN.md)을 참고한다.
+## 10. 테스트와 viewer
 
 ```bash
-python -m fm_constraint.sample --config configs/pushing.yaml --projection --vlsa --pf2mp --set sample.n_windows=4
+python -m pytest fm_constraint/tests tests -q     # visualizer 테스트는 visualizer/requirements.txt 필요
+./visualizer/run.sh                                # 로컬 3D rollout viewer (visualizer/README.md)
 ```
-
-## LiPo smoothness and rollout viewer
-
-Training-free Baseline / Blending / LiPo comparisons for Pushing and Inserting: [implementation and evaluation](fm_baseline/LIPO.md). Run `./visualizer/run.sh` for the [local 3D viewer](visualizer/README.md), including verified sample replays, live XY jerk plots and video export. Full evaluation summaries are under `experiments/lipo_pushing_20261104` and `experiments/lipo_inserting_20261104`.

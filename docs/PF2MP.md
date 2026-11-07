@@ -1,6 +1,6 @@
 # PF2MP: 논문 정리와 D3IL 적용안
 
-근거는 로컬 논문 [Towards Safe Imitation Learning via Potential Field-Guided Flow Matching](<Towards Safe Imitation Learning via Potential Field-Guided Flow Matching.pdf>)의 arXiv:2508.08707v1, 2025-08-12 버전이다. 방법은 III–IV절(pp. 2–4), 실험은 V절(pp. 5–7)을 참조한다. 아래에서 **논문의 방법**, **Gaussian KDE를 선택했을 때의 수식 전개**, **이 저장소에 적용하기 위한 제안**을 구분한다. 현재 구현은 `fm_constraint/pf2mp.py`와 `policy.py`에 있으며, D3IL 적용은 아래 5~6절과 `PLAN.md` 8절을 따른다. 논문 결과와 이 저장소의 기능 검증 결과는 구분한다.
+근거는 논문 *Towards Safe Imitation Learning via Potential Field-Guided Flow Matching*(PDF는 저장소에 넣지 않고 로컬 `docs/`에 둔다)의 arXiv:2508.08707v1, 2025-08-12 버전이다. 방법은 III–IV절(pp. 2–4), 실험은 V절(pp. 5–7)을 참조한다. 아래에서 **논문의 방법**, **Gaussian KDE를 선택했을 때의 수식 전개**, **이 저장소에 적용하기 위한 제안**을 구분한다. 현재 구현은 `fm_constraint/pf2mp.py`와 `policy.py`에 있으며, D3IL 적용은 아래 5~6절과 `PLAN.md` 8절을 따른다. 논문 결과와 이 저장소의 기능 검증 결과는 구분한다.
 
 ## 1. 핵심 이해
 
@@ -154,22 +154,22 @@ $$
 
 Raw 목표 위치가 $q=c_q+S_q\widetilde q$이면 정규화 위치 gradient는 $S_q^\top\nabla_q\phi$다. **행동 누적으로 위치를 재구성하여 action으로 역전파하지 않는다.** 이전 문서의 행동 chain rule 제안은 사용자 지정에 따라 이 방식으로 교체했다.
 
-같은 갱신 전 계획에서 FM과 PF를 평가하고 Euler한 뒤, 선택적으로 행동 Projection을 수행한다. 이후 VLSA는 전체 행동 계획을 terminal 투영한다. PF가 바꾼 미래 상태는 다음 FM 평가에서 행동에 간접 영향을 줄 수 있다. 한 번만 Euler하면 PF에 의한 행동 변화는 없으며, 상태 에너지 개선이 실행 행동의 안전 개선을 보장하지 않는다. 명시 제약은 계속 행동 누적 목표에 적용하고 생성 상태와의 차이를 기록한다.
+같은 갱신 전 계획에서 FM(④ RTC가 켜져 있으면 RTC 보정 벡터장)과 PF를 평가하고 Euler한 뒤, 선택적으로 ① 행동 Projection을 수행한다. 이후 ⑤ LiPo와 ③ 실행 직전 필터가 이어진다([METHODS.md](METHODS.md)). PF가 바꾼 미래 상태는 다음 FM 평가에서 행동에 간접 영향을 줄 수 있다. 한 번만 Euler하면 PF에 의한 행동 변화는 없으며, 상태 에너지 개선이 실행 행동의 안전 개선을 보장하지 않는다. 명시 제약은 계속 행동 누적 목표에 적용하고 생성 상태와의 차이를 기록한다.
 
 ## 6. 캐시와 실행
 
 `fm_constraint/pf2mp.py`에서 전체 train의 shape·유한값·시간·시연 내 연결·행동 대응·sin/cos·분할 정합성을 검사하고 Gaussian support와 거리장을 만든다. 밀도는 해석적 Gaussian 혼합으로 평가하고 거리항은 threshold를 넘는 2D grid 점 집합까지의 최근접 거리로 근사한다. 이는 논문에서 상세히 지정하지 않은 거리장에 대한 구현 선택이다.
 
-PF on의 추론 시작 시 `data/<task>_sincos_v1/pf2mp_cache/<fingerprint>.npz`를 준비한다. Data/manifest hash, bandwidth, support 추출, grid·threshold 설정으로 캐시를 구별한다. 없으면 생성하고 있으면 검증 후 재사용하며, PF off에서는 읽거나 만들지 않는다. Weight·거리항 계수만 바꾸면 캐시를 재사용한다. 전체 명세와 검증 항목은 [PLAN 8절](PLAN.md)을 따른다.
+PF on의 추론 시작 시 `data/<task>_sincos_v1/pf2mp_cache/<fingerprint>.npz`를 준비한다. Data/manifest hash, bandwidth, support 추출, grid·threshold 설정으로 캐시를 구별한다. 없으면 생성하고 있으면 검증 후 재사용하며, PF off에서는 읽거나 만들지 않는다. Weight·거리항 계수만 바꾸면 캐시를 재사용한다. 구현 이력과 검증 기록은 [PLAN](PLAN.md)과 `fm_constraint/results/pf2mp_validation.json`에 있다.
 
 ```bash
 python -m fm_constraint.sample --config configs/pushing.yaml --pf2mp --projection \
   --set sample.n_windows=4
-python -m fm_constraint.sample --config configs/inserting.yaml --pf2mp --vlsa \
+python -m fm_constraint.sample --config configs/inserting.yaml --pf2mp --lipo \
   --set methods.pf2mp.weight=0.01 --set sample.n_windows=4
 ```
 
-설정은 schema v3이며 PC는 주석으로 보존하고 실행하지 않는다. Gaussian score와 거리항은 해석적으로 계산하므로 FM 모델에 대한 backpropagation이 필요 없다. 기본 수치는 초기 후보값으로 전체 태스크 성능을 검증한 최적값이 아니다.
+설정은 schema v4(`methods.pf2mp`)다. Gaussian score와 거리항은 해석적으로 계산하므로 FM 모델에 대한 backpropagation이 필요 없다. 기본 수치는 초기 후보값으로 전체 태스크 성능을 검증한 최적값이 아니다.
 
 ## 7. 평가와 남은 설계상의 주의점
 

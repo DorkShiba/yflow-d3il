@@ -37,22 +37,9 @@ class VisualizerTest(unittest.TestCase):
     def test_missing_environment(self):
         r=self.client.post('/api/evaluate',json={'run_dir':'/missing','d3il_root':'/missing'})
         self.assertEqual(r.status_code,400)
-    def test_fresh_store_has_verified_three_way_comparison(self):
-        dashboard=self.client.get('/api/dashboard').json()
-        jobs={j['id']:j for j in self.client.get('/api/jobs').json()}
-        for task in ('pushing', 'inserting'):
-            panels=dashboard['tasks'][task]['panels']
-            self.assertEqual([p['label'] for p in panels], ['Baseline', 'Blending', 'LiPo'])
-            for p in panels:
-                proof=jobs[p['job']]['spec']['verification']
-                self.assertEqual(proof['max_hand_error_m'], 0)
-                self.assertEqual(proof['max_boxes_error'], 0)
-                r=self.client.get(f'/api/jobs/{p["job"]}/rollouts').json()[0]
-                self.assertEqual(r['key'], 'c000_t0')
-                self.assertEqual(len(r['joints']), r['steps'])
-                self.assertEqual(len(r['jerk_xy']), r['steps'])
-                self.assertEqual(len(r['walls']), 17 if task=='inserting' else 0)
-                self.assertEqual(r['distance_kind'], '3D')
+    def test_fresh_store_has_no_bundled_samples(self):
+        self.assertEqual(self.client.get('/api/dashboard').json(), {'tasks': {}, 'default_task': 'pushing'})
+
     def test_captured_goals_xyz_roundtrip(self):
         data=io.BytesIO()
         np.savez_compressed(data,c000_t0_c=np.zeros((2,3)),c000_t0_des=np.zeros((2,2)),

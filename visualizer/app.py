@@ -23,15 +23,6 @@ from .analytics import enrich, TASKS
 ROOT = Path(__file__).resolve().parents[1]
 STORE = Path(os.environ.get('VISUALIZER_STORE', ROOT / '.visualizer')).resolve()
 STORE.mkdir(parents=True, exist_ok=True)
-# Ship recorded examples so a fresh teammate checkout opens a real comparison.
-# Existing local jobs and dashboard choices always win.
-SAMPLES = Path(__file__).parent / 'samples'
-for sample in SAMPLES.glob('*/job.json'):
-    destination = STORE / sample.parent.name
-    if not destination.exists():
-        shutil.copytree(sample.parent, destination)
-if not (STORE/'dashboard.json').exists() and (SAMPLES/'dashboard.json').exists():
-    shutil.copy2(SAMPLES/'dashboard.json', STORE/'dashboard.json')
 POOL = ThreadPoolExecutor(max_workers=1)
 JOBS = {}
 PROCS = {}

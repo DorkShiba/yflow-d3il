@@ -337,6 +337,22 @@ Predict N회: v = FM(x,t) [+ ④ RTC guidance] [+ ② PF2MP] → Euler → [① 
 
 ---
 
+### 5단계 결과 (2026-11-08, 브랜치 `integrate/phase5-docs`)
+- **visualizer 샘플 삭제** (12절 결정 (b)):
+  - 삭제: `visualizer/samples/`, 시작 시 샘플을 store로 복사하던 코드
+  - 대시보드 기본 제목: "Baseline / Blending / LiPo" → "비교"
+  - 테스트: 빈 store에서 대시보드가 비어 있음을 확인하도록 바꿨다.
+- **새 문서**: `docs/METHODS.md`. 현재 코드 기준으로 5개 방법과 제약 집합, 실행 순서, 상호작용 규칙, 조합 ID와 비교 쌍, 출처를 정리했다.
+- **삭제한 문서**: `docs/FM_Constraint_Integral.md`, `Predict_Correct_d3il.md`, `Projection_d3il.md`, `VLSA_d3il_exp.md`. PC 시대의 통합 명세이거나, 폐기한 제약·코드(`fm_pc`, `fm_projection`, `vlsa.py`) 기준이었다. git 이력에 남아 있다.
+- **고친 문서**:
+  - 루트 `README.md`: 문서 표, 저장소 구조, 8절 5개 방법, 10절 테스트·viewer
+  - `docs/README.md` 3절: METHODS로 연결
+  - `docs/PF2MP.md`: 파이프라인 위치, CLI, schema
+  - `docs/YFLOW_research_overview.md`: 현재 5개 방법과 다르다는 안내
+  - `fm_baseline/README.md` 9·10절, `fm_baseline/LIPO.md`(현재 ⑤ 정의로 재작성)
+  - `visualizer/README.md`, `TEAM_GUIDE.md`
+- 남은 오래된 용어(VLSA, blend, method123)는 이력을 설명하는 문장에만 남아 있다.
+
 ## 7. 6단계: master 반영과 브랜치 정리 (네트워크 작업은 사용자가 실행)
 
 1. Claude: `integrate/all-methods`에서 전체 테스트와 smoke가 통과한 것을 확인한다.
@@ -416,9 +432,10 @@ terminal 위치는 PC Correct 때문에 생겼다. PC는 Euler가 끝난 뒤 계
 
 ---
 
-## 12. 남은 결정 (4단계 이후)
+## 12. 4단계 이후 결정
 1. **visualizer 내장 샘플**: 현재 6개 샘플(`visualizer/samples/`)은 이전 blend LiPo 기록이다. 선택지는 세 가지다.
    - (a) 이력 데모로 유지하고 README에 표시한다.
    - (b) 삭제한다.
    - (c) 현재 ⑤로 다시 기록한다(D3IL 재실행과 관절 기록 필요).
+   - **결정 (2026-11-08): (b) 삭제.** 5단계에서 처리했다.
 

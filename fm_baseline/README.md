@@ -122,13 +122,10 @@ Inserting 본 평가는 시드 0과 1로 각각 82 × 2회를 동시에 실행�
 - Inserting 평가 초기 배치는 `contexts/inserting_val.pkl`(검증 분할 82개 시연의 `context`, 첫 관절 자세, 목표 손 궤적)에서 읽는다. 이 파일은 `eval_inserting.py --export-contexts contexts/inserting_val.pkl`로 원본 pkl에서 만들었다. 파일에 없는 시연은 `--raw-root`(기본 `/root/d3il-work/raw/inserting`) 아래 원본을 재귀 검색한다.
 - `config.json`의 경로가 없는 환경에서는 저장소 기준 위치(`<저장소>/data`, `<저장소>/../d3il`)를 쓴다. 학습 결과는 기본으로 `fm_baseline/runs/`에 저장된다.
 
-## 9. 남은 작업
+## 9. 이후 작업
 
-1. 태스크별 실제 물리 제약 정의: 작업 공간 경계, 장애물·벽 여유 거리, 스텝당 최대 이동량, 목표–손 추종 거리 등.
-2. 5개 제약 주입 방식 확정. 추론 시 적용하는 방식과 학습 시 적용하는 방식이 섞여 있는지 확인.
-3. 제약 위반 지표를 rollout 궤적(`rollouts.npz`)에서 계산하는 스크립트 작성.
-4. Inserting 실패 rollout과 미로 벽 좌표를 겹친 시각화.
+train-free 5개 방법(제약 정의, 위반 지표, 조합 실험)은 `fm_constraint/`로 구현했다. [`docs/METHODS.md`](../docs/METHODS.md)와 [`fm_constraint/README.md`](../fm_constraint/README.md)를 본다.
 
 ## 10. LiPo 후처리와 smoothness 평가
 
-학습된 EMA 모델을 고정한 `none / blend / lipo` 비교를 지원한다. 구현 범위, SI 단위 지표, 실행 명령, 검증 상태는 [LIPO.md](LIPO.md)를 참고한다. `python fm_baseline/run_lipo_comparison.py --task pushing --dry-run`으로 세 비교군의 명령을 확인할 수 있다(저장소 루트 기준).
+학습된 EMA 모델을 고정한 `none / lipo` 비교를 지원한다. ⑤ LiPo(고정 한도 jerk QP)를 baseline 평가 스크립트에서 켜는 방식이며, 실행 명령과 지표는 [LIPO.md](LIPO.md)에 있다. 추가 태스크(avoiding, aligning, sorting, stacking)의 baseline 평가는 `python fm_baseline/eval_task.py --task <태스크> --run-dir <run>`으로 한다.

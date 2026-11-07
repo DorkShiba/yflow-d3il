@@ -73,6 +73,8 @@ $$
 
 ### 3.2 방법 (Methods)
 
+> **2026-11-08 현재 확정된 5개 방법은 이 초안과 다르다.** ① Projection, ② PF2MP(PC 대체), ③ 실행 직전 필터(VLSA), ④ RTC(CAPS 대체), ⑤ LiPo 고정 jerk QP(L2C2 대체)이며 모두 train-free다. 현재 정의는 [METHODS.md](METHODS.md)에 있다. 아래는 10/08 미팅 시점의 초안이다.
+
 최종 실험 대상은 **Safety 3종(①②③) + Smoothness 2종(④⑤)** 이다.
 (초안에는 ⑥ Spectral Normalization, ⑦ Weight Decay도 포함되어 있었으나 10/08 미팅 자료에서는 5개로 정리됨 → 3.2.3 참고)
 
