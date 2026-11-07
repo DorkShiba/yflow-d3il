@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # ID 본실험: 원하는 조합(하나 또는 여러 개)을 맡은 context에 대해 순서대로 실행한다.
 # 각 단위(task × 조합 × context, noise seed 0·1·2)는 끝나는 즉시 저장되며, 다시 실행하면 완료된 단위를 건너뛴다.
+# 같은 장비에서 여러 프로세스(GPU별 등)를 동시에 띄워도 단위마다 잠금을 잡으므로 같은 단위를 두 번 돌리지 않는다.
 set -euo pipefail
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
@@ -83,7 +84,9 @@ for task in "${tasks[@]}"; do
         printf '%q ' "${command[@]}"; printf '\n'
         continue
     fi
-    log="$log_dir/${name}_${task}_$(date -u +%Y%m%dT%H%M%SZ).log"
+    # 같은 이름으로 여러 GPU·범위를 동시에 실행해도 로그가 겹치지 않게 장치·범위·PID를 넣는다.
+    tag="${name}_${task}_${device//:/}_ctx${contexts//[,]/_}_c${combos//[,]/_}"
+    log="$log_dir/${tag}_$(date -u +%Y%m%dT%H%M%SZ)_$$.log"
     echo "== $task: combos $combos, contexts $contexts → $log"
     "${command[@]}" 2>&1 | tee "$log"
 done

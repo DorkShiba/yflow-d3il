@@ -117,3 +117,15 @@ def test_merge_rejects_mixed_code(tmp_path, monkeypatch):
     write_units(experiment.RESULT_ROOT, units)
     with pytest.raises(SystemExit, match='code versions'):
         experiment.merge(tmp_path / 'merged.md')
+
+
+def test_unit_lock_blocks_a_second_holder(tmp_path, monkeypatch):
+    monkeypatch.setattr(experiment, 'LOCAL_ROOT', tmp_path)
+    with experiment.unit_lock('pushing', 5, 3, smoke=True) as first:
+        assert first
+        with experiment.unit_lock('pushing', 5, 3, smoke=True) as second:
+            assert not second                         # 같은 단위는 동시에 잡을 수 없다
+        with experiment.unit_lock('pushing', 5, 4, smoke=True) as other:
+            assert other                              # 다른 단위는 독립적이다
+    with experiment.unit_lock('pushing', 5, 3, smoke=True) as again:
+        assert again                                  # 끝나면 풀린다

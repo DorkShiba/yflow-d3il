@@ -14,9 +14,12 @@ git으로 추적하는 결과: experiments/id_v1/<task>/<조합>/ctx_NN/{result.
 """
 
 import argparse
+from contextlib import contextmanager
 from datetime import datetime, timezone
+import fcntl
 import hashlib
 import json
+import os
 from pathlib import Path
 import pickle
 import platform
@@ -198,7 +201,6 @@ def slim_trajectories(rollouts, tolerance):
 
 
 def run(task, combos, indices, device, name, max_steps=None):
-    from .evaluation import evaluate
     rows = None
     fingerprint = code_fingerprint()
     smoke = max_steps is not None
@@ -207,49 +209,85 @@ def run(task, combos, indices, device, name, max_steps=None):
     commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=REPO, text=True).strip()
     for number in combos:
         for index in indices:
-            out = unit_dir(tracked, task, number, index)
-            result_path = out / 'result.json'
-            if result_path.exists():
-                saved = json.loads(result_path.read_text())
-                if saved['code_fingerprint'] != fingerprint:
-                    raise ValueError(f'{result_path} was produced by different code; do not mix results')
-                print(f'SKIP {combo_id(task, number)} ctx_{index:02d} (done by {saved["member"]})', flush=True)
-                continue
-            overrides = {**{f'methods.{k}.enabled': v for k, v in combo_flags(number).items()},
-                         'device': device, 'eval.n_contexts': 0, 'eval.execute_steps': 8,
-                         'sampling.predict_steps': 10,
-                         'paths.output_root': str(LOCAL_ROOT)}
-            if smoke:
-                overrides['eval.max_steps'] = max_steps
-            cfg = ExperimentConfig.from_yaml(REPO / f'configs/{task}.yaml', overrides)
-            if rows is None:
-                rows = load_selection(task, cfg.values['paths']['d3il_root'])
-            row = rows[index]
-            local = unit_dir(LOCAL_ROOT / ('smoke' if smoke else 'full'), task, number, index)
-            if local.exists():
-                # 중단된 이전 시도는 지우지 않고 이름을 바꿔 보존한다.
-                local.rename(local.with_name(local.name + '.interrupted.' + datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')))
-            started = perf_counter()
-            print(f'RUN  {combo_id(task, number)} ctx_{index:02d} ({row["context_id"]}) seeds {list(SEEDS)}', flush=True)
-            result = evaluate(cfg, sampling_seeds=list(SEEDS), context_ids=[row['context_id']], output_directory=local)
-            rollouts = json.loads((local / 'rollouts.json').read_text())
-            out.mkdir(parents=True, exist_ok=True)
-            np.savez_compressed(out / 'trajectories.npz',
-                                **slim_trajectories(rollouts, cfg.values['solver']['feasibility_tolerance_m']))
-            summary = {k: result[k] for k in ('success_rate', 'plan_ms', 'plan_attempts', 'model_calls', 'qp_calls',
-                                              'pf_calls', 'executed_actions', 'execution_intervention_rate',
-                                              'filter_abort_rate', 'mean_steps')}
-            record = {'protocol': PROTOCOL, 'task': task, 'combo': combo_id(task, number), 'number': number,
-                      'methods': combo_flags(number), 'context_index': index, 'context_id': row['context_id'],
-                      'context_sha256': row['context_sha256'], 'noise_seeds': list(SEEDS), 'member': name,
-                      'device': info, 'code_fingerprint': fingerprint, 'git_commit': commit,
-                      'max_steps': cfg.values['eval']['max_steps'],
-                      'finished_utc': datetime.now(timezone.utc).isoformat(),
-                      'wall_s': perf_counter() - started, 'summary': summary, 'episodes': result['episodes']}
-            # result.json은 마지막에 쓴다. 이 파일이 있으면 완료된 단위다.
-            result_path.write_text(json.dumps(record, indent=1, allow_nan=False) + '\n')
-            print(f'DONE {combo_id(task, number)} ctx_{index:02d} success {result["success_rate"]:.2f} '
-                  f'{record["wall_s"]:.0f}s', flush=True)
+            with unit_lock(task, number, index, smoke) as acquired:
+                if not acquired:
+                    # 다른 프로세스(다른 GPU 등)가 지금 이 단위를 실행 중이다. 건너뛰고 다음 단위로 간다.
+                    print(f'BUSY {combo_id(task, number)} ctx_{index:02d} (running in another process)', flush=True)
+                    continue
+                rows = run_unit(task, number, index, device, name, max_steps, rows, fingerprint, info, commit, tracked)
+
+
+def run_unit(task, number, index, device, name, max_steps, rows, fingerprint, info, commit, tracked):
+    """잠금을 잡은 상태에서 단위 하나를 실행한다. 이미 완료됐으면 건너뛴다. 평가 목록을 반환한다."""
+    from .evaluation import evaluate
+    smoke = max_steps is not None
+    out = unit_dir(tracked, task, number, index)
+    result_path = out / 'result.json'
+    if result_path.exists():
+        saved = json.loads(result_path.read_text())
+        if saved['code_fingerprint'] != fingerprint:
+            raise ValueError(f'{result_path} was produced by different code; do not mix results')
+        print(f'SKIP {combo_id(task, number)} ctx_{index:02d} (done by {saved["member"]})', flush=True)
+        return rows
+    overrides = {**{f'methods.{k}.enabled': v for k, v in combo_flags(number).items()},
+                 'device': device, 'eval.n_contexts': 0, 'eval.execute_steps': 8,
+                 'sampling.predict_steps': 10,
+                 'paths.output_root': str(LOCAL_ROOT)}
+    if smoke:
+        overrides['eval.max_steps'] = max_steps
+    cfg = ExperimentConfig.from_yaml(REPO / f'configs/{task}.yaml', overrides)
+    if rows is None:
+        rows = load_selection(task, cfg.values['paths']['d3il_root'])
+    row = rows[index]
+    local = unit_dir(LOCAL_ROOT / ('smoke' if smoke else 'full'), task, number, index)
+    if local.exists():
+        # 중단된 이전 시도는 지우지 않고 이름을 바꿔 보존한다.
+        local.rename(local.with_name(local.name + '.interrupted.' + datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')))
+    started = perf_counter()
+    print(f'RUN  {combo_id(task, number)} ctx_{index:02d} ({row["context_id"]}) seeds {list(SEEDS)}', flush=True)
+    result = evaluate(cfg, sampling_seeds=list(SEEDS), context_ids=[row['context_id']], output_directory=local)
+    rollouts = json.loads((local / 'rollouts.json').read_text())
+    out.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(out / 'trajectories.npz',
+                        **slim_trajectories(rollouts, cfg.values['solver']['feasibility_tolerance_m']))
+    summary = {k: result[k] for k in ('success_rate', 'plan_ms', 'plan_attempts', 'model_calls', 'qp_calls',
+                                      'pf_calls', 'executed_actions', 'execution_intervention_rate',
+                                      'filter_abort_rate', 'mean_steps')}
+    record = {'protocol': PROTOCOL, 'task': task, 'combo': combo_id(task, number), 'number': number,
+              'methods': combo_flags(number), 'context_index': index, 'context_id': row['context_id'],
+              'context_sha256': row['context_sha256'], 'noise_seeds': list(SEEDS), 'member': name,
+              'device': info, 'code_fingerprint': fingerprint, 'git_commit': commit,
+              'max_steps': cfg.values['eval']['max_steps'],
+              'finished_utc': datetime.now(timezone.utc).isoformat(),
+              'wall_s': perf_counter() - started, 'summary': summary, 'episodes': result['episodes']}
+    # result.json은 마지막에 쓴다. 이 파일이 있으면 완료된 단위다.
+    result_path.write_text(json.dumps(record, indent=1, allow_nan=False) + '\n')
+    print(f'DONE {combo_id(task, number)} ctx_{index:02d} success {result["success_rate"]:.2f} '
+          f'{record["wall_s"]:.0f}s', flush=True)
+    return rows
+
+
+@contextmanager
+def unit_lock(task, number, index, smoke):
+    """같은 장비에서 동시에 실행한 프로세스끼리 같은 단위를 두 번 돌리지 않게 한다(비차단 flock).
+
+    잠금 파일은 로컬(fm_constraint/runs)에 있으므로 서로 다른 장비 사이에는 적용되지 않는다.
+    장비 사이의 중복은 README의 context 분담으로 막는다.
+    """
+    path = LOCAL_ROOT / 'locks' / ('smoke' if smoke else 'full') / f'{combo_id(task, number)}_ctx_{index:02d}.lock'
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open('w') as handle:
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            yield False
+            return
+        try:
+            handle.write(f'{os.getpid()}\n')
+            handle.flush()
+            yield True
+        finally:
+            fcntl.flock(handle, fcntl.LOCK_UN)
 
 
 # ---- 집계 ---------------------------------------------------------------------------
