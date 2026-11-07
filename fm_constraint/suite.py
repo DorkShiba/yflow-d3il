@@ -1,4 +1,8 @@
-"""16개 순차 실험의 고정 context·seed 목록, 실행, 보고 지표 집계를 관리한다."""
+"""5개 방법 × 32조합 순차 실험의 고정 context·seed 목록, 실행, 보고 지표 집계를 관리한다.
+
+조합 ID 비트: ① Projection=16, ② PF2MP=8, ③ Filter=4, ④ RTC=2, ⑤ LiPo=1 (P00..P31, I00..I31).
+기존 method123 실험의 P00 P04 … P28은 ④⑤ OFF인 같은 번호다.
+"""
 
 import argparse
 from datetime import datetime, timezone
@@ -14,9 +18,19 @@ from configs.config import ExperimentConfig, REPO
 from .evaluation import evaluate
 from .pf2mp import file_hash
 
-COMBINATIONS = (0, 4, 8, 12, 16, 20, 24, 28)
-# 결과를 보기 전에 고정하는 상보성 비교: triple은 Projection+PF와 Filter를 비교한다.
-COMPLEMENTARITY = {12: (8, 4), 20: (16, 4), 24: (16, 8), 28: (24, 4)}
+from configs.config import METHODS
+
+COMBINATIONS = tuple(range(32))
+BITS = dict(zip(METHODS, (16, 8, 4, 2, 1)))
+
+
+def _complementarity(number):
+    """결과를 보기 전에 고정한 비교: A = 마지막 방법(가장 낮은 비트)을 뺀 조합, B = 그 방법 단독."""
+    low = number & -number
+    return (number - low, low) if number and number != low else None
+
+
+COMPLEMENTARITY = {n: _complementarity(n) for n in COMBINATIONS if _complementarity(n)}
 
 
 def _context_digest(value):
@@ -55,15 +69,16 @@ def prepare(root, stage, inserting_set, device, split_seed, max_steps=None, cont
         raise ValueError('max_steps/context_limit overrides are only allowed for smoke checks')
     root.mkdir(parents=True, exist_ok=True)
     seeds = list(range(5)) if stage == 'main' else [100, 101] if stage == 'smoke' else [100, 101, 102]
-    manifest = {'protocol_version': 'method123_v1', 'model_implementation': 'fm_baseline.models.v1', 'request': request,
+    manifest = {'protocol_version': 'suite_v1', 'model_implementation': 'fm_baseline.models.v1', 'request': request,
                 'created_at': datetime.now(timezone.utc).isoformat(), 'sampling_seeds': seeds,
                 'seeding': 'SHA256 JSON [task,context_id,sampling_seed], independent per rollout FM generator',
-                'rtc': False, 'lipo': False, 'terminal_vlsa': False, 'tasks': {}, 'source_hashes': {},
+                'methods': list(METHODS), 'tasks': {}, 'source_hashes': {},
                 'runtime_versions': {name: version(name) for name in ['torch', 'numpy', 'osqp', 'mujoco', 'PyYAML']},
                 'complementarity': {str(k): list(v) for k, v in COMPLEMENTARITY.items()}}
-    for relative in ['fm_constraint/method123.py', 'fm_constraint/evaluation.py', 'fm_constraint/policy.py',
+    for relative in ['fm_constraint/suite.py', 'fm_constraint/evaluation.py', 'fm_constraint/policy.py',
                      'fm_constraint/pf2mp.py', 'fm_constraint/constraints.py', 'fm_constraint/qp.py',
-                     'configs/config.py', 'fm_constraint/method123_metrics.py', 'scripts/run_method123.sh',
+                     'fm_constraint/rtc.py', 'fm_constraint/lipo.py', 'ood/apply.py',
+                     'configs/config.py', 'fm_constraint/suite_metrics.py', 'scripts/run_suite.sh',
                      'fm_baseline/train.py', 'fm_baseline/eval_pushing.py',
                      'fm_baseline/models/__init__.py', 'fm_baseline/models/temporal_unet.py',
                      'fm_baseline/models/flow_matching.py', 'fm_baseline/models/ode.py']:
@@ -77,8 +92,8 @@ def prepare(root, stage, inserting_set, device, split_seed, max_steps=None, cont
         settings['max_steps'] = (max_steps or 10) if stage == 'smoke' else (400 if task == 'pushing' else 2000)
         v['sampling']['predict_steps'] = 10
         v['methods']['projection'].update(enabled=False, mode='every', skip_first=0)
-        v['methods']['pf2mp']['enabled'] = False
-        v['methods']['vlsa'].update(enabled=False, execution_recheck=False)
+        for name in METHODS:
+            v['methods'][name]['enabled'] = False
         cfg.validate('eval')
         dataset_root = Path(paths['data_root']) / f'{task}_sincos_v1'
         inputs = {str(Path(paths['run_dir']) / name): file_hash(Path(paths['run_dir']) / name)
@@ -138,8 +153,7 @@ def prepare(root, stage, inserting_set, device, split_seed, max_steps=None, cont
             path = root / f'{task}_{label}_contexts.json'
             inputs[str(path)] = file_hash(path)
         jobs = [{'id': f'{"P" if task == "pushing" else "I"}{number:02d}', 'number': number,
-                 'projection': bool(number & 16), 'pf2mp': bool(number & 8),
-                 'executed_action_filter': bool(number & 4), 'rtc': False, 'lipo': False}
+                 **{name: bool(number & bit) for name, bit in BITS.items()}}
                 for number in COMBINATIONS]
         manifest['tasks'][task] = {'dataset_root': str(dataset_root), 'train_sha256': _train_digest(dataset_root),
                                    'context_ids': ids, 'context_list_sha256': _digest(selected),
@@ -147,13 +161,13 @@ def prepare(root, stage, inserting_set, device, split_seed, max_steps=None, cont
                                    'rollouts_per_job': len(ids) * len(seeds),
                                    'evaluation_label': ('validation_all_not_independent_test' if task == 'inserting' and inserting_set == 'all-val'
                                                         else 'heldout_contexts' if stage == 'main' else 'tuning_function_check' if stage == 'smoke' else 'tuning_pilot')}
-    manifest['total_rollouts'] = sum(row['rollouts_per_job'] * 8 for row in manifest['tasks'].values())
+    manifest['total_rollouts'] = sum(row['rollouts_per_job'] * len(COMBINATIONS) for row in manifest['tasks'].values())
     manifest['manifest_sha256'] = _digest(manifest)
     manifest_path.write_text(json.dumps(manifest, indent=2))
     print(f'Frozen plan: {manifest_path}')
     for task, row in manifest['tasks'].items():
-        print(f'{task}: {len(row["context_ids"])} contexts × {len(seeds)} seeds × 8 combinations')
-    print(f'Total: 16 sequential jobs, {manifest["total_rollouts"]} rollouts; RTC=OFF LiPo=OFF terminal VLSA=OFF')
+        print(f'{task}: {len(row["context_ids"])} contexts × {len(seeds)} seeds × {len(COMBINATIONS)} combinations')
+    print(f'Total: {2 * len(COMBINATIONS)} sequential jobs, {manifest["total_rollouts"]} rollouts')
     return manifest
 
 
@@ -199,17 +213,16 @@ def run(root, job_id):
         stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
         output.rename(root / f'{job_id}.interrupted.{stamp}')
     cfg = ExperimentConfig.from_yaml(spec['config'], {
-        'methods.projection.enabled': job['projection'], 'methods.pf2mp.enabled': job['pf2mp'],
-        'paths.output_root': str(root)})
-    metadata = {'experiment_protocol': 'method123_v1', 'combination_id': job_id,
+        **{f'methods.{name}.enabled': job[name] for name in METHODS}, 'paths.output_root': str(root)})
+    metadata = {'experiment_protocol': 'suite_v1', 'combination_id': job_id,
                 'experiment_manifest_sha256': manifest['manifest_sha256'],
                 'context_list_sha256': spec['context_list_sha256'],
-                'experiment_methods': {k: job[k] for k in ('projection', 'pf2mp', 'executed_action_filter', 'rtc', 'lipo')},
-                'evaluation_label': spec['evaluation_label'], 'terminal_vlsa': False,
+                'experiment_methods': {k: job[k] for k in METHODS},
+                'evaluation_label': spec['evaluation_label'],
                 'execution_queue_rule': 'discard_remaining_queue_after_modified_action',
                 'git_commit': manifest['git_commit'], 'source_hashes': manifest['source_hashes'],
                 'runtime_versions': manifest['runtime_versions']}
-    result = evaluate(cfg, execution_filter=job['executed_action_filter'], sampling_seeds=manifest['sampling_seeds'],
+    result = evaluate(cfg, sampling_seeds=manifest['sampling_seeds'],
                       context_ids=spec['context_ids'], output_directory=output, experiment_metadata=metadata)
     expected = {(context, seed) for context in spec['context_ids'] for seed in manifest['sampling_seeds']}
     actual = [(row['context_id'], row['sampling_seed']) for row in result['episodes']]
@@ -243,7 +256,7 @@ def main():
             parser.error('run requires --job')
         run(root, args.job)
     else:
-        from .method123_metrics import summarize
+        from .suite_metrics import summarize
         summarize(root)
 
 

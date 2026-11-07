@@ -1,4 +1,4 @@
-"""실제 실행 지표와 context 묶음 bootstrap으로 16개 실험 결과를 집계한다."""
+"""실제 실행 지표와 context 묶음 bootstrap으로 32조합 실험 결과를 집계한다."""
 
 import json
 from pathlib import Path
@@ -56,12 +56,13 @@ def _estimate(value, samples):
 
 
 def summarize(root):
-    """16개 완료 결과를 대조한 뒤 태스크별 추정값과 대응 차이를 저장한다."""
-    from .method123 import verify_inputs, COMPLEMENTARITY
+    """모든 완료 결과를 대조한 뒤 태스크별 추정값과 대응 차이를 저장한다."""
+    from configs.config import METHODS
+    from .suite import verify_inputs, COMPLEMENTARITY
     from .pf2mp import file_hash
     manifest = json.loads((root / 'experiment_manifest.json').read_text())
     verify_inputs(root, manifest)
-    summary = {'protocol_version': 'method123_v1', 'manifest_sha256': manifest['manifest_sha256'],
+    summary = {'protocol_version': 'suite_v1', 'manifest_sha256': manifest['manifest_sha256'],
                'bootstrap_unit': 'context_cluster_all_seeds', 'n_bootstrap': 2000,
                'bootstrap_seed': 2026, 'tasks': {}}
     for task, spec in manifest['tasks'].items():
@@ -103,12 +104,12 @@ def summarize(root):
                     row['complementarity']['metrics'][name] = _estimate(value, samples)
         summary['tasks'][task] = list(results.values())
     (root / 'summary.json').write_text(json.dumps(summary, indent=2, allow_nan=False))
-    lines = ['# Method 1/2/3 results', '', 'RTC=OFF, LiPo=OFF, terminal VLSA=OFF. Values are estimates [95% context bootstrap CI].', '']
+    lines = ['# Five-method results', '', 'Values are estimates [95% context bootstrap CI].', '']
     for task, rows in summary['tasks'].items():
-        lines += [f'## {task}', '', '| ID | Projection | PF2MP | Executed filter | Success % | Violation % | Action change m | Jerk m/s³ | Entropy | Method abort % |',
-                  '|---|---|---|---|---:|---:|---:|---:|---:|---:|']
+        lines += [f'## {task}', '', '| ID | ① Projection | ② PF2MP | ③ Filter | ④ RTC | ⑤ LiPo | Success % | Violation % | Action change m | Jerk m/s³ | Entropy | Method abort % |',
+                  '|---|---|---|---|---|---|---:|---:|---:|---:|---:|---:|']
         for row in rows:
-            cells = [row['job']['id'], *['ON' if row['job'][key] else 'OFF' for key in ('projection', 'pf2mp', 'executed_action_filter')]]
+            cells = [row['job']['id'], *['ON' if row['job'][key] else 'OFF' for key in METHODS]]
             for name in NAMES:
                 estimate = row['metrics'][name]
                 if estimate['value'] is None:

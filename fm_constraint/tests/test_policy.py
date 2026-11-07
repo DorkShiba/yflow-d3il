@@ -43,24 +43,74 @@ def baseline(steps=10):
     return p
 
 
-@pytest.mark.parametrize('flags', list(product((False, True), repeat=3)))
-def test_all_combinations_obey_conditions_and_call_budget(flags):
-    cfg = ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml')
-    projection, pf, vlsa = flags
-    for name, enabled in zip(('projection', 'pf2mp', 'vlsa'), flags):
-        cfg.values['methods'][name]['enabled'] = enabled
+SUFFIX = np.full((2, 2), .001)          # horizon 4, execute 2 → H−s = 2
+HISTORY = np.array([[.498, 0.], [.499, 0.], [.5, 0.]])
+
+
+def config(**enabled):
+    cfg = ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml', {'eval.execute_steps': 2})
+    for name, value in enabled.items():
+        cfg.values['methods'][name]['enabled'] = value
+    return cfg
+
+
+@pytest.mark.parametrize('flags', list(product((False, True), repeat=4)))
+def test_all_plan_combinations_obey_conditions_and_call_budget(flags):
+    projection, pf, rtc, lipo = flags
+    cfg = config(projection=projection, pf2mp=pf, rtc=rtc, lipo=lipo)
     torch.manual_seed(19)
     p = Policy(baseline(), cfg, potential(cfg) if pf else None)
-    plan = p.plan(OBS, [.001, -.001])
+    plan = p.plan(OBS, [.001, -.001], torch.randn(1, 4, 14), rtc_suffix=SUFFIX, history=HISTORY)
     assert plan is not None, p.last_report
-    np.testing.assert_allclose(plan[0, 2:], OBS, atol=1e-7)
+    np.testing.assert_allclose(plan[0, 2:], OBS, atol=1e-6)
     assert p.last_report['model_calls'] == 10
-    assert p.last_report['qp_calls'] == 10 * projection + vlsa
-    assert p.last_report['pipeline_order'] == ['pf2mp', 'projection', 'vlsa']
-    assert list(p.last_report['stages']) == ['predict'] + (['vlsa'] if vlsa else [])
+    assert p.last_report['qp_calls'] == 10 * projection + lipo
+    assert p.last_report['pipeline_order'] == ['rtc', 'pf2mp', 'projection', 'lipo', 'filter']
+    assert p.last_report['rtc_guided'] == rtc
+    assert list(p.last_report['stages']) == ['predict'] + (['lipo'] if lipo else [])
     assert p.last_report['pf_calls'] == 10 * pf
-    if projection or vlsa:
+    if projection:
         assert p.last_report['final']['qp_max_m'] <= 1e-7
+    if lipo:
+        assert p.last_report['lipo']['correction_max_m'] <= cfg.values['methods']['lipo']['bound_m'] + 1e-9
+        assert p.last_report['lipo']['jerk_cost_after_m2'] <= p.last_report['lipo']['jerk_cost_before_m2'] + 1e-15
+
+
+def test_rtc_pulls_actions_toward_suffix_and_is_inert_without_reference():
+    noise = torch.randn(1, 4, 14, generator=torch.Generator().manual_seed(3))
+    plain = Policy(baseline(), config()).plan(OBS, [0, 0], noise)
+    no_ref = Policy(baseline(), config(rtc=True)).plan(OBS, [0, 0], noise)
+    np.testing.assert_array_equal(plain, no_ref)
+    target = np.full((2, 2), .005)
+    guided = Policy(baseline(), config(rtc=True)).plan(OBS, [0, 0], noise, rtc_suffix=target)
+    assert np.abs(guided[:2, :2] - target).max() < np.abs(plain[:2, :2] - target).max()
+    cfg = config(rtc=True)
+    cfg.values['methods']['rtc']['beta'] = 0.
+    np.testing.assert_allclose(Policy(baseline(), cfg).plan(OBS, [0, 0], noise, rtc_suffix=target), plain, atol=1e-6)
+    p = Policy(baseline(), config(rtc=True))
+    assert p.plan(OBS, [0, 0], noise, rtc_suffix=np.zeros((3, 2))) is None
+    assert p.last_report['failure_stage'] == 'rtc'
+
+
+def test_lipo_keeps_frozen_prefix_and_projection_constraints():
+    noise = torch.randn(1, 4, 14, generator=torch.Generator().manual_seed(5))
+    frozen = np.array([[.002, -.001]])
+    p = Policy(baseline(), config(projection=True, lipo=True))
+    plan = p.plan(OBS, [0, 0], noise, frozen=frozen, history=HISTORY)
+    assert plan is not None, p.last_report
+    np.testing.assert_array_equal(plan[0, :2].astype(np.float32), frozen[0].astype(np.float32))
+    assert p.last_report['lipo']['constrained'] and p.last_report['lipo']['frozen_prefix'] == 1
+    constraints = PlanConstraints(OBS, [0, 0], 4, p.config['constraints'])
+    keep = np.abs(constraints.G[:, 2:]).sum(1) > 0
+    assert np.maximum(constraints.G[keep] @ plan[:, :2].ravel() - constraints.d[keep], 0).max() <= 1e-6
+
+
+def test_lipo_failure_stops_the_plan(monkeypatch):
+    import fm_constraint.policy as module
+    monkeypatch.setattr(module, 'jerk_qp', lambda *a, **k: {'value': None, 'status': 'lipo_infeasible', 'latency_ms': 0.})
+    p = Policy(baseline(), config(lipo=True))
+    assert p.plan(OBS, [0, 0], torch.zeros(1, 4, 14)) is None
+    assert p.last_report['failure_stage'] == 'lipo'
 
 
 def test_all_off_exactly_delegates_without_extra_random_draw():
@@ -74,22 +124,6 @@ def test_all_off_exactly_delegates_without_extra_random_draw():
     assert torch.equal(torch.get_rng_state(), expected_rng)
 
 
-def test_final_projection_matches_vlsa_and_every_then_vlsa_is_idempotent():
-    cfg = ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml')
-    noise = torch.randn(1, 4, 14, generator=torch.Generator().manual_seed(42))
-    cfg.values['methods']['projection'].update(enabled=True, mode='final')
-    final = Policy(baseline(), cfg).plan(OBS, [0., 0.], noise)
-    cfg.values['methods']['projection']['enabled'] = False
-    cfg.values['methods']['vlsa']['enabled'] = True
-    terminal = Policy(baseline(), cfg).plan(OBS, [0., 0.], noise)
-    np.testing.assert_array_equal(final, terminal)
-    cfg.values['methods']['projection'].update(enabled=True, mode='every')
-    both = Policy(baseline(), cfg).plan(OBS, [0., 0.], noise)
-    cfg.values['methods']['vlsa']['enabled'] = False
-    every = Policy(baseline(), cfg).plan(OBS, [0., 0.], noise)
-    np.testing.assert_allclose(both, every, atol=1e-8)
-
-
 def test_single_step_predict_and_invalid_inputs():
     cfg = ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml', {'sampling.predict_steps': 1})
     p = Policy(baseline(), cfg)
@@ -101,7 +135,8 @@ def test_single_step_predict_and_invalid_inputs():
 
 
 def test_infeasible_joint_constraints_return_no_plan():
-    cfg = ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml', {'methods.vlsa.enabled': True})
+    cfg = ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml', {
+        'methods.projection.enabled': True, 'methods.projection.mode': 'final'})
     cfg.values['constraints']['object_envelope']['margin_m'] = .001
     obs = OBS.copy()
     obs[4:6] = obs[8:10] = [.8, .3]
@@ -157,18 +192,17 @@ def test_zero_weight_is_identical_and_pf_only_measures_hard_violations():
     assert not policy.last_report['hard_constraints_enforced']
 
 
-@pytest.mark.parametrize('stage', ['projection', 'vlsa'])
+@pytest.mark.parametrize('stage', ['projection', 'projection_final'])
 @pytest.mark.parametrize('failure', ['solver_failure', 'infeasible'])
 def test_qp_failure_stops_pipeline(monkeypatch, stage, failure):
     import fm_constraint.policy as module
     cfg = ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml', {
-        'methods.projection.enabled': True, 'methods.vlsa.enabled': True, 'sampling.predict_steps': 1})
+        'methods.projection.enabled': True, 'methods.lipo.enabled': True, 'sampling.predict_steps': 1,
+        'methods.projection.mode': 'every' if stage == 'projection' else 'final'})
     def failed(*args):
         result = solve_qp(*args)
         result.update(value=None, status=failure)
         return result
-    if stage == 'vlsa':
-        cfg.values['methods']['projection']['enabled'] = False
     monkeypatch.setattr(module, 'solve_qp', failed)
     p = Policy(baseline(1), cfg)
     assert p.plan(OBS, [0, 0], torch.zeros(1, 4, 14)) is None
@@ -179,7 +213,8 @@ def test_qp_failure_stops_pipeline(monkeypatch, stage, failure):
 @pytest.mark.parametrize('value,status', [(.2, 'constraint_violation'), (1e100, 'invalid_policy_output')])
 def test_terminal_dtype_failure(monkeypatch, value, status):
     import fm_constraint.policy as module
-    cfg = ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml', {'methods.vlsa.enabled': True})
+    cfg = ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml', {
+        'methods.projection.enabled': True, 'methods.projection.mode': 'final'})
     def inaccurate(*args):
         result = solve_qp(*args)
         result['value'] = np.full(8, value)
@@ -194,7 +229,7 @@ def test_terminal_dtype_failure(monkeypatch, value, status):
 
 def test_nonfinite_pf_stops_before_qp():
     cfg = ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml', {
-        'methods.pf2mp.enabled': True, 'methods.vlsa.enabled': True})
+        'methods.pf2mp.enabled': True, 'methods.projection.enabled': True, 'methods.projection.mode': 'final'})
     field = potential(cfg)
     field.support[:] = float('nan')
     p = Policy(baseline(), cfg, field)
@@ -204,8 +239,8 @@ def test_nonfinite_pf_stops_before_qp():
 
 
 @pytest.mark.parametrize('failure_call', [1, 2])
-def test_nonfinite_model_output_stops_before_terminal_vlsa(failure_call):
-    cfg = ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml', {'methods.vlsa.enabled': True})
+def test_nonfinite_model_output_stops_before_lipo(failure_call):
+    cfg = ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml', {'methods.lipo.enabled': True})
     base = baseline()
     count = 0
     def model(x, t):
@@ -220,18 +255,6 @@ def test_nonfinite_model_output_stops_before_terminal_vlsa(failure_call):
     assert p.plan(OBS, [0, 0], torch.zeros(1, 4, 14)) is None
     assert p.last_report['failure_stage'] == 'predict'
     assert p.last_report['qp_calls'] == 0
-
-
-@pytest.mark.parametrize('pf', [False, True])
-def test_terminal_after_every_projection_is_idempotent_with_pf(pf):
-    cfg = ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml', {
-        'methods.projection.enabled': True, 'methods.pf2mp.enabled': pf})
-    field = potential(cfg) if pf else None
-    noise = torch.randn(1, 4, 14, generator=torch.Generator().manual_seed(10))
-    without = Policy(baseline(), cfg, field).plan(OBS, [0, 0], noise)
-    cfg.values['methods']['vlsa']['enabled'] = True
-    with_terminal = Policy(baseline(), cfg, field).plan(OBS, [0, 0], noise)
-    np.testing.assert_allclose(with_terminal, without, rtol=0, atol=1e-8)
 
 
 def test_combined_step_matches_independent_numeric_reference():

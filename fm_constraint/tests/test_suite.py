@@ -1,4 +1,4 @@
-"""순차 실험의 조합·분할·대응 난수·실행 필터와 보고 집계를 검증한다."""
+"""32조합 순차 실험의 조합·분할·대응 난수·실행 필터와 보고 집계를 검증한다."""
 
 import copy
 import json
@@ -10,25 +10,20 @@ import torch
 
 from configs.config import ExperimentConfig, REPO
 from fm_constraint.evaluation import run_evaluation
-from fm_constraint.method123 import COMBINATIONS, prepare, verify_inputs
-from fm_constraint.method123_metrics import _aggregate, _frame
+from fm_constraint.suite import BITS, COMBINATIONS, COMPLEMENTARITY, prepare, verify_inputs
+from fm_constraint.suite_metrics import _aggregate, _frame
 from fm_constraint.tests.test_evaluation import FakeEnv, FakePolicy, read_state, build_obs, CONTEXTS, SETTINGS
 from fm_constraint.tests.test_policy import baseline
 
 
-def test_execution_filter_independent_of_terminal_vlsa():
-    config = ExperimentConfig.from_yaml(REPO / 'configs/pushing.yaml').values
-    config['constraints']['acceleration']['max_m_s2'] = .8
-    env, policy = FakeEnv(), FakePolicy(actions=(.04, .04))
-    result, logs = run_evaluation(env, policy, CONTEXTS, read_state, build_obs, None,
-                                   'pushing', SETTINGS, config, execution_filter=True)
-    assert not config['methods']['vlsa']['enabled']
-    assert result['executed_action_filter'] and result['execution_recheck']
-    assert len(policy.calls) == 5
-    actions = np.array([row['safe_action'] for row in logs['c000_t0']])
-    np.testing.assert_allclose([call[1] for call in policy.calls][1:], actions[:-1])
-    assert (np.linalg.norm(np.diff(actions, axis=0, prepend=np.zeros((1, 2))), axis=1) / .035**2).max() <= .8 + 1e-5
-    assert all(row['queue_invalidated'] for row in logs['c000_t0'])
+def test_combination_bits_and_preregistered_complementarity():
+    assert COMBINATIONS == tuple(range(32))
+    assert BITS == {'projection': 16, 'pf2mp': 8, 'filter': 4, 'rtc': 2, 'lipo': 1}
+    # 기존 method123 비교 쌍과 일치하고, 단독·all-off에는 비교가 없다.
+    assert COMPLEMENTARITY[12] == (8, 4) and COMPLEMENTARITY[20] == (16, 4)
+    assert COMPLEMENTARITY[24] == (16, 8) and COMPLEMENTARITY[28] == (24, 4)
+    assert COMPLEMENTARITY[31] == (30, 1) and COMPLEMENTARITY[3] == (2, 1)
+    assert not ({0, 1, 2, 4, 8, 16} & set(COMPLEMENTARITY))
 
 
 def test_noise_per_context_seed_ignores_prior_abort_and_global_rng():
@@ -40,7 +35,7 @@ def test_noise_per_context_seed_ignores_prior_abort_and_global_rng():
             self.base = baseline()
             self.abort_first = abort_first
             self.noises = []
-        def plan(self, obs, previous, noise=None):
+        def plan(self, obs, previous, noise=None, **kwargs):
             self.noises.append(noise.clone())
             output = super().plan(obs, previous)
             if self.abort_first and len(self.noises) == 1:
@@ -67,14 +62,17 @@ def test_noise_per_context_seed_ignores_prior_abort_and_global_rng():
 
 def test_group_holdout_and_manifest_are_frozen():
     import tempfile
-    with tempfile.TemporaryDirectory(prefix='method123_test_', dir=REPO / 'fm_constraint/runs') as name:
+    with tempfile.TemporaryDirectory(prefix='suite_test_', dir=REPO / 'fm_constraint/runs') as name:
         root = __import__('pathlib').Path(name)
         manifest = prepare(root, 'main', 'holdout', 'cpu', 2026)
-        assert manifest['total_rollouts'] == 4800
+        assert manifest['total_rollouts'] == 300 * 32 * 2
         assert manifest['tasks']['pushing']['rollouts_per_job'] == 300
         assert manifest['tasks']['inserting']['rollouts_per_job'] == 300
         assert [row['number'] for row in manifest['tasks']['pushing']['jobs']] == list(COMBINATIONS)
-        assert all(not row['rtc'] and not row['lipo'] for spec in manifest['tasks'].values() for row in spec['jobs'])
+        jobs = manifest['tasks']['inserting']['jobs']
+        assert [row['id'] for row in jobs][:3] == ['I00', 'I01', 'I02']
+        assert jobs[19] == {'id': 'I19', 'number': 19, 'projection': True, 'pf2mp': False,
+                            'filter': False, 'rtc': True, 'lipo': True}
         tuning = json.loads((root / 'inserting_tuning_contexts.json').read_text())
         final = json.loads((root / 'inserting_final_contexts.json').read_text())
         assert len(tuning) == 20 and len(final) == 60

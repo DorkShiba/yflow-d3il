@@ -9,6 +9,8 @@ from pathlib import Path
 import yaml
 
 REPO = Path(__file__).resolve().parents[1]
+# ①~⑤. 조합 ID 비트: ①=16, ②=8, ③=4, ④=2, ⑤=1.
+METHODS = ('projection', 'pf2mp', 'filter', 'rtc', 'lipo')
 
 
 def _merge_settings(target, supplied, prefix=''):
@@ -45,7 +47,7 @@ class ExperimentConfig:
         task = supplied['task']
         inserting = task == 'inserting'
         values = {
-            'schema_version': 3, 'task': task, 'device': 'cpu',
+            'schema_version': 4, 'task': task, 'device': 'cpu',
             'paths': {
                 'run_dir': f'fm_baseline/results/{task}_baseline',
                 'output_root': 'fm_constraint/runs', 'data_root': 'data',
@@ -71,16 +73,17 @@ class ExperimentConfig:
                      **({'split': 'val'} if inserting else {'contexts': 'test'})},
             'control': {'dt_s': 0.035},
             'sampling': {'predict_steps': 10},
-            # 가독성을 위해 실행 순서로 나열한다. 순서를 선택하는 설정은 아니다.
+            # 5개 train-free 방법. 실행 순서는 policy.PIPELINE_ORDER로 고정이며 설정으로 바꾸지 않는다.
             'methods': {
-                'projection': {'enabled': False, 'mode': 'every', 'scope': 'predict', 'skip_first': 0},
+                'projection': {'enabled': False, 'mode': 'every', 'skip_first': 0},
                 'pf2mp': {'enabled': False, 'weight': 0.01, 'bandwidth_m': 0.025,
                           'distance_alpha': -1.0, 'max_support': 3000, 'seed': 42,
                           'grid_step_m': 0.01, 'grid_padding_m': 0.15,
                           'density_quantile': 0.05, 'query_chunk_size': 128,
                           'lock_timeout_s': 600.0},
-                'vlsa': {'enabled': False, 'scope': 'terminal_plan', 'execution_recheck': False,
-                         'invalidate_queue_on_change': True},
+                'filter': {'enabled': False},
+                'rtc': {'enabled': False, 'beta': 5.0},
+                'lipo': {'enabled': False, 'bound_m': 0.0003},
             },
             'constraints': {
                 'workspace': {'enabled': True, 'geometry': 'rectangle', 'source': 'research_bounds',
@@ -98,8 +101,6 @@ class ExperimentConfig:
                        'eps_abs': 1e-9, 'eps_rel': 1e-9, 'max_iter': 20000,
                        'on_failure': 'abort_episode'},
         }
-        if 'pc' in supplied.get('methods', {}) or any(k.startswith('methods.pc') for k in (overrides or {})):
-            raise ValueError('PC is retired; select methods.pf2mp explicitly (schema v3)')
         _merge_settings(values, supplied)
         for dotted, value in (overrides or {}).items():
             parts = dotted.split('.')
@@ -133,8 +134,8 @@ class ExperimentConfig:
         """형상·단위·지원 모드를 확인한다. 미지원 설정을 자동 대체하지 않는다."""
         v = self.values
         model, train, ev = (v[k] for k in ('model', 'train', 'eval'))
-        if v['schema_version'] != 3:
-            raise ValueError('Require schema_version: 3; PC is retired; migrate legacy settings explicitly')
+        if v['schema_version'] != 4:
+            raise ValueError('Require schema_version: 4 (methods: projection, pf2mp, filter, rtc, lipo)')
         for group, keys in [('model', ['horizon', 'dim']),
                             ('train', ['steps', 'batch_size', 'log_every', 'val_batches']),
                             ('sample', ['n_windows', 'batch_size']),
@@ -169,14 +170,15 @@ class ExperimentConfig:
         # 현재 D3IL은 1ms 내부 스텝 35회로 명령 하나를 실행한다. 다른 dt는 지원하지 않는다.
         if command == 'eval' and not math.isclose(v['control']['dt_s'], 0.035, abs_tol=1e-12):
             raise ValueError('D3IL evaluation requires control.dt_s=0.035')
-        proj, vlsa, pf = (v['methods'][k] for k in ('projection', 'vlsa', 'pf2mp'))
-        if proj['mode'] not in ('every', 'final') or proj['scope'] != 'predict' or proj['skip_first'] < 0:
-            raise ValueError('Invalid projection mode/scope/skip_first')
-        if vlsa['scope'] != 'terminal_plan' or not vlsa['invalidate_queue_on_change']:
-            raise ValueError('VLSA requires terminal_plan and queue invalidation on change')
-        # PF는 Predict 내부이므로 final Projection과 VLSA 사이에 보정이 없다.
-        if proj['enabled'] and proj['mode'] == 'final' and vlsa['enabled']:
-            raise ValueError('Projection final and terminal VLSA are identical; select one')
+        proj, pf, rtc, lipo = (v['methods'][k] for k in ('projection', 'pf2mp', 'rtc', 'lipo'))
+        if proj['mode'] not in ('every', 'final') or proj['skip_first'] < 0:
+            raise ValueError('Invalid projection mode/skip_first')
+        if not math.isfinite(rtc['beta']) or rtc['beta'] < 0:
+            raise ValueError('RTC beta must be finite and nonnegative')
+        if not math.isfinite(lipo['bound_m']) or lipo['bound_m'] <= 0:
+            raise ValueError('LiPo bound_m must be positive')
+        if rtc['enabled'] and 2 * ev['execute_steps'] > model['horizon']:
+            raise ValueError('RTC requires execute_steps <= horizon - execute_steps')
         for key in ('bandwidth_m', 'grid_step_m', 'grid_padding_m', 'lock_timeout_s'):
             if not math.isfinite(pf[key]) or pf[key] <= 0:
                 raise ValueError(f'PF2MP {key} must be positive')
@@ -305,15 +307,12 @@ def parse_config(command, task=None, argv=None):
     parser.add_argument('--config', required=True)
     parser.add_argument('--set', action='append', default=[], metavar='SECTION.KEY=VALUE')
     parser.add_argument('--device')
-    for method in ('projection', 'vlsa', 'pf2mp'):
+    for method in METHODS:
         parser.add_argument('--' + method, action=argparse.BooleanOptionalAction, default=None)
-    parser.add_argument('--pc', action=argparse.BooleanOptionalAction, default=None, help=argparse.SUPPRESS)
     parser.add_argument('--check-obs', type=int)
     parser.add_argument('--export-contexts')
     parser.add_argument('--ood', help='OOD condition in data/ood (e.g. id, A_mid, D_strong)')
     args = parser.parse_args(argv)
-    if args.pc is not None:
-        parser.error('PC is retired; use --pf2mp / --no-pf2mp explicitly')
     overrides = {}
     for item in args.set:
         if '=' not in item:
@@ -323,7 +322,7 @@ def parse_config(command, task=None, argv=None):
     for key, value in [('device', args.device), ('eval.check_obs', args.check_obs),
                        ('eval.export_contexts', args.export_contexts), ('eval.ood', args.ood),
                        *[(f'methods.{name}.enabled', getattr(args, name))
-                         for name in ('projection', 'vlsa', 'pf2mp')]]:
+                         for name in METHODS]]:
         if value is not None:
             overrides[key] = value
     cfg = ExperimentConfig.from_yaml(args.config, overrides)

@@ -1,4 +1,7 @@
-"""baseline 모델을 재사용하는 Predict[FM+PF → Euler → Projection] → VLSA 정책."""
+"""baseline 모델을 재사용하는 Predict[FM(+RTC)+PF → Euler → Projection] → LiPo 정책.
+
+③ 실행 직전 필터는 실행 루프(evaluation.py)에서 행동 하나씩 적용한다.
+"""
 
 from time import perf_counter
 
@@ -6,16 +9,20 @@ import numpy as np
 import torch
 
 from .constraints import PlanConstraints
+from .lipo import _rows_after, jerk_qp
 from .qp import solve_qp
+from .rtc import guided_velocity, rtc_target, soft_mask
 
 
-# 설정 키의 나열 순서와 무관한 고정 실행 순서다. 과거 결과와의 비교에도 저장한다.
-PIPELINE_ORDER = ('pf2mp', 'projection', 'vlsa')
+# 설정 키의 나열 순서와 무관한 고정 실행 순서다. 결과에도 저장한다.
+PIPELINE_ORDER = ('rtc', 'pf2mp', 'projection', 'lipo', 'filter')
 PIPELINE_METADATA = {
-    'pipeline_version': 'pf2mp_state_xy_v1',
-    'predict_update_order': ['fm', 'pf2mp', 'euler', 'projection'],
-    'post_predict_order': ['vlsa'],
+    'pipeline_version': 'five_methods_v4',
+    'predict_update_order': ['fm_or_rtc', 'pf2mp', 'euler', 'projection'],
+    'post_predict_order': ['lipo'],
+    'execution_order': ['filter'],
 }
+PLAN_METHODS = ('projection', 'pf2mp', 'rtc', 'lipo')
 
 
 class Policy:
@@ -30,8 +37,8 @@ class Policy:
         self.base = baseline_policy
         self.config = config.values if hasattr(config, 'values') and not isinstance(config, dict) else config
         self.methods = self.config['methods']
-        self.enabled = any(value['enabled'] for value in self.methods.values())
-        self.hard_constraints_enforced = any(self.methods[k]['enabled'] for k in ('projection', 'vlsa'))
+        self.enabled = any(self.methods[k]['enabled'] for k in PLAN_METHODS)
+        self.hard_constraints_enforced = self.methods['projection']['enabled']
         self.potential = potential
         if self.methods['pf2mp']['enabled'] and potential is None:
             raise ValueError('PF2MP enabled without prepared potential; call prepare_potential once')
@@ -73,7 +80,7 @@ class Policy:
         stages = self.last_report['stages']
         report = {'actions_m': raw[:, :2].tolist(), **constraints.violation(raw[:, :2])}
         if stages:
-            # VLSA 수정량은 Predict 종료 행동을 기준으로 측정한다.
+            # LiPo 수정량은 Predict 종료 행동을 기준으로 측정한다.
             previous = next(reversed(stages.values()))['actions_m']
             report['intervention_norm_m'] = float(np.linalg.norm(raw[:, :2] - np.asarray(previous)))
         reconstructed = constraints.q0 + np.cumsum(raw[:, :2], axis=0)
@@ -85,17 +92,23 @@ class Policy:
         stages[label] = report
 
     @torch.no_grad()
-    def plan(self, obs, previous_action, noise=None):
+    def plan(self, obs, previous_action, noise=None, rtc_suffix=None, frozen=None, history=None):
         """현재 관측과 직전 실행 행동으로 전체 계획을 생성한다.
 
         obs는 raw (obs_dim,), previous_action은 실제 실행한 XY 증분 (2,), 단위 m다.
         비교용 noise는 정규화 공간의 (1,H,act_dim+obs_dim)이며 내부에서 복사한다.
+        rtc_suffix: 직전 계획에서 아직 실행하지 않은 행동 (H−s, 2) raw. ④가 켜져 있을 때만 쓴다.
+        frozen: 추론 지연 d 동안 이전 계획에서 실행될 행동 (d, 2). ④ mask와 ⑤ 고정 구간에 쓴다.
+        history: 실행된 목표 위치 최대 3개 (마지막 = 현재 목표). ⑤에 쓴다.
         성공하면 raw (H,act_dim+obs_dim)을 반환한다. 실패하면 None을 반환하고
         status·failure_stage·이미 끝난 단계의 행동과 비용을 last_report에 남긴다.
         """
         started = perf_counter()
         p, v = self.base, self.config
+        delay = 0 if frozen is None else len(frozen)
+        use_rtc = self.methods['rtc']['enabled'] and rtc_suffix is not None
         self.last_report = {'status': 'ok', 'failure_stage': None, 'model_calls': 0,
+                            'rtc_guided': use_rtc, 'frozen_prefix': delay,
                             'pipeline_order': list(PIPELINE_ORDER), **PIPELINE_METADATA,
                             'pf_calls': 0, 'pf_ms': 0., 'model_ms': 0., 'pf_steps': [],
                             'potential_cache': self.potential.cache_report if self.potential else None,
@@ -103,7 +116,7 @@ class Policy:
                             'qp_calls': 0, 'qp_ms': 0., 'qp': [], 'stages': {},
                             'latency_ms': 0., 'stage_ms': {}, 'methods': {k: s['enabled'] for k, s in self.methods.items()}}
         try:
-            # 재계획 시점에 한 번만 구성한다. Predict나 terminal VLSA에서
+            # 재계획 시점에 한 번만 구성한다. Predict나 LiPo에서
             # 물체 기하·이전 행동·제어 간격을 바꾸면 서로 다른 제약 문제가 된다.
             constraints = PlanConstraints(obs, previous_action, p.horizon, v['constraints'], v['control']['dt_s'])
         except (ValueError, TypeError) as error:
@@ -117,7 +130,7 @@ class Policy:
             self.last_report.update(status='initial_outside_workspace', failure_stage='input')
             self.last_report['latency_ms'] = 1000 * (perf_counter() - started)
             return None
-        # 모든 방법 off이면 baseline에 위임한다. 추가 noise를 뽑거나 제약으로 행동을 거부하지 않는다.
+        # 계획 단계 방법이 모두 off이면 baseline에 위임한다. 추가 noise를 뽑거나 제약으로 행동을 거부하지 않는다.
         if not self.enabled and noise is None and v['sampling']['predict_steps'] > 1:
             result = p.plan(obs)
             if not np.isfinite(result).all():
@@ -147,13 +160,28 @@ class Policy:
         steps = v['sampling']['predict_steps']
         times = torch.linspace(0., 1., steps + 1, device=p.device)[:-1]
         dt = times[1] - times[0] if steps > 1 else 1.0
+        if use_rtc:
+            suffix = np.asarray(rtc_suffix, dtype=np.float64)
+            execute = v['eval']['execute_steps']
+            if suffix.shape != (p.horizon - execute, p.act_dim) or not np.isfinite(suffix).all():
+                self.last_report.update(status='invalid_input', failure_stage='rtc')
+                self.last_report['latency_ms'] = 1000 * (perf_counter() - started)
+                return None
+            target, mask = rtc_target(p, suffix, soft_mask(p.horizon, execute, delay))
+            # 입력 x에 대한 VJP만 필요하다. 파라미터 gradient는 계산하지 않는다.
+            params = [param for param in getattr(p.model, 'parameters', lambda: [])() if param.requires_grad]
+            for param in params:
+                param.requires_grad_(False)
 
         # 1. Predict: Euler 직후에만 선택적으로 Projection을 적용한다.
         # 첫 관측 벡터장을 0으로 하고 매 갱신 후 실제 관측 조건을 복원한다.
         stage_started = perf_counter()
         for k, t in enumerate(times):
             model_started = perf_counter()
-            velocity = p.model(x, t)
+            if use_rtc:
+                velocity = guided_velocity(p, x, t, target, mask, k / steps, self.methods['rtc']['beta'])
+            else:
+                velocity = p.model(x, t)
             self.last_report['model_calls'] += 1
             self.last_report['model_ms'] += 1000 * (perf_counter() - model_started)
             velocity[:, 0, p.act_dim:] = 0.
@@ -194,78 +222,39 @@ class Policy:
                 if x is None:
                     break
             x = p.apply_conditioning(x, cond, p.act_dim).detach()
+        if use_rtc:
+            for param in params:
+                param.requires_grad_(True)
         if x is not None and proj['enabled'] and proj['mode'] == 'final':
             x = self._project(x, constraints, 'projection_final')
         self.last_report['stage_ms']['predict'] = 1000 * (perf_counter() - stage_started)
         if x is not None:
             self._record('predict', x, constraints)
 
-        # 이전 PC Correct 보존: schema v3에서는 실행하지 않는다.
-        # 이전 구현은 변경 전 커밋 및 pf2mp_validation/before.json 기준으로 재현한다.
-        # LEGACY_PC # 2. PC Correct: Predict 종료 계획에서 시간만 다시 0으로 시작한다.
-        # LEGACY_PC # VLSA로 미리 feasible하게 만들지 않는다. PC 단독과 같은 입력을 받는다.
-        # LEGACY_PC # 새 noise나 두 번째 Predict를 만들지 않는다. 기하와 이전 행동도 고정이다.
-        # LEGACY_PC pc = self.methods['pc']
-        # LEGACY_PC if x is not None and pc['enabled']:
-        # LEGACY_PC     stage_started = perf_counter()
-        # LEGACY_PC     count = pc['correct_steps']
-        # LEGACY_PC     # 보정 시간 τ의 간격이다. 물리 가속도 계산의 control.dt_s와 구별한다.
-        # LEGACY_PC     dt_c = 1.0 / count
-        # LEGACY_PC     b_star = pc['delta'] / (1 - pc['rho'])
-        # LEGACY_PC     eps = (0.9 / dt_c * b_star / (b_star - pc['delta'])**pc['rho']
-        # LEGACY_PC            if pc['eps'] == 'auto' else pc['eps'])
-        # LEGACY_PC     self.last_report['pc_eps'] = eps
-        # LEGACY_PC     for t in torch.linspace(0., 1., count + 1, device=p.device)[:-1]:
-        # LEGACY_PC         velocity = p.model(x, t) * (pc['alpha'] * (1 - float(t)))
-        # LEGACY_PC         self.last_report['model_calls'] += 1
-        # LEGACY_PC         velocity[:, 0, p.act_dim:] = 0.
-        # LEGACY_PC         if not torch.isfinite(velocity).all():
-        # LEGACY_PC             self.last_report.update(status='invalid_policy_output', failure_stage='pc')
-        # LEGACY_PC             x = None
-        # LEGACY_PC             break
-        # LEGACY_PC         raw_actions = (x * p.scale + p.center)[0, :, :2].cpu().numpy().astype(np.float64)
-        # LEGACY_PC         # h는 공통 면의 raw 여유 거리를 scale로 나눈 무차원 장벽이다.
-        # LEGACY_PC         # CBF의 G U <= s φ(h)는 행동 위치가 아니라 보정 벡터장의 제약이다.
-        # LEGACY_PC         barrier = (constraints.d - constraints.G @ raw_actions.ravel()) / constraints.scales
-        # LEGACY_PC         z = barrier - pc['delta']
-        # LEGACY_PC         bound = constraints.scales * eps * np.sign(z) * np.abs(z)**pc['rho']
-        # LEGACY_PC         # 벡터장은 dA/dτ이므로 scale만 곱한다. center를 더하면 미분이 아니다.
-        # LEGACY_PC         raw_velocity = (velocity[0, :, :2].double() * p.scale[:2].double()).cpu().numpy()
-        # LEGACY_PC         solved = solve_qp(raw_velocity.ravel(), constraints.G, bound, v['solver'])
-        # LEGACY_PC         self.last_report['qp_calls'] += 1
-        # LEGACY_PC         self.last_report['qp_ms'] += solved['latency_ms']
-        # LEGACY_PC         value = solved.pop('value')
-        # LEGACY_PC         self.last_report['qp'].append({'stage': 'pc', **solved})
-        # LEGACY_PC         if solved['status'] != 'ok':
-        # LEGACY_PC             self.last_report.update(status=solved['status'], failure_stage='pc')
-        # LEGACY_PC             x = None
-        # LEGACY_PC             break
-        # LEGACY_PC         corrected = torch.as_tensor(value.reshape(1, -1, 2), device=x.device, dtype=x.dtype)
-        # LEGACY_PC         velocity[:, :, :2] = corrected / p.scale[:2]
-        # LEGACY_PC         # 미래 관측은 명목 벡터장으로 갱신하되 첫 관측 조건은 복원한다.
-        # LEGACY_PC         # 행동 보정값에 맞추려고 모델의 미래 관측 채널을 덮어쓰지 않는다.
-        # LEGACY_PC         x = p.apply_conditioning(x + velocity * dt_c, cond, p.act_dim).detach()
-        # LEGACY_PC         # solver 성공과 모델 dtype에서의 유한성은 별개다. 실패 iterate는
-        # LEGACY_PC         # terminal VLSA로 복구하지 않고 여기서 계획 자체를 폐기한다.
-        # LEGACY_PC         if not torch.isfinite(x).all():
-        # LEGACY_PC             self.last_report.update(status='invalid_policy_output', failure_stage='pc')
-        # LEGACY_PC             x = None
-        # LEGACY_PC             break
-        # LEGACY_PC     self.last_report['stage_ms']['pc'] = 1000 * (perf_counter() - stage_started)
-        # LEGACY_PC     if x is not None:
-        # LEGACY_PC         self._record('pc', x, constraints)
-        # LEGACY_PC
-        # LEGACY_PC # 3. VLSA: PC on이면 PC 종료값, off이면 Predict 종료값의 전체 H개 행동을
-        # LEGACY_PC # 한 번에 공동 투영한다. PC의 유한 반복 뒤 남은 행동 잔차는 이 명시적인
-        # LEGACY_PC # 단계가 보정할 수 있지만, 앞 단계의 solver 실패(None)를 되살리지는 않는다.
-
-        # VLSA는 유효한 Predict 종료 계획에만 적용한다.
-        if x is not None and self.methods['vlsa']['enabled']:
+        # ⑤ LiPo: 고정 한도 jerk QP. ①이 켜져 있으면 같은 QP에 ① 제약을 넣는다.
+        lipo = self.methods['lipo']
+        if x is not None and lipo['enabled']:
             stage_started = perf_counter()
-            x = self._project(x, constraints, 'vlsa')
-            self.last_report['stage_ms']['vlsa'] = 1000 * (perf_counter() - stage_started)
-            if x is not None:
-                self._record('vlsa', x, constraints)
+            raw = (x * p.scale + p.center)[0].detach().cpu().numpy().astype(np.float64)
+            actions = raw[:, :2].copy()
+            if delay:
+                actions[:delay] = np.asarray(frozen, dtype=np.float64)
+            past = np.asarray(history if history is not None else [constraints.q0], dtype=np.float64)
+            enforced = self.hard_constraints_enforced
+            solved = jerk_qp(actions, past, lipo['bound_m'], v['solver'], delay,
+                             constraints.G if enforced else None, constraints.d if enforced else None)
+            self.last_report['qp_calls'] += 1
+            self.last_report['qp_ms'] += solved['latency_ms']
+            value = solved.pop('value')
+            self.last_report['lipo'] = solved
+            if solved['status'] != 'ok':
+                self.last_report.update(status=solved['status'], failure_stage='lipo')
+                x = None
+            else:
+                x = x.clone()
+                x[:, :, :2] = (torch.as_tensor(value[None], device=x.device, dtype=x.dtype) - p.center[:2]) / p.scale[:2]
+                self._record('lipo', x, constraints)
+            self.last_report['stage_ms']['lipo'] = 1000 * (perf_counter() - stage_started)
 
         result = None
         if x is not None:
@@ -277,9 +266,13 @@ class Policy:
             else:
                 final = constraints.violation(result[:, :2])
                 self.last_report['final'] = final
-                # 판정 대상은 마지막 활성 단계의 반환 dtype 결과다. VLSA off에서
-                # 잔차를 줄이려고 숨은 terminal 투영을 추가하지 않는다.
-                if self.hard_constraints_enforced and final['qp_max_m'] > v['solver']['feasibility_tolerance_m']:
+                # 판정 대상은 마지막 활성 단계의 반환 dtype 결과다. 지연으로 고정된 앞 d개만
+                # 걸린 면은 이 계획이 바꿀 수 없으므로 판정에서 뺀다.
+                residual = final['qp_max_m']
+                if delay and lipo['enabled']:
+                    keep = _rows_after(constraints.G, delay)
+                    residual = float(np.maximum(constraints.G[keep] @ result[:, :2].ravel() - constraints.d[keep], 0).max(initial=0.))
+                if self.hard_constraints_enforced and residual > v['solver']['feasibility_tolerance_m']:
                     self.last_report.update(status='constraint_violation', failure_stage='final')
                     result = None
         self.last_report['latency_ms'] = 1000 * (perf_counter() - started)

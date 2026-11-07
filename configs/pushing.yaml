@@ -49,19 +49,18 @@ eval:
   check_obs: 0
   export_contexts: null
   contexts: test
-schema_version: 3
+schema_version: 4
 control:
   dt_s: 0.035
 sampling:
   predict_steps: 10
 methods:
-  # Predict 내부 FM+PF2MP → Euler → Projection, 이후 최종 계획 VLSA.
+  # ①~⑤ 독립 on/off. 실행 순서(고정): Predict 내부 FM(+④ RTC)+② PF2MP → Euler → ① Projection,
+  # 계획 끝 ⑤ LiPo(①이 켜져 있으면 ① 제약 포함), 실행 직전 ③ filter.
   projection:
     enabled: false
     mode: every
-    scope: predict
     skip_first: 0
-  # 이전 PC Correct(9회, alpha=2, rho=0.9, delta=0.01, eps=auto)는 중단.
   pf2mp:
     enabled: false
     # 초기 후보값이며 D3IL 성능을 검증한 확정값이 아니다.
@@ -75,11 +74,14 @@ methods:
     density_quantile: 0.05
     query_chunk_size: 128
     lock_timeout_s: 600.0
-  vlsa:
+  filter:
     enabled: false
-    scope: terminal_plan
-    execution_recheck: false
-    invalidate_queue_on_change: true
+  rtc:
+    enabled: false
+    beta: 5.0
+  lipo:
+    enabled: false
+    bound_m: 0.0003
 constraints:
   workspace:
     enabled: true

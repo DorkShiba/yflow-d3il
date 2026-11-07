@@ -10,17 +10,9 @@ import numpy as np
 
 
 def load_replay_config(path):
-    """구 schema v2도 정책을 실행·변환하지 않고 저장 행동 재생에만 읽는다."""
-    import yaml
-    from configs.config import ExperimentConfig, REPO
-    value = yaml.safe_load(Path(path).read_text())
-    if value.get('schema_version') != 2:
-        return ExperimentConfig.from_yaml(path)
-    if value.get('task') not in ('pushing', 'inserting'):
-        raise ValueError('Invalid replay task')
-    for key, location in value['paths'].items():
-        value['paths'][key] = str((REPO / location).resolve())
-    return ExperimentConfig(value)
+    """저장된 schema v4 설정을 재생용으로 읽는다. 정책은 실행하지 않는다."""
+    from configs.config import ExperimentConfig
+    return ExperimentConfig.from_yaml(path)
 
 
 def replay_camera(directory, episode, rows, indices, size, config_path=None):

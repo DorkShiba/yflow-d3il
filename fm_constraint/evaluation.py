@@ -21,21 +21,26 @@ from ood.apply import Episode, context_from_json, load_cases
 
 
 def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
-                   task, settings, config, observe_safety=None, execution_filter=False, spec=None):
+                   task, settings, config, observe_safety=None, spec=None):
     """계획 실패를 실행하지 않고, 실제 실행 행동으로만 이전 행동을 갱신한다.
 
-    config는 schema v3의 resolved 값이다. 접촉 관측이 없으면 물리적
+    config는 schema v4의 resolved 값이다. 접촉 관측이 없으면 물리적
     safe success는 null로 둔다. all-off에서는 제약 위반을 측정만 한다.
 
     context에 'ood' 사례(data/ood JSONL 한 행)가 있으면 OOD 조건을 적용한다.
     정책 seed는 사례의 policy_seeds를 쓰고, 관측 노이즈(C)는 정책과 실행 직전
     필터가 보는 관측에만 넣는다. 제약 위반 측정은 항상 실제 상태로 한다.
     지연(E)이 있으면 남은 행동이 d개일 때 다음 계획을 세우고 새 chunk는 index d부터 실행한다.
+
+    ④ RTC: 활성 계획에서 아직 실행하지 않은 H−s개 행동을 다음 계획의 target으로 넘긴다.
+    ③이 행동을 수정해 큐를 폐기하면 참조가 끊기므로 다음 계획은 RTC 없이 만든다.
+    ⑤ LiPo: 실행된 목표 위치 최근 3개와, 지연 중 실행이 확정된 d개 행동(고정 구간)을 넘긴다.
     """
     if not contexts:
         raise ValueError('No evaluation contexts')
     methods, definitions = config['methods'], config['constraints']
-    recheck = execution_filter or (methods['vlsa']['enabled'] and methods['vlsa']['execution_recheck'])
+    recheck = methods['filter']['enabled']
+    use_rtc = methods['rtc']['enabled']
     seeds = settings.get('sampling_seeds')
     if seeds is not None and (not seeds or len(set(seeds)) != len(seeds)
                               or any(type(seed) is not int or seed < 0 for seed in seeds)):
@@ -77,6 +82,9 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
             previous = np.zeros(2)
             queue, logs = [], []
             pending, delay = None, episode.delay
+            # 활성 계획의 행동 (H,2)과 다음에 실행할 index. ④ RTC의 suffix에 쓴다.
+            active_actions, active_index = None, 0
+            des_history = [des.copy()]
             plan_id, active_plan, steps, failure = -1, -1, 0, None
             info, done = {}, False
             command_min_h = float(np.min(np.r_[des - low, high - des])) if low is not None else None
@@ -97,14 +105,20 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
                 seam = False
                 if (not queue and pending is None) or (
                         delay and len(queue) == delay and pending is None and steps > 0):
+                    extra = {'history': np.asarray(des_history[-3:]),
+                             'frozen': np.asarray(queue) if queue else None, 'rtc_suffix': None}
+                    if use_rtc and active_actions is not None:
+                        suffix = active_actions[active_index:active_index + len(active_actions) - settings['execute_steps']]
+                        if len(suffix) == len(active_actions) - settings['execute_steps']:
+                            extra['rtc_suffix'] = suffix.copy()
                     started = perf_counter()
                     if generator is None:
-                        plan = policy.plan(obs, previous.copy())
+                        plan = policy.plan(obs, previous.copy(), **extra)
                     else:
                         base = policy.base
                         noise = torch.randn(1, base.horizon, base.act_dim + base.obs_dim,
                                             generator=generator, device=base.device, dtype=base.center.dtype)
-                        plan = policy.plan(obs, previous.copy(), noise=noise)
+                        plan = policy.plan(obs, previous.copy(), noise=noise, **extra)
                     plan_seconds += perf_counter() - started
                     plan_count += 1
                     plan_id += 1
@@ -130,6 +144,7 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
                     if not queue:
                         queue = [plan[k, :2].astype(np.float64) for k in range(settings['execute_steps'])]
                         active_plan, seam = plan_id, True
+                        active_actions, active_index = plan[:, :2].astype(np.float64).copy(), 0
                     else:
                         # 지연: 남은 d개를 실행하는 동안 계산했다고 보고, 새 계획은 index d부터 쓴다.
                         pending = (plan_id, plan)
@@ -137,7 +152,9 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
                     active_plan, plan = pending
                     queue = [plan[k, :2].astype(np.float64) for k in range(delay, delay + settings['execute_steps'])]
                     pending, seam = None, True
+                    active_actions, active_index = plan[:, :2].astype(np.float64).copy(), delay
                 nominal = queue.pop(0)
+                active_index += 1
                 attempts += 1
                 record = {'step': steps, 'plan_id': active_plan, 'seam': seam, 'measured_state': c.tolist(),
                           'command_state': des.tolist(), 'previous_action_m': previous.tolist(),
@@ -163,7 +180,7 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
                     # 다음 행동부터 최신 관측으로 재계획하도록 큐를 폐기한다.
                     if np.linalg.norm(action - nominal) > config['solver']['intervention_tolerance_m']:
                         queue.clear()
-                        pending = None
+                        pending, active_actions = None, None
                         record['queue_invalidated'] = True
                 modification = float(np.linalg.norm(action - nominal))
                 interventions += int(modification > config['solver']['intervention_tolerance_m'])
@@ -173,6 +190,7 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
                               latest_executed_violation=measurement,
                               execution_geometry=measured_at.geometry())
                 des = des + action
+                des_history.append(des.copy())
                 command = np.concatenate([des, fixed_z, [0., 1., 0., 0.]])
                 _, _, done, info = env.step(command)
                 previous = action.copy()
@@ -241,9 +259,9 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
         entropy = float(np.mean(valid)) if valid else None
     success_rate = float(np.mean([e['success'] for e in episodes]))
     distances = [e['mean_distance'] for e in episodes if e['mean_distance'] is not None]
-    results = {'schema_version': 3, 'pipeline_order': list(PIPELINE_ORDER), **PIPELINE_METADATA,
+    results = {'schema_version': 4, 'pipeline_order': list(PIPELINE_ORDER), **PIPELINE_METADATA,
                'task': task, 'n_contexts': len(contexts), 'n_traj': len(seeds) if seeds is not None else settings['n_traj'],
-               'sampling_seeds': seeds, 'executed_action_filter': bool(execution_filter),
+               'sampling_seeds': seeds,
                'methods': {name: m['enabled'] for name, m in methods.items()},
                'execution_recheck': bool(recheck), 'success_rate': success_rate, 'entropy': entropy,
                'score': 0.5 * (success_rate + entropy) if entropy is not None else None,
@@ -254,7 +272,7 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
                'safety_measurement': 'adapter_cumulative_internal_steps' if observe_safety else 'unavailable',
                'plan_ms': 1000 * plan_seconds / max(plan_count, 1), 'plan_attempts': plan_count,
                'model_calls': model_calls, 'qp_calls': qp_calls, 'pf_calls': pf_calls, 'pf_ms': pf_ms,
-               'hard_constraints_enforced': any(methods[k]['enabled'] for k in ('projection', 'vlsa')),
+               'hard_constraints_enforced': methods['projection']['enabled'],
                'action_attempts': attempts, 'executed_actions': executed,
                'execution_intervention_rate': interventions / executed if executed else None,
                'executed_acceleration_qp_exceed_rate': acceleration_violations / executed if executed else None,
@@ -270,7 +288,7 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
     return results, rollouts
 
 
-def evaluate(cfg, *, execution_filter=False, sampling_seeds=None, context_ids=None,
+def evaluate(cfg, *, sampling_seeds=None, context_ids=None,
              output_directory=None, experiment_metadata=None):
     """baseline 환경·모델 로더를 재사용해 두 태스크를 동일한 평가 루프로 실행한다."""
     cfg.validate('eval')
@@ -362,21 +380,21 @@ def evaluate(cfg, *, execution_filter=False, sampling_seeds=None, context_ids=No
                     'checkpoint_step': checkpoint_step, 'weights': settings['weights'],
                     'seed': settings['seed'], 'predict_steps': v['sampling']['predict_steps'],
                     'potential_cache': policy.potential.cache_report if policy.potential else None,
-                    'constraint_scope': 'command_plan', 'schema_version': 3,
+                    'constraint_scope': 'command_plan', 'schema_version': 4,
                     'normalizer_sha256': hashlib.sha256((Path(paths['run_dir']) / 'normalizer.npz').read_bytes()).hexdigest(),
                     'control_dt_s': v['control']['dt_s'],
                     'execute_steps': settings['execute_steps'], 'max_steps': settings['max_steps']}
         (output / 'model_config.json').write_text((Path(paths['run_dir']) / 'config.json').read_text())
         results, rollouts = run_evaluation(env, policy, items, module.read_state, module.build_obs,
                                           quat2euler, cfg.task, settings, config=v,
-                                          execution_filter=execution_filter, spec=spec)
+                                          spec=spec)
         results.update(metadata)
         results['ood'] = ood_info
         if experiment_metadata:
             results.update(experiment_metadata)
-        if context_ids is not None or sampling_seeds is not None or execution_filter:
+        if context_ids is not None or sampling_seeds is not None:
             replay = {'context_ids': [item['id'] for item in items],
-                      'sampling_seeds': sampling_seeds, 'executed_action_filter': bool(execution_filter)}
+                      'sampling_seeds': sampling_seeds, 'methods': {k: m['enabled'] for k, m in v['methods'].items()}}
             (output / 'evaluation_protocol.json').write_text(json.dumps(replay, indent=2))
             (output / 'evaluation_contexts.pkl').write_bytes(pickle.dumps(items))
         (output / 'results.json').write_text(json.dumps(results, indent=2, allow_nan=False))

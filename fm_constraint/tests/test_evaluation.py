@@ -24,8 +24,9 @@ class FakePolicy:
         self.calls, self.actions, self.fail = [], actions, fail
         self.last_report = {}
 
-    def plan(self, obs, previous):
+    def plan(self, obs, previous, **kwargs):
         self.calls.append((obs.copy(), previous.copy()))
+        self.kwargs = getattr(self, 'kwargs', []) + [kwargs]
         self.last_report = {'status': 'infeasible' if self.fail else 'ok', 'model_calls': 10, 'qp_calls': 0}
         if self.fail:
             return None
@@ -73,31 +74,31 @@ def test_failed_plan_is_not_executed_and_counts_as_failure(config):
     assert logs['c000_t0'][0]['safe_action'] is None
 
 
-def test_queue_executes_terminal_vlsa_actions_after_pf(config):
+def test_queue_executes_final_lipo_actions_after_pf(config):
     from fm_constraint.policy import Policy
     from fm_constraint.tests.test_policy import baseline, potential
     from types import SimpleNamespace
     import torch
 
-    config['methods']['pf2mp']['enabled'] = config['methods']['vlsa']['enabled'] = True
+    config['methods']['pf2mp']['enabled'] = config['methods']['lipo']['enabled'] = True
     torch.manual_seed(19)
     env, policy = FakeEnv(), Policy(baseline(), config, potential(SimpleNamespace(values=config)))
     result, logs = run_evaluation(env, policy, CONTEXTS, read_state, build_obs, None,
                                   'pushing', SETTINGS, config)
-    assert result['pipeline_order'] == ['pf2mp', 'projection', 'vlsa']
+    assert result['pipeline_order'] == ['rtc', 'pf2mp', 'projection', 'lipo', 'filter']
     assert result['executed_actions'] == 5
-    terminal, offset = None, 0
+    final, offset = None, 0
     for row in logs['c000_t0']:
         if row['plan_report'] is not None:
             stages = row['plan_report']['stages']
-            assert list(stages) == ['predict', 'vlsa']
-            terminal, offset = stages['vlsa']['actions_m'], 0
-        np.testing.assert_array_equal(row['safe_action'], terminal[offset])
+            assert list(stages) == ['predict', 'lipo']
+            final, offset = stages['lipo']['actions_m'], 0
+        np.testing.assert_array_equal(row['safe_action'], final[offset])
         offset += 1
 
 
-def test_execution_recheck_invalidates_queue_and_uses_executed_previous(config):
-    config['methods']['vlsa'].update(enabled=True, execution_recheck=True)
+def test_execution_filter_invalidates_queue_and_uses_executed_previous(config):
+    config['methods']['filter']['enabled'] = True
     config['constraints']['acceleration']['max_m_s2'] = .8
     env, policy = FakeEnv(), FakePolicy(actions=(.04, .04))
     result, logs = run_evaluation(env, policy, CONTEXTS, read_state, build_obs, None,
@@ -108,7 +109,7 @@ def test_execution_recheck_invalidates_queue_and_uses_executed_previous(config):
     lengths = np.linalg.norm(np.diff(executed, axis=0, prepend=np.zeros((1, 2))), axis=1) / .035**2
     assert lengths.max() <= .8 + 1e-5
     assert all(row['queue_invalidated'] for row in logs['c000_t0'])
-    assert result['execution_intervention_rate'] == 1
+    assert result['execution_intervention_rate'] == 1 and result['execution_recheck']
 
 
 def test_initial_previous_action_resets_between_episodes(config):
@@ -157,7 +158,7 @@ def test_reporting_keeps_context_pairing_and_renders_saved_geometry(config, tmp_
     summary = json.loads((tmp_path / 'summary/summary.json').read_text())[0]
     assert summary['paired_success_difference'] == 0
     assert summary['pairing_status'] == 'matched_contexts_and_checkpoint'
-    assert summary['pipeline_order'] == ['pf2mp', 'projection', 'vlsa']
+    assert summary['pipeline_order'] == ['rtc', 'pf2mp', 'projection', 'lipo', 'filter']
     assert summary['pipeline_comparison'] == 'same_order'
     monkeypatch.setattr(sys, 'argv', ['render', '--eval-dir', str(directory), '--gif'])
     render()
@@ -173,8 +174,8 @@ def test_summary_distinguishes_changed_and_unknown_order(config, tmp_path, monke
                                None, 'pushing', SETTINGS, config)
     result['checkpoint_sha256'] = 'same-model'
     argv = ['compute']
-    for name, order in [('new', ['pf2mp', 'projection', 'vlsa']),
-                        ('old', ['projection', 'vlsa', 'pc']), ('unknown', None)]:
+    for name, order in [('new', ['rtc', 'pf2mp', 'projection', 'lipo', 'filter']),
+                        ('old', ['pf2mp', 'projection', 'vlsa']), ('unknown', None)]:
         directory = tmp_path / name
         directory.mkdir()
         value = {**result, 'pipeline_order': order}
@@ -188,31 +189,16 @@ def test_summary_distinguishes_changed_and_unknown_order(config, tmp_path, monke
     rows = json.loads((output / 'summary.json').read_text())
     assert [r['pipeline_comparison'] for r in rows] == ['same_order', 'order_change', 'unknown_order']
     assert rows[2]['pipeline_order'] is None
+    assert 'rtc → pf2mp → projection → lipo → filter' in (output / 'summary.md').read_text()
     assert 'pf2mp → projection → vlsa' in (output / 'summary.md').read_text()
-    assert 'projection → vlsa → pc' in (output / 'summary.md').read_text()
-
-
-def test_legacy_camera_config_is_read_only_and_not_migrated(config, tmp_path):
-    import yaml
-    from fm_constraint.render_rollouts import load_replay_config
-    config['schema_version'] = 2
-    config['methods'].pop('pf2mp')
-    config['methods']['pc'] = {'enabled': True, 'correct_steps': 9}
-    path = tmp_path / 'old_resolved_config.yaml'
-    path.write_text(yaml.safe_dump(config))
-    before = path.read_bytes()
-    loaded = load_replay_config(path)
-    assert loaded.values['schema_version'] == 2
-    assert loaded.values['methods']['pc']['enabled']
-    assert 'pf2mp' not in loaded.values['methods']
-    assert path.read_bytes() == before
 
 
 class PlanIndexPolicy(FakePolicy):
     """계획마다 행동 값이 (계획 번호, index)를 담아 어떤 계획의 몇 번째 행동이 실행됐는지 보인다."""
 
-    def plan(self, obs, previous):
+    def plan(self, obs, previous, **kwargs):
         self.calls.append((obs.copy(), previous.copy()))
+        self.kwargs = getattr(self, 'kwargs', []) + [kwargs]
         self.last_report = {'status': 'ok', 'model_calls': 10, 'qp_calls': 0}
         result = np.zeros((16, 14))
         result[:, 0] = 1e-4 * (len(self.calls) * 100 + np.arange(16))
@@ -229,7 +215,7 @@ def test_ood_delay_plans_early_and_starts_new_chunk_at_index_d(config):
     env, policy = FakeEnv(), PlanIndexPolicy()
     policy.base = type('Base', (), {'device': 'cpu', 'horizon': 16, 'act_dim': 2, 'obs_dim': 12,
                                     'center': torch.zeros(14, dtype=torch.float64)})()
-    policy.plan = lambda obs, previous, noise=None: PlanIndexPolicy.plan(policy, obs, previous)
+    policy.plan = lambda obs, previous, noise=None, **kw: PlanIndexPolicy.plan(policy, obs, previous, **kw)
     contexts = [{'id': 'test', 'context': {}, 'ood': ood_case(delay_steps=2)}]
     settings = {'n_traj': 1, 'max_steps': 5, 'execute_steps': 4}
     _, logs = run_evaluation(env, policy, contexts, read_state, build_obs, None, 'pushing', settings, config)
@@ -247,7 +233,7 @@ def test_ood_noise_reaches_policy_but_violation_uses_true_state(config):
     env, policy = FakeEnv(), PlanIndexPolicy()
     policy.base = type('Base', (), {'device': 'cpu', 'horizon': 16, 'act_dim': 2, 'obs_dim': 12,
                                     'center': torch.zeros(14, dtype=torch.float64)})()
-    policy.plan = lambda obs, previous, noise=None: PlanIndexPolicy.plan(policy, obs, previous)
+    policy.plan = lambda obs, previous, noise=None, **kw: PlanIndexPolicy.plan(policy, obs, previous, **kw)
     case = ood_case(noise={'pos_m': 0.05, 'yaw_deg': 0.0, 'seed': 5})
     settings = {'n_traj': 2, 'max_steps': 2, 'execute_steps': 2}
     results, logs = run_evaluation(env, policy, [{'id': 'test', 'context': {}, 'ood': case}],
@@ -258,3 +244,29 @@ def test_ood_noise_reaches_policy_but_violation_uses_true_state(config):
     assert np.allclose(true_obs[4:6], [.4, 0.])
     assert [e['sampling_seed'] for e in results['episodes']] == [11, 12]
     assert results['episodes'][0]['ood_case'] == 'pushing/X/test'
+
+
+def test_rtc_suffix_frozen_prefix_and_history_follow_the_executed_plan(config):
+    import torch
+    config['methods']['rtc']['enabled'] = True
+    env, policy = FakeEnv(), PlanIndexPolicy()
+    policy.base = type('Base', (), {'device': 'cpu', 'horizon': 16, 'act_dim': 2, 'obs_dim': 12,
+                                    'center': torch.zeros(14, dtype=torch.float64)})()
+    policy.plan = lambda obs, previous, noise=None, **kw: PlanIndexPolicy.plan(policy, obs, previous, **kw)
+    contexts = [{'id': 'test', 'context': {}, 'ood': ood_case(delay_steps=2)}]
+    run_evaluation(env, policy, contexts, read_state, build_obs, None, 'pushing',
+                   {'n_traj': 1, 'max_steps': 5, 'execute_steps': 4}, config)
+    first, second = policy.kwargs
+    assert first['rtc_suffix'] is None and first['frozen'] is None and len(first['history']) == 1
+    # 계획 1의 index 0,1 실행 후(step 2) 계획: 고정 = index 2,3, suffix = index 2..13 (H−s = 12개)
+    assert np.round(second['frozen'][:, 0] / 1e-4).tolist() == [102, 103]
+    assert np.round(second['rtc_suffix'][:, 0] / 1e-4).tolist() == list(range(102, 114))
+    assert len(second['history']) == 3
+
+
+def test_filter_modification_drops_the_rtc_reference(config):
+    config['methods']['rtc']['enabled'] = config['methods']['filter']['enabled'] = True
+    config['constraints']['acceleration']['max_m_s2'] = .8
+    policy = FakePolicy(actions=(.04, .04))
+    run_evaluation(FakeEnv(), policy, CONTEXTS, read_state, build_obs, None, 'pushing', SETTINGS, config)
+    assert all(kw['rtc_suffix'] is None for kw in policy.kwargs)

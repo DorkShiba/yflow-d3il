@@ -256,6 +256,37 @@ Predict N회: v = FM(x,t) [+ ④ RTC guidance] [+ ② PF2MP] → Euler → [① 
 
 ---
 
+### 3단계 결과 (2026-11-08, 브랜치 `integrate/phase3-methods`)
+- **schema v4**: `methods.{projection, pf2mp, filter, rtc, lipo}`. CLI `--projection --pf2mp --filter --rtc --lipo`.
+  - terminal VLSA와 `execution_recheck`, PC 주석 블록, PC·v2 호환 코드를 삭제했다.
+  - 조합 비트는 ①16 ②8 ③4 ④2 ⑤1이다.
+- **④ RTC** (`fm_constraint/rtc.py`, codex에서 가져옴): Predict의 각 스텝 벡터장에 `guided_velocity`를 쓴다(beta 5).
+  - 참조는 활성 계획의 미실행 H−s개 행동이다.
+  - 지연 d가 있으면 soft mask의 앞 d개를 1로 둔다.
+  - ③이 행동을 수정한 직후 계획은 참조 없이 만든다.
+- **⑤ LiPo** (`fm_constraint/lipo.py`): codex `mode="qp"`와 같은 목적함수다. 결정 1-a에 따라 ①이 켜져 있으면 ① 제약을 같은 QP에 넣는다. 지연 중 실행이 확정된 d개 행동은 등식으로 고정한다.
+  - **solver 변경**: 4.3절과 11절의 "OSQP 하나로 통일"과 달리 ⑤만 **Clarabel(interior point)**을 쓴다.
+    - OSQP로 풀면 반복 한도에 걸리거나 한도를 1e-9 m 넘겼고, 계획당 약 370 ms가 걸렸다.
+    - 원래 master·codex LiPo도 Clarabel을 썼다. ①·③은 그대로 OSQP다.
+  - **닿을 수 없는 ① 면 제외**: 보정 한도 안에서는 닿을 수 없는 면(여유 > ‖G_row‖₁·2·bound)을 빼고 푼다(해는 같다). 704면을 모두 넣으면 Clarabel이 `InsufficientProgress`로 멈췄다. 최종 잔차는 전체 면으로 판정한다.
+- **runner**: `method123.py` → `suite.py`(32조합, `P00`~`P31`·`I00`~`I31`), `method123_metrics.py` → `suite_metrics.py`, `run_method123.sh` → `run_suite.sh`.
+  - Complementarity 쌍은 실행 전에 고정했다: 가장 낮은 비트 방법이 B, 나머지가 A(기존 12/20/24/28 쌍과 같다).
+  - `run_inserting_gpu_group.sh`와 그 테스트는 삭제했다(5절 목록).
+  - runner에 OOD 조건을 넣는 일은 실험 환경 통일 단계로 미룬다.
+- **⑤의 범위**: `fm_baseline/lipo.py`의 blend 경로 삭제는 4단계(정리)에서 한다. 현재 ⑤는 `fm_constraint/lipo.py`이고, `fm_baseline/lipo.py`는 baseline 평가 스크립트의 `--postprocess`에서만 쓴다.
+- **검증 (4.4)**:
+  1. pytest 135 passed(visualizer 2개 제외). 범위:
+     - ①②④⑤ 16조합의 호출 수와 조건 유지, ④ 참조 유무와 beta=0 동등성
+     - ⑤의 고정 구간 유지, ① 잔차, 실패 시 중단
+     - ③ 큐 폐기 후 ④ 참조 제거, 지연 중 고정 구간·suffix·history 전달
+     - 32조합 비트와 비교 쌍
+  2. 2태스크 × 32조합 D3IL smoke(24 step)를 모두 통과했다. Clarabel로 바꾸기 전에는 Pushing의 ①+⑤ 8조합이 첫 계획에서 실패했다.
+  3. ①+⑤ 스트레스: Pushing 17·31, Inserting 31 조합 각 10 context × 600 step에서 LiPo 실패 0건, 계획당 최대 약 50 ms.
+  4. 지연 E_strong + 5개 모두 ON, 두 태스크 × 2 context × 200 step:
+     - 계획 52회 중 ④ 참조 50회, 고정 구간 50회, ⑤ 성공 52회
+     - 위반 step 0
+  5. **④⑤ OFF 8조합 × 2태스크의 실행 행동이 2단계 코드와 비트 단위로 같다**(D3IL, 24 step, seed 0).
+
 ## 5. 4단계: 삭제 목록 (legacy / 불필요 테스트)
 
 삭제는 각 단계의 대체 기능이 검증된 뒤 **별도 commit**으로 한다. 결과 JSON처럼 재현의 근거가 되는 파일은 git 이력으로 보존된다는 점을 확인한 뒤 지운다.
