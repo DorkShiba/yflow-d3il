@@ -63,7 +63,7 @@ bash scripts/run_suite.sh --stage main --output fm_constraint/runs/suite_main
 
 ## PF2MP 캐시
 
-태스크별 전체 **train** 시연의 목표 TCP XY로 Gaussian KDE와 고밀도 영역 거리장을 만들고 `data/<task>_sincos_v1/pf2mp_cache/<fingerprint>.npz`에 캐시한다(lock·atomic rename). `bandwidth_m`·support·grid·threshold가 바뀌면 새로 만들고 `weight`·`distance_alpha`만 바뀌면 재사용한다. 기본값(weight 0.01, bandwidth 0.025 m, alpha −1)은 초기 후보값이다. 설계는 [PF2MP.md](../docs/PF2MP.md).
+태스크별 전체 **train** 시연의 목표 TCP XY로 Gaussian KDE와 고밀도 영역 거리장을 만들고 `data/<task>_sincos_v1/pf2mp_cache/<fingerprint>.npz`에 캐시한다(lock·atomic rename). `bandwidth_m`·support·grid·threshold가 바뀌면 새로 만들고 `weight`·`distance_alpha`만 바뀌면 재사용한다. 기본값(weight 0.01, bandwidth 0.025 m, alpha −1)은 초기 후보값이다.
 
 ## 파일
 

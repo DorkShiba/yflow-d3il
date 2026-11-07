@@ -347,7 +347,7 @@ Predict N회: v = FM(x,t) [+ ④ RTC guidance] [+ ② PF2MP] → Euler → [① 
 - **고친 문서**:
   - 루트 `README.md`: 문서 표, 저장소 구조, 8절 5개 방법, 10절 테스트·viewer
   - `docs/README.md` 3절: METHODS로 연결
-  - `docs/PF2MP.md`: 파이프라인 위치, CLI, schema
+  - `docs/PF2MP.md`: 파이프라인 위치, CLI, schema (이후 사용자가 문서를 삭제했다)
   - `docs/YFLOW_research_overview.md`: 현재 5개 방법과 다르다는 안내
   - `fm_baseline/README.md` 9·10절, `fm_baseline/LIPO.md`(현재 ⑤ 정의로 재작성)
   - `visualizer/README.md`, `TEAM_GUIDE.md`

@@ -44,7 +44,7 @@ noise → Predict N회 [ FM 또는 ④ RTC 벡터장 + ② PF2MP → Euler → �
 ### ② PF2MP (`methods.pf2mp`, 비트 8)
 - train 시연의 목표 TCP XY로 만든 Gaussian KDE와 고밀도 영역 거리장으로 potential `φ(q) = log p(q) + α·dist(q, safe)`를 정의한다.
 - Predict 벡터장에 `λ∇φ`를 **생성된 미래 상태 위치 채널에만** 더한다. 행동 채널 가산항은 항상 0이고, 행동은 다음 FM 평가를 거쳐 간접적으로 바뀐다.
-- 기본값(λ 0.01, bandwidth 0.025 m, α −1)은 초기 후보값이다. 자세한 내용은 [PF2MP.md](PF2MP.md)에 있다.
+- 기본값(λ 0.01, bandwidth 0.025 m, α −1)은 초기 후보값이다. 구현은 `fm_constraint/pf2mp.py`에 있다.
 
 ### ③ Filter: 실행 직전 필터 (`methods.filter`, 비트 4)
 - 큐에서 꺼낸 행동 하나를, 실행 직전 **최신 관측**(블록 위치, 직전 실제 행동)으로 만든 C(H=1)에 투영한다(OSQP).
