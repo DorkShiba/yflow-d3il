@@ -1,0 +1,168 @@
+# Y-Flow: Combining Safety Constraints and Inter-Chunk Continuity for Flow Matching-Based Robotic Arm Control
+
+> **2026-11-08 초기화.** 이전 결과(method123 16조합, LiPo blend 비교 등)는 방법 정의·코드가 서로 달라 비교할 수 없어 폐기했다. 그래서 브랜치를 통합했다(`docs/PLAN.md`). 아래는 통합된 코드(master `bb003a7` 이후)로 처음부터 다시 수행하는 실험의 프로토콜과 빈 결과 표다.
+
+## 1. 실험 구성
+
+학습된 FM baseline(태스크별 EMA checkpoint 1개)을 고정하고, 추론 시점에만 적용하는 5개 방법을 독립적으로 on/off하여 **태스크당 32개 조합, 두 태스크 합계 64개 조합**을 비교한다. 정의는 [`docs/METHODS.md`](METHODS.md)를 따른다.
+
+| # | 방법 | 한 줄 정의 | 조합 비트 |
+|---|---|---|---:|
+| ① | Projection | Predict 매 Euler 직후 행동 H개를 제약 집합에 공동 투영 | 16 |
+| ② | PF2MP | train KDE potential guidance를 미래 상태 위치 채널에 추가 | 8 |
+| ③ | Filter | 실행 직전 최신 관측으로 행동 하나를 투영, 수정 시 큐 폐기·재계획 | 4 |
+| ④ | RTC | 직전 계획의 미실행 행동으로 inpainting guidance (β=5) | 2 |
+| ⑤ | LiPo | 계획 끝 고정 한도(0.3 mm) jerk QP, ①이 켜져 있으면 ① 제약 포함 | 1 |
+
+조합 ID = 비트 합(`P00`~`P31`, `I00`~`I31`). `P00`/`I00`은 baseline, `P31`/`I31`은 모두 ON이다.
+
+## 2. 평가 규모
+
+| | Pushing | Inserting |
+|---|---:|---:|
+| 초기 상태(context) | 30 | 30 |
+| context당 FM 입력 noise | 3 | 3 |
+| 조합당 rollout | 90 | 90 |
+| 32조합 합계 | 2,880 | 2,880 |
+| 최대 제어 step | 400 | 2,000 |
+
+두 태스크 합계는 **5,760 rollout**이다. 30개 context와 3개 noise seed는 모든 조합이 공유한다(대응 비교).
+
+## 3. 고정 조건
+
+| 항목 | 값 |
+|---|---|
+| checkpoint | `fm_baseline/results/<task>_baseline/baseline_ema.pt` (EMA) |
+| Predict | Euler 10회, horizon 16, chunk 8개 실행 후 재계획, 제어 간격 0.035 s |
+| 제약 | `configs/<task>.yaml` (workspace, 가속도 13.7 / 14.2 m/s², object envelope margin 0.25 / 0.14 m) |
+| 방법 파라미터 | PF2MP weight 0.01·bandwidth 0.025 m·alpha −1, RTC β 5, LiPo bound 0.3 mm, Projection `every` |
+| 코드 | 모든 담당자가 같은 git commit에서 실행. 실행 기록에 commit·설정 hash 저장 |
+
+방법 파라미터는 이번 실험에서 조정하지 않는다(초기 후보값 그대로). 조정이 필요하면 평가용 30개와 겹치지 않는 context로 별도 수행한다.
+
+## 4. 평가 단위와 난수
+
+- **평가 단위:** `(task, 조합 ID, context, noise seed)` 하나가 완전한 rollout 1회다. rollout마다 환경을 reset하고, 이전 rollout의 큐·RTC 참조·LiPo 이력을 이어받지 않는다.
+- **FM 입력 noise:** `(task, context_id, noise seed)`로 rollout 전용 generator를 만든다. 조합 ID는 noise에 넣지 않으므로, 같은 context·seed에서 모든 조합의 **첫 계획 noise가 같다**. 재계획 횟수가 달라지면 그 이후의 noise 인덱스만 대응한다.
+- **실패 처리:** 계획 실패, solver 실패, 필터 거부 같은 방법 자체의 실패는 실패 rollout으로 분모에 포함한다. 프로세스 중단 같은 인프라 실패는 같은 평가 키로 재실행하고 그 사실을 기록한다.
+
+## 5. 평가 지표
+
+| 구분 | 지표 | 정의 |
+|---|---|---|
+| Task | Success rate ↑ | D3IL 공식 판정. 30 context × 3 seed 전체가 분모 |
+| Safety | Constraint violation rate ↓ | 실행한 step 중 활성 평가 제약(workspace·가속도·object envelope)을 하나라도 위반한 비율. 실제 실행 행동과 실제 상태로 측정하며, 방법이 OFF여도 같은 기준으로 측정 |
+| Smoothness | Action change / Jerk ↓ | 실행 행동 기준 평균 ‖a_t − a_{t−1}‖ (mm), 명령 jerk ‖a_t − 2a_{t−1} + a_{t−2}‖/Δt³ (m/s³). rollout 경계를 넘는 차분은 만들지 않음 |
+| Diversity | Behavior entropy ↑ | context별 성공 mode 분포의 정규화 entropy(Pushing M=4, Inserting M=6). 성공이 있는 context만 평균 |
+| Combination | Complementarity Δ ↑ | Δ = S_{A+B} − max(S_A, S_B). A = 조합에서 가장 낮은 비트 방법을 뺀 조합, B = 그 방법 단독(실행 전 고정). 낮을수록 좋은 지표는 S = −x |
+
+- **표기:** 표에는 `추정값 [95% CI]`를 쓴다.
+- **신뢰구간:** context 단위 cluster bootstrap 2,000회로 구한다. 모든 조합에 같은 재표집 인덱스를 쓴다.
+- **계산 비용:** 계획 시간·모델/QP 호출 수는 별도로 기록한다. 장비가 다른 결과끼리는 시간 지표를 비교하지 않는다.
+
+## 6. 실행 절차
+
+1. **평가 목록:** `configs/experiment_contexts.json`(태스크마다 30개, 번호 0~29, 초기 상태 hash 포함). 고정 seed `20261108`로 한 번 생성해 commit했다. Inserting은 val의 context group이 겹치지 않게 그룹당 대표 1개에서 뽑았다.
+2. **동작 확인:** `bash scripts/run_experiment.sh --name <이름> --contexts <번호> --smoke 24`. GPU 사용, 실패, 단위별 시간을 확인한다. 결과는 로컬에만 저장되며 본실험에 섞이지 않는다.
+3. **본실험:** `bash scripts/run_experiment.sh --name <이름> --contexts <번호>`. 분담은 루트 `README.md` 11절에 있다.
+   - 맡은 context마다 두 태스크 × 32조합 × seed 3을 실행한다.
+   - 단위(task × 조합 × context)마다 결과를 저장한다. 다시 실행하면 완료된 단위는 건너뛴다.
+4. **공유:** `experiments/id_v1/`와 `docs/report_<이름>.md`를 commit하고 push한다.
+5. **통합(팀장):** `python -m fm_constraint.experiment merge`로 `docs/report_results.md`를 만들어 8절 표를 채운다. 결과를 보고 특정 조합만 다시 돌리거나 seed를 바꾸지 않는다.
+
+### 6.1 결정 사항 (2026-11-08)
+
+| # | 항목 | 결정 |
+|---|---|---|
+| 1 | Pushing 30 context | D3IL 공식 test 60개 중 고정 seed로 무작위 30개 |
+| 2 | Inserting 30 context | val 80 group에서 group이 겹치지 않게 무작위 30개. val 목록이므로 **validation**으로 표기 |
+| 3 | 반복 | noise seed `0, 1, 2` (3회) |
+| 4 | OOD | 이번 실험은 ID만. OOD(20조건)는 별도 실험 |
+| 5 | 장비 | 통일하지 않음. 대신 **context 단위로 분담**해, 같은 context의 32조합은 같은 장비에서 실행한다. 장비 차이는 context 간 변동에 포함되어 context bootstrap CI에 반영된다. FM noise는 장비와 무관하게 CPU 난수로 생성한다 |
+| 6 | 결과 공유 | git으로 추적: 단위별 `result.json`(지표·episode)과 `trajectories.npz`(실행 행동·seam·위반). 전체 계획 로그는 각자 로컬에 둔다 |
+| 7 | 보고서 | 팀원별 `docs/report_<이름>.md`(점추정). 팀장이 merge로 전체 CI를 계산해 이 문서에 정리한다. 이 문서도 git으로 추적한다 |
+
+### 6.2 해석할 때 주의할 점
+- **entropy 상한:** context당 성공이 최대 3개라서 Inserting(행동 방식 6가지)의 entropy는 최대 log3/log6 ≈ 0.61이다. Pushing은 0.79다.
+- **파라미터:** 방법 파라미터는 조정하지 않은 초기 후보값이다.
+- **시간 지표:** 계획 시간·지연은 장비가 섞여 있으므로 같은 장비 안에서만 비교한다.
+
+## 7. 분담
+
+context 번호 분담과 실행 명령은 루트 `README.md` 11절에만 기록한다(Pushing과 Inserting에 같은 번호). 진행 상황은 각자의 `docs/report_<이름>.md`로 확인한다.
+
+## 8. Results
+
+### D3IL Pushing — 32개 조합 (30 context × 3 seed)
+
+| 조합 ID | ① Projection | ② PF2MP | ③ Filter | ④ RTC | ⑤ LiPo | 담당자 | 성공률 (%) ↑ | 제약 위반율 (%) ↓ | Action change (mm) / Jerk (m/s³) ↓ | Behavior entropy ↑ | Complementarity Δ (A, B) ↑ |
+|---|:-:|:-:|:-:|:-:|:-:|---|---:|---:|---:|---:|---|
+| P00 | · | · | · | · | · | 미정 | — | — | — / — | — | N/A |
+| P01 | · | · | · | · | ON | 미정 | — | — | — / — | — | N/A |
+| P02 | · | · | · | ON | · | 미정 | — | — | — / — | — | N/A |
+| P03 | · | · | · | ON | ON | 미정 | — | — | — / — | — | — (P02, P01) |
+| P04 | · | · | ON | · | · | 미정 | — | — | — / — | — | N/A |
+| P05 | · | · | ON | · | ON | 미정 | — | — | — / — | — | — (P04, P01) |
+| P06 | · | · | ON | ON | · | 미정 | — | — | — / — | — | — (P04, P02) |
+| P07 | · | · | ON | ON | ON | 미정 | — | — | — / — | — | — (P06, P01) |
+| P08 | · | ON | · | · | · | 미정 | — | — | — / — | — | N/A |
+| P09 | · | ON | · | · | ON | 미정 | — | — | — / — | — | — (P08, P01) |
+| P10 | · | ON | · | ON | · | 미정 | — | — | — / — | — | — (P08, P02) |
+| P11 | · | ON | · | ON | ON | 미정 | — | — | — / — | — | — (P10, P01) |
+| P12 | · | ON | ON | · | · | 미정 | — | — | — / — | — | — (P08, P04) |
+| P13 | · | ON | ON | · | ON | 미정 | — | — | — / — | — | — (P12, P01) |
+| P14 | · | ON | ON | ON | · | 미정 | — | — | — / — | — | — (P12, P02) |
+| P15 | · | ON | ON | ON | ON | 미정 | — | — | — / — | — | — (P14, P01) |
+| P16 | ON | · | · | · | · | 미정 | — | — | — / — | — | N/A |
+| P17 | ON | · | · | · | ON | 미정 | — | — | — / — | — | — (P16, P01) |
+| P18 | ON | · | · | ON | · | 미정 | — | — | — / — | — | — (P16, P02) |
+| P19 | ON | · | · | ON | ON | 미정 | — | — | — / — | — | — (P18, P01) |
+| P20 | ON | · | ON | · | · | 미정 | — | — | — / — | — | — (P16, P04) |
+| P21 | ON | · | ON | · | ON | 미정 | — | — | — / — | — | — (P20, P01) |
+| P22 | ON | · | ON | ON | · | 미정 | — | — | — / — | — | — (P20, P02) |
+| P23 | ON | · | ON | ON | ON | 미정 | — | — | — / — | — | — (P22, P01) |
+| P24 | ON | ON | · | · | · | 미정 | — | — | — / — | — | — (P16, P08) |
+| P25 | ON | ON | · | · | ON | 미정 | — | — | — / — | — | — (P24, P01) |
+| P26 | ON | ON | · | ON | · | 미정 | — | — | — / — | — | — (P24, P02) |
+| P27 | ON | ON | · | ON | ON | 미정 | — | — | — / — | — | — (P26, P01) |
+| P28 | ON | ON | ON | · | · | 미정 | — | — | — / — | — | — (P24, P04) |
+| P29 | ON | ON | ON | · | ON | 미정 | — | — | — / — | — | — (P28, P01) |
+| P30 | ON | ON | ON | ON | · | 미정 | — | — | — / — | — | — (P28, P02) |
+| P31 | ON | ON | ON | ON | ON | 미정 | — | — | — / — | — | — (P30, P01) |
+
+### D3IL Inserting — 32개 조합 (30 context × 3 seed)
+
+| 조합 ID | ① Projection | ② PF2MP | ③ Filter | ④ RTC | ⑤ LiPo | 담당자 | 성공률 (%) ↑ | 제약 위반율 (%) ↓ | Action change (mm) / Jerk (m/s³) ↓ | Behavior entropy ↑ | Complementarity Δ (A, B) ↑ |
+|---|:-:|:-:|:-:|:-:|:-:|---|---:|---:|---:|---:|---|
+| I00 | · | · | · | · | · | 미정 | — | — | — / — | — | N/A |
+| I01 | · | · | · | · | ON | 미정 | — | — | — / — | — | N/A |
+| I02 | · | · | · | ON | · | 미정 | — | — | — / — | — | N/A |
+| I03 | · | · | · | ON | ON | 미정 | — | — | — / — | — | — (I02, I01) |
+| I04 | · | · | ON | · | · | 미정 | — | — | — / — | — | N/A |
+| I05 | · | · | ON | · | ON | 미정 | — | — | — / — | — | — (I04, I01) |
+| I06 | · | · | ON | ON | · | 미정 | — | — | — / — | — | — (I04, I02) |
+| I07 | · | · | ON | ON | ON | 미정 | — | — | — / — | — | — (I06, I01) |
+| I08 | · | ON | · | · | · | 미정 | — | — | — / — | — | N/A |
+| I09 | · | ON | · | · | ON | 미정 | — | — | — / — | — | — (I08, I01) |
+| I10 | · | ON | · | ON | · | 미정 | — | — | — / — | — | — (I08, I02) |
+| I11 | · | ON | · | ON | ON | 미정 | — | — | — / — | — | — (I10, I01) |
+| I12 | · | ON | ON | · | · | 미정 | — | — | — / — | — | — (I08, I04) |
+| I13 | · | ON | ON | · | ON | 미정 | — | — | — / — | — | — (I12, I01) |
+| I14 | · | ON | ON | ON | · | 미정 | — | — | — / — | — | — (I12, I02) |
+| I15 | · | ON | ON | ON | ON | 미정 | — | — | — / — | — | — (I14, I01) |
+| I16 | ON | · | · | · | · | 미정 | — | — | — / — | — | N/A |
+| I17 | ON | · | · | · | ON | 미정 | — | — | — / — | — | — (I16, I01) |
+| I18 | ON | · | · | ON | · | 미정 | — | — | — / — | — | — (I16, I02) |
+| I19 | ON | · | · | ON | ON | 미정 | — | — | — / — | — | — (I18, I01) |
+| I20 | ON | · | ON | · | · | 미정 | — | — | — / — | — | — (I16, I04) |
+| I21 | ON | · | ON | · | ON | 미정 | — | — | — / — | — | — (I20, I01) |
+| I22 | ON | · | ON | ON | · | 미정 | — | — | — / — | — | — (I20, I02) |
+| I23 | ON | · | ON | ON | ON | 미정 | — | — | — / — | — | — (I22, I01) |
+| I24 | ON | ON | · | · | · | 미정 | — | — | — / — | — | — (I16, I08) |
+| I25 | ON | ON | · | · | ON | 미정 | — | — | — / — | — | — (I24, I01) |
+| I26 | ON | ON | · | ON | · | 미정 | — | — | — / — | — | — (I24, I02) |
+| I27 | ON | ON | · | ON | ON | 미정 | — | — | — / — | — | — (I26, I01) |
+| I28 | ON | ON | ON | · | · | 미정 | — | — | — / — | — | — (I24, I04) |
+| I29 | ON | ON | ON | · | ON | 미정 | — | — | — / — | — | — (I28, I01) |
+| I30 | ON | ON | ON | ON | · | 미정 | — | — | — / — | — | — (I28, I02) |
+| I31 | ON | ON | ON | ON | ON | 미정 | — | — | — / — | — | — (I30, I01) |

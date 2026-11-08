@@ -1,0 +1,50 @@
+commit 4d33329
+0, NVIDIA GeForce RTX 3090, 1494 MiB, 24576 MiB
+device OK: NVIDIA GeForce RTX 3090 | torch 2.3.1+cu121 | cuda 12.1
+== inserting: combos 4,8,16,31, contexts 18 → fm_constraint/runs/experiment_logs/jaeyeop_inserting_cuda0_ctx18_c4_8_16_31_20261108T044215Z_3268.log
+RUN  I04 ctx_18 (env_083_02.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+pybullet build time: Jan 29 2025 23:17:20
+/root/d3il-work/venv/lib/python3.11/site-packages/gym/spaces/box.py:84: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=24 failure=None
+c000_t1 success=0 steps=24 failure=None
+c000_t2 success=0 steps=24 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/smoke/inserting/I04/ctx_18
+DONE I04 ctx_18 success 0.00 6s
+RUN  I08 ctx_18 (env_083_02.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=24 failure=None
+c000_t1 success=0 steps=24 failure=None
+c000_t2 success=0 steps=24 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/smoke/inserting/I08/ctx_18
+DONE I08 ctx_18 success 0.00 5s
+RUN  I16 ctx_18 (env_083_02.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=24 failure=None
+c000_t1 success=0 steps=24 failure=None
+c000_t2 success=0 steps=24 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/smoke/inserting/I16/ctx_18
+DONE I16 ctx_18 success 0.00 5s
+RUN  I31 ctx_18 (env_083_02.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=24 failure=None
+c000_t1 success=0 steps=24 failure=None
+c000_t2 success=0 steps=24 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/smoke/inserting/I31/ctx_18
+DONE I31 ctx_18 success 0.00 6s

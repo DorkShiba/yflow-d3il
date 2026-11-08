@@ -1,0 +1,128 @@
+[
+  {
+    "ctx": 17,
+    "seed": 0,
+    "final_xy_goal_distance_mm": [
+      444.44140149582364,
+      2.539839054982207,
+      499.6026306911975
+    ],
+    "first_step_xy_under_10mm": [
+      null,
+      268,
+      null
+    ]
+  },
+  {
+    "ctx": 17,
+    "seed": 1,
+    "final_xy_goal_distance_mm": [
+      2.92157559751799,
+      661.1115436477576,
+      258.54629887953524
+    ],
+    "first_step_xy_under_10mm": [
+      261,
+      null,
+      null
+    ]
+  },
+  {
+    "ctx": 17,
+    "seed": 2,
+    "final_xy_goal_distance_mm": [
+      2.2638461974307913,
+      2.6624271611490458,
+      6.307477919120611
+    ],
+    "first_step_xy_under_10mm": [
+      859,
+      410,
+      1120
+    ]
+  },
+  {
+    "ctx": 18,
+    "seed": 0,
+    "final_xy_goal_distance_mm": [
+      688.1058435139905,
+      1.784487103470732,
+      2.519728934748091
+    ],
+    "first_step_xy_under_10mm": [
+      null,
+      654,
+      1205
+    ]
+  },
+  {
+    "ctx": 18,
+    "seed": 1,
+    "final_xy_goal_distance_mm": [
+      625.7175035602037,
+      2.331832090626069,
+      377.40854825954295
+    ],
+    "first_step_xy_under_10mm": [
+      null,
+      1161,
+      null
+    ]
+  },
+  {
+    "ctx": 18,
+    "seed": 2,
+    "final_xy_goal_distance_mm": [
+      2.608429651974595,
+      8.788495106948899,
+      1.3214650111823867
+    ],
+    "first_step_xy_under_10mm": [
+      1017,
+      423,
+      621
+    ]
+  },
+  {
+    "ctx": 19,
+    "seed": 0,
+    "final_xy_goal_distance_mm": [
+      2.581232868393628,
+      2.995034506453561,
+      2.0784942720194706
+    ],
+    "first_step_xy_under_10mm": [
+      774,
+      224,
+      517
+    ]
+  },
+  {
+    "ctx": 19,
+    "seed": 1,
+    "final_xy_goal_distance_mm": [
+      2.577400319787184,
+      2.7544461535123124,
+      3.897731873909094
+    ],
+    "first_step_xy_under_10mm": [
+      1086,
+      332,
+      1405
+    ]
+  },
+  {
+    "ctx": 19,
+    "seed": 2,
+    "final_xy_goal_distance_mm": [
+      3.0436327993248296,
+      2.615175439945707,
+      532.6248091285466
+    ],
+    "first_step_xy_under_10mm": [
+      296,
+      546,
+      null
+    ]
+  }
+]

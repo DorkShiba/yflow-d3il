@@ -1,0 +1,24 @@
+commit 4d33329
+0, NVIDIA GeForce RTX 3090, 1 MiB, 24576 MiB
+device OK: NVIDIA GeForce RTX 3090 | torch 2.3.1+cu121 | cuda 12.1
+== inserting: combos 0, contexts 17 → fm_constraint/runs/experiment_logs/jaeyeop_inserting_cuda0_ctx17_c0_20261108T044106Z_3068.log
+RUN  I00 ctx_17 (env_078_04.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+pybullet build time: Jan 29 2025 23:17:20
+/root/d3il-work/venv/lib/python3.11/site-packages/gym/spaces/box.py:84: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=962 failure=None
+c000_t1 success=1 steps=1357 failure=None
+c000_t2 success=0 steps=2000 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I00/ctx_17
+DONE I00 ctx_17 success 0.67 244s
+Saved /root/d3il-work/yflow-d3il/docs/report_jaeyeop.md
+
+완료. 결과를 공유하려면:
+  git add experiments/id_v1 docs/report_jaeyeop.md && git commit -m "results: jaeyeop contexts 17" && git pull --rebase && git push

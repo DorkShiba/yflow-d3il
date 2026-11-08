@@ -1,0 +1,57 @@
+commit 4d33329
+0, NVIDIA GeForce RTX 3090, 1 MiB, 24576 MiB
+device OK: NVIDIA GeForce RTX 3090 | torch 2.3.1+cu121 | cuda 12.1
+== pushing: combos 0,31, contexts 17 → fm_constraint/runs/experiment_logs/jaeyeop_pushing_cuda0_ctx17_c0_31_20261108T043759Z_2735.log
+RUN  P00 ctx_17 (32) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+pybullet build time: Jan 29 2025 23:17:20
+/root/d3il-work/venv/lib/python3.11/site-packages/gym/spaces/box.py:84: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=24 failure=None
+c000_t1 success=0 steps=24 failure=None
+c000_t2 success=0 steps=24 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/smoke/pushing/P00/ctx_17
+DONE P00 ctx_17 success 0.00 6s
+RUN  P31 ctx_17 (32) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=24 failure=None
+c000_t1 success=0 steps=24 failure=None
+c000_t2 success=0 steps=24 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/smoke/pushing/P31/ctx_17
+DONE P31 ctx_17 success 0.00 54s
+== inserting: combos 0,31, contexts 17 → fm_constraint/runs/experiment_logs/jaeyeop_inserting_cuda0_ctx17_c0_31_20261108T043901Z_2735.log
+RUN  I00 ctx_17 (env_078_04.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+pybullet build time: Jan 29 2025 23:17:20
+/root/d3il-work/venv/lib/python3.11/site-packages/gym/spaces/box.py:84: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=24 failure=None
+c000_t1 success=0 steps=24 failure=None
+c000_t2 success=0 steps=24 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/smoke/inserting/I00/ctx_17
+DONE I00 ctx_17 success 0.00 6s
+RUN  I31 ctx_17 (env_078_04.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=24 failure=None
+c000_t1 success=0 steps=24 failure=None
+c000_t2 success=0 steps=24 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/smoke/inserting/I31/ctx_17
+DONE I31 ctx_17 success 0.00 87s

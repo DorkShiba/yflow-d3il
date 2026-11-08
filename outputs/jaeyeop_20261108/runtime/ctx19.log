@@ -1,0 +1,661 @@
+commit 4d33329
+0, NVIDIA GeForce RTX 3090, 845 MiB, 24576 MiB
+device OK: NVIDIA GeForce RTX 3090 | torch 2.3.1+cu121 | cuda 12.1
+== pushing: combos all, contexts 19 → fm_constraint/runs/experiment_logs/jaeyeop_pushing_cuda0_ctx19_call_20261108T044112Z_3151.log
+RUN  P00 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+pybullet build time: Jan 29 2025 23:17:20
+/root/d3il-work/venv/lib/python3.11/site-packages/gym/spaces/box.py:84: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=218 failure=None
+c000_t1 success=1 steps=199 failure=None
+c000_t2 success=0 steps=400 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P00/ctx_19
+DONE P00 ctx_19 success 0.67 45s
+RUN  P01 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=203 failure=None
+c000_t1 success=1 steps=206 failure=None
+c000_t2 success=0 steps=400 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P01/ctx_19
+DONE P01 ctx_19 success 0.67 44s
+RUN  P02 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=200 failure=None
+c000_t1 success=1 steps=203 failure=None
+c000_t2 success=1 steps=202 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P02/ctx_19
+DONE P02 ctx_19 success 1.00 41s
+RUN  P03 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=196 failure=None
+c000_t1 success=1 steps=212 failure=None
+c000_t2 success=1 steps=281 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P03/ctx_19
+DONE P03 ctx_19 success 1.00 47s
+RUN  P04 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=218 failure=None
+c000_t1 success=1 steps=199 failure=None
+c000_t2 success=0 steps=400 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P04/ctx_19
+DONE P04 ctx_19 success 0.67 44s
+RUN  P05 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=203 failure=None
+c000_t1 success=1 steps=206 failure=None
+c000_t2 success=0 steps=400 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P05/ctx_19
+DONE P05 ctx_19 success 0.67 44s
+RUN  P06 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=200 failure=None
+c000_t1 success=1 steps=203 failure=None
+c000_t2 success=1 steps=202 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P06/ctx_19
+DONE P06 ctx_19 success 1.00 41s
+RUN  P07 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=196 failure=None
+c000_t1 success=1 steps=212 failure=None
+c000_t2 success=1 steps=281 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P07/ctx_19
+DONE P07 ctx_19 success 1.00 47s
+RUN  P08 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=290 failure=None
+c000_t1 success=1 steps=215 failure=None
+c000_t2 success=0 steps=400 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P08/ctx_19
+DONE P08 ctx_19 success 0.67 52s
+RUN  P09 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=201 failure=None
+c000_t1 success=1 steps=192 failure=None
+c000_t2 success=0 steps=400 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P09/ctx_19
+DONE P09 ctx_19 success 0.67 45s
+RUN  P10 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=195 failure=None
+c000_t1 success=1 steps=201 failure=None
+c000_t2 success=1 steps=212 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P10/ctx_19
+DONE P10 ctx_19 success 1.00 44s
+RUN  P11 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=218 failure=None
+c000_t1 success=1 steps=209 failure=None
+c000_t2 success=0 steps=400 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P11/ctx_19
+DONE P11 ctx_19 success 0.67 59s
+RUN  P12 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=290 failure=None
+c000_t1 success=1 steps=215 failure=None
+c000_t2 success=0 steps=400 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P12/ctx_19
+DONE P12 ctx_19 success 0.67 80s
+RUN  P13 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=201 failure=None
+c000_t1 success=1 steps=192 failure=None
+c000_t2 success=0 steps=400 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P13/ctx_19
+DONE P13 ctx_19 success 0.67 50s
+RUN  P14 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=195 failure=None
+c000_t1 success=1 steps=201 failure=None
+c000_t2 success=1 steps=212 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P14/ctx_19
+DONE P14 ctx_19 success 1.00 42s
+RUN  P15 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=218 failure=None
+c000_t1 success=1 steps=209 failure=None
+c000_t2 success=0 steps=400 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P15/ctx_19
+DONE P15 ctx_19 success 0.67 57s
+RUN  P16 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=206 failure=None
+c000_t1 success=1 steps=207 failure=None
+c000_t2 success=1 steps=246 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P16/ctx_19
+DONE P16 ctx_19 success 1.00 37s
+RUN  P17 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=220 failure=None
+c000_t1 success=1 steps=216 failure=None
+c000_t2 success=1 steps=266 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P17/ctx_19
+DONE P17 ctx_19 success 1.00 40s
+RUN  P18 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=192 failure=None
+c000_t1 success=1 steps=270 failure=None
+c000_t2 success=1 steps=215 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P18/ctx_19
+DONE P18 ctx_19 success 1.00 47s
+RUN  P19 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=199 failure=None
+c000_t1 success=1 steps=228 failure=None
+c000_t2 success=0 steps=400 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P19/ctx_19
+DONE P19 ctx_19 success 0.67 58s
+RUN  P20 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=206 failure=None
+c000_t1 success=1 steps=207 failure=None
+c000_t2 success=1 steps=246 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P20/ctx_19
+DONE P20 ctx_19 success 1.00 37s
+RUN  P21 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=220 failure=None
+c000_t1 success=1 steps=216 failure=None
+c000_t2 success=1 steps=266 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P21/ctx_19
+DONE P21 ctx_19 success 1.00 40s
+RUN  P22 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=192 failure=None
+c000_t1 success=1 steps=270 failure=None
+c000_t2 success=1 steps=215 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P22/ctx_19
+DONE P22 ctx_19 success 1.00 47s
+RUN  P23 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=199 failure=None
+c000_t1 success=1 steps=228 failure=None
+c000_t2 success=0 steps=400 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P23/ctx_19
+DONE P23 ctx_19 success 0.67 58s
+RUN  P24 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=201 failure=None
+c000_t1 success=1 steps=259 failure=None
+c000_t2 success=0 steps=400 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P24/ctx_19
+DONE P24 ctx_19 success 0.67 51s
+RUN  P25 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=400 failure=None
+c000_t1 success=1 steps=208 failure=None
+c000_t2 success=0 steps=400 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P25/ctx_19
+DONE P25 ctx_19 success 0.33 61s
+RUN  P26 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=227 failure=None
+c000_t1 success=1 steps=196 failure=None
+c000_t2 success=1 steps=271 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P26/ctx_19
+DONE P26 ctx_19 success 1.00 51s
+RUN  P27 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=230 failure=None
+c000_t1 success=1 steps=190 failure=None
+c000_t2 success=0 steps=400 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P27/ctx_19
+DONE P27 ctx_19 success 0.67 61s
+RUN  P28 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=201 failure=None
+c000_t1 success=1 steps=259 failure=None
+c000_t2 success=0 steps=400 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P28/ctx_19
+DONE P28 ctx_19 success 0.67 52s
+RUN  P29 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=400 failure=None
+c000_t1 success=1 steps=208 failure=None
+c000_t2 success=0 steps=400 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P29/ctx_19
+DONE P29 ctx_19 success 0.33 61s
+RUN  P30 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=227 failure=None
+c000_t1 success=1 steps=196 failure=None
+c000_t2 success=1 steps=271 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P30/ctx_19
+DONE P30 ctx_19 success 1.00 51s
+RUN  P31 ctx_19 (38) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=230 failure=None
+c000_t1 success=1 steps=190 failure=None
+c000_t2 success=0 steps=400 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/pushing/P31/ctx_19
+DONE P31 ctx_19 success 0.67 61s
+== inserting: combos all, contexts 19 → fm_constraint/runs/experiment_logs/jaeyeop_inserting_cuda0_ctx19_call_20261108T050750Z_3151.log
+RUN  I00 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+pybullet build time: Jan 29 2025 23:17:20
+/root/d3il-work/venv/lib/python3.11/site-packages/gym/spaces/box.py:84: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1422 failure=None
+c000_t1 success=1 steps=1168 failure=None
+c000_t2 success=1 steps=1081 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I00/ctx_19
+DONE I00 ctx_19 success 1.00 208s
+RUN  I01 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=2000 failure=None
+c000_t1 success=1 steps=1545 failure=None
+c000_t2 success=1 steps=1046 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I01/ctx_19
+DONE I01 ctx_19 success 0.67 259s
+RUN  I02 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1145 failure=None
+c000_t1 success=1 steps=1023 failure=None
+c000_t2 success=1 steps=1333 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I02/ctx_19
+DONE I02 ctx_19 success 1.00 258s
+RUN  I03 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1251 failure=None
+c000_t1 success=1 steps=1608 failure=None
+c000_t2 success=1 steps=1791 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I03/ctx_19
+DONE I03 ctx_19 success 1.00 350s
+RUN  I04 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1422 failure=None
+c000_t1 success=1 steps=1131 failure=None
+c000_t2 success=1 steps=1081 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I04/ctx_19
+DONE I04 ctx_19 success 1.00 208s
+RUN  I05 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=2000 failure=None
+c000_t1 success=1 steps=1498 failure=None
+c000_t2 success=1 steps=1046 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I05/ctx_19
+DONE I05 ctx_19 success 0.67 258s
+RUN  I06 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1145 failure=None
+c000_t1 success=1 steps=1023 failure=None
+c000_t2 success=1 steps=1333 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I06/ctx_19
+DONE I06 ctx_19 success 1.00 257s
+RUN  I07 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1251 failure=None
+c000_t1 success=1 steps=1608 failure=None
+c000_t2 success=1 steps=1791 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I07/ctx_19
+DONE I07 ctx_19 success 1.00 341s
+RUN  I08 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=2000 failure=None
+c000_t1 success=1 steps=1099 failure=None
+c000_t2 success=1 steps=1453 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I08/ctx_19
+DONE I08 ctx_19 success 0.67 276s
+RUN  I09 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=776 failure=None
+c000_t1 success=0 steps=2000 failure=None
+c000_t2 success=0 steps=2000 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I09/ctx_19
+DONE I09 ctx_19 success 0.33 292s
+RUN  I10 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1238 failure=None
+c000_t1 success=0 steps=2000 failure=None
+c000_t2 success=1 steps=799 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I10/ctx_19
+DONE I10 ctx_19 success 0.67 309s
+RUN  I11 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=2000 failure=None
+c000_t1 success=1 steps=1026 failure=None
+c000_t2 success=0 steps=2000 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I11/ctx_19
+DONE I11 ctx_19 success 0.33 386s
+RUN  I12 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=2000 failure=None
+c000_t1 success=1 steps=1099 failure=None
+c000_t2 success=0 steps=2000 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I12/ctx_19
+DONE I12 ctx_19 success 0.33 309s
+RUN  I13 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=776 failure=None
+c000_t1 success=0 steps=2000 failure=None
+c000_t2 success=0 steps=2000 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I13/ctx_19
+DONE I13 ctx_19 success 0.33 301s
+RUN  I14 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1238 failure=None
+c000_t1 success=0 steps=2000 failure=None
+c000_t2 success=1 steps=799 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I14/ctx_19
+DONE I14 ctx_19 success 0.67 310s
+RUN  I15 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=2000 failure=None
+c000_t1 success=1 steps=1026 failure=None
+c000_t2 success=0 steps=2000 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I15/ctx_19
+DONE I15 ctx_19 success 0.33 387s
+RUN  I16 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1287 failure=None
+c000_t1 success=1 steps=1297 failure=None
+c000_t2 success=1 steps=1197 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I16/ctx_19
+DONE I16 ctx_19 success 1.00 223s
+RUN  I17 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1655 failure=None
+c000_t1 success=0 steps=2000 failure=None
+c000_t2 success=1 steps=1045 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I17/ctx_19
+DONE I17 ctx_19 success 0.67 278s
+RUN  I18 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1021 failure=None
+c000_t1 success=0 steps=2000 failure=None
+c000_t2 success=0 steps=2000 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I18/ctx_19
+DONE I18 ctx_19 success 0.33 383s
+RUN  I19 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1310 failure=None
+c000_t1 success=1 steps=1021 failure=None
+c000_t2 success=0 steps=2000 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I19/ctx_19
+DONE I19 ctx_19 success 0.67 330s
+RUN  I20 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1287 failure=None
+c000_t1 success=1 steps=1297 failure=None
+c000_t2 success=1 steps=1197 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I20/ctx_19
+DONE I20 ctx_19 success 1.00 224s
+RUN  I21 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1655 failure=None
+c000_t1 success=0 steps=2000 failure=None
+c000_t2 success=1 steps=1045 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I21/ctx_19
+DONE I21 ctx_19 success 0.67 280s
+RUN  I22 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1021 failure=None
+c000_t1 success=0 steps=2000 failure=None
+c000_t2 success=0 steps=2000 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I22/ctx_19
+DONE I22 ctx_19 success 0.33 385s
+RUN  I23 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1310 failure=None
+c000_t1 success=1 steps=1021 failure=None
+c000_t2 success=0 steps=2000 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I23/ctx_19
+DONE I23 ctx_19 success 0.67 331s
+RUN  I24 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1746 failure=None
+c000_t1 success=1 steps=931 failure=None
+c000_t2 success=1 steps=1381 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I24/ctx_19
+DONE I24 ctx_19 success 1.00 257s
+RUN  I25 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=898 failure=None
+c000_t1 success=1 steps=974 failure=None
+c000_t2 success=1 steps=1275 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I25/ctx_19
+DONE I25 ctx_19 success 1.00 199s
+RUN  I26 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=2000 failure=None
+c000_t1 success=0 steps=2000 failure=None
+c000_t2 success=0 steps=2000 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I26/ctx_19
+DONE I26 ctx_19 success 0.00 473s
+RUN  I27 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=2000 failure=None
+c000_t1 success=1 steps=1268 failure=None
+c000_t2 success=0 steps=2000 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I27/ctx_19
+DONE I27 ctx_19 success 0.33 419s
+RUN  I28 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1451 failure=None
+c000_t1 success=1 steps=931 failure=None
+c000_t2 success=1 steps=1381 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I28/ctx_19
+DONE I28 ctx_19 success 1.00 237s
+RUN  I29 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=898 failure=None
+c000_t1 success=1 steps=974 failure=None
+c000_t2 success=1 steps=1275 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I29/ctx_19
+DONE I29 ctx_19 success 1.00 197s
+RUN  I30 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=2000 failure=None
+c000_t1 success=0 steps=2000 failure=None
+c000_t2 success=0 steps=2000 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I30/ctx_19
+DONE I30 ctx_19 success 0.00 473s
+RUN  I31 ctx_19 (env_090_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=2000 failure=None
+c000_t1 success=1 steps=1268 failure=None
+c000_t2 success=0 steps=2000 failure=None
+Saved: /root/d3il-work/yflow-d3il/fm_constraint/runs/experiment_id_v1/full/inserting/I31/ctx_19
+DONE I31 ctx_19 success 0.33 417s
+Saved /root/d3il-work/yflow-d3il/docs/report_jaeyeop.md
+
+완료. 결과를 공유하려면:
+  git add experiments/id_v1 docs/report_jaeyeop.md && git commit -m "results: jaeyeop contexts 19" && git pull --rebase && git push
