@@ -1,0 +1,16 @@
+RUN  P31 ctx_07 (13) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(14, 32), (32, 128), (128, 256)]
+[(14, 32), (32, 128), (128, 256)]
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+pybullet build time: Jan 29 2025 23:17:20
+/workspace/py311/lib/python3.11/site-packages/gym/spaces/box.py:84: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=24 failure=None
+c000_t1 success=0 steps=24 failure=None
+c000_t2 success=0 steps=24 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/smoke/pushing/P31/ctx_07
+DONE P31 ctx_07 success 0.00 104s

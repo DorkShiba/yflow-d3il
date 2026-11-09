@@ -1,0 +1,48 @@
+
+==== 0. git 소유자 예외 (/workspace 폴더 주인이 서버 계정이라 필요)
+
+==== 1. D3IL 커밋 고정 (README: 1d9c718)
+d3il 1d9c718
+
+==== 2. 저장소 (master)
+Already on 'master'
+Your branch is up to date with 'origin/master'.
+Already up to date.
+repo 4d33329 Lock experiment units and give logs unique names
+
+==== 3. Python 3.11 환경과 requirements.txt (README 5절)
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+python 3.11.18 | torch 2.3.1+cu121 | cuda True 4 GPU | numpy 1.26.4 | scipy 1.16.3 | mujoco 2.3.2 | gym 0.23.1
+
+==== 4. 설치 확인 (README 5절의 세 명령)
+obs rmse t>=1           model: 0.076798  hold t0: 0.088063
+gen action abs mean: 0.004268  gt action abs mean: 0.004316
+CHECK PASSED
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+pybullet build time: Jan 29 2025 23:17:20
+/workspace/py311/lib/python3.11/site-packages/gym/spaces/box.py:84: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+check env_006_05.npz  context_key False  max abs err 5.82e-05  per-dim [0.0, 0.0, 0.0, 9.999999747378752e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+check env_008_06.npz  context_key False  max abs err 5.82e-05  per-dim [0.0, 0.0, 0.0, 9.999999747378752e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+check summary  max 5.82e-05  mean per-dim [0.0, 0.0, 4.999999873689376e-05, 5.999999848427251e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+pybullet build time: Jan 29 2025 23:17:20
+/workspace/py311/lib/python3.11/site-packages/gym/spaces/box.py:84: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+context   0 traj 0  success 1  mode  0  mean_dist 0.0288  steps 205  elapsed 25s
+context   1 traj 0  success 1  mode  3  mean_dist 0.0288  steps 245  elapsed 50s
+context   2 traj 0  success 1  mode  1  mean_dist 0.0323  steps 182  elapsed 68s
+  "success_rate": 1.0,
+
+==== 5. 테스트 (README 10절)
+ERROR tests/test_visualizer.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 13.72s

@@ -1,0 +1,821 @@
+BUSY I00 ctx_07 (running in another process)
+BUSY I00 ctx_08 (running in another process)
+BUSY I00 ctx_09 (running in another process)
+BUSY I00 ctx_10 (running in another process)
+RUN  I00 ctx_11 (env_041_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+pybullet build time: Jan 29 2025 23:17:20
+/workspace/py311/lib/python3.11/site-packages/gym/spaces/box.py:84: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1442 failure=None
+c000_t1 success=1 steps=1293 failure=None
+c000_t2 success=1 steps=1249 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I00/ctx_11
+DONE I00 ctx_11 success 1.00 448s
+SKIP I00 ctx_12 (done by junhyuk)
+BUSY I00 ctx_13 (running in another process)
+BUSY I00 ctx_14 (running in another process)
+BUSY I00 ctx_15 (running in another process)
+BUSY I00 ctx_16 (running in another process)
+RUN  I01 ctx_07 (env_031_05.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=892 failure=None
+c000_t1 success=1 steps=1015 failure=None
+c000_t2 success=1 steps=1652 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I01/ctx_07
+DONE I01 ctx_07 success 1.00 397s
+SKIP I01 ctx_08 (done by junhyuk)
+BUSY I01 ctx_09 (running in another process)
+BUSY I01 ctx_10 (running in another process)
+BUSY I01 ctx_11 (running in another process)
+RUN  I01 ctx_12 (env_048_01.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1392 failure=None
+c000_t1 success=1 steps=939 failure=None
+c000_t2 success=1 steps=1302 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I01/ctx_12
+DONE I01 ctx_12 success 1.00 406s
+BUSY I01 ctx_13 (running in another process)
+BUSY I01 ctx_14 (running in another process)
+BUSY I01 ctx_15 (running in another process)
+RUN  I01 ctx_16 (env_077_05.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=2000 failure=None
+c000_t1 success=1 steps=1246 failure=None
+c000_t2 success=1 steps=1348 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I01/ctx_16
+DONE I01 ctx_16 success 0.67 510s
+BUSY I02 ctx_07 (running in another process)
+SKIP I02 ctx_08 (done by junhyuk)
+BUSY I02 ctx_09 (running in another process)
+BUSY I02 ctx_10 (running in another process)
+BUSY I02 ctx_11 (running in another process)
+RUN  I02 ctx_12 (env_048_01.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1276 failure=None
+c000_t1 success=1 steps=1416 failure=None
+c000_t2 success=1 steps=1062 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I02/ctx_12
+DONE I02 ctx_12 success 1.00 502s
+BUSY I02 ctx_13 (running in another process)
+BUSY I02 ctx_14 (running in another process)
+BUSY I02 ctx_15 (running in another process)
+BUSY I02 ctx_16 (running in another process)
+BUSY I03 ctx_07 (running in another process)
+RUN  I03 ctx_08 (env_034_02.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1072 failure=None
+c000_t1 success=1 steps=862 failure=None
+c000_t2 success=0 steps=2000 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I03/ctx_08
+DONE I03 ctx_08 success 0.67 528s
+BUSY I03 ctx_09 (running in another process)
+BUSY I03 ctx_10 (running in another process)
+BUSY I03 ctx_11 (running in another process)
+BUSY I03 ctx_12 (running in another process)
+BUSY I03 ctx_13 (running in another process)
+RUN  I03 ctx_14 (env_060_06.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1058 failure=None
+c000_t1 success=1 steps=1217 failure=None
+c000_t2 success=1 steps=1227 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I03/ctx_14
+DONE I03 ctx_14 success 1.00 472s
+BUSY I03 ctx_15 (running in another process)
+BUSY I03 ctx_16 (running in another process)
+BUSY I04 ctx_07 (running in another process)
+BUSY I04 ctx_08 (running in another process)
+BUSY I04 ctx_09 (running in another process)
+RUN  I04 ctx_10 (env_040_05.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1159 failure=None
+c000_t1 success=1 steps=963 failure=None
+c000_t2 success=1 steps=981 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I04/ctx_10
+DONE I04 ctx_10 success 1.00 347s
+BUSY I04 ctx_11 (running in another process)
+BUSY I04 ctx_12 (running in another process)
+BUSY I04 ctx_13 (running in another process)
+RUN  I04 ctx_14 (env_060_06.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1463 failure=None
+c000_t1 success=1 steps=1623 failure=None
+c000_t2 success=1 steps=1093 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I04/ctx_14
+DONE I04 ctx_14 success 1.00 470s
+BUSY I04 ctx_15 (running in another process)
+SKIP I04 ctx_16 (done by junhyuk)
+BUSY I05 ctx_07 (running in another process)
+BUSY I05 ctx_08 (running in another process)
+BUSY I05 ctx_09 (running in another process)
+BUSY I05 ctx_10 (running in another process)
+RUN  I05 ctx_11 (env_041_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1011 failure=None
+c000_t1 success=1 steps=1441 failure=None
+c000_t2 success=1 steps=1853 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I05/ctx_11
+DONE I05 ctx_11 success 1.00 478s
+SKIP I05 ctx_12 (done by junhyuk)
+BUSY I05 ctx_13 (running in another process)
+BUSY I05 ctx_14 (running in another process)
+BUSY I05 ctx_15 (running in another process)
+BUSY I05 ctx_16 (running in another process)
+RUN  I06 ctx_07 (env_031_05.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=2000 failure=None
+c000_t1 success=1 steps=914 failure=None
+c000_t2 success=1 steps=1370 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I06/ctx_07
+DONE I06 ctx_07 success 0.67 576s
+BUSY I06 ctx_08 (running in another process)
+BUSY I06 ctx_09 (running in another process)
+BUSY I06 ctx_10 (running in another process)
+BUSY I06 ctx_11 (running in another process)
+BUSY I06 ctx_12 (running in another process)
+RUN  I06 ctx_13 (env_050_05.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=909 failure=None
+c000_t1 success=0 steps=2000 failure=None
+c000_t2 success=1 steps=715 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I06/ctx_13
+DONE I06 ctx_13 success 0.67 486s
+BUSY I06 ctx_14 (running in another process)
+BUSY I06 ctx_15 (running in another process)
+BUSY I06 ctx_16 (running in another process)
+BUSY I07 ctx_07 (running in another process)
+BUSY I07 ctx_08 (running in another process)
+RUN  I07 ctx_09 (env_039_01.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1157 failure=None
+c000_t1 success=0 steps=2000 failure=None
+c000_t2 success=1 steps=1227 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I07/ctx_09
+DONE I07 ctx_09 success 0.67 589s
+BUSY I07 ctx_10 (running in another process)
+BUSY I07 ctx_11 (running in another process)
+BUSY I07 ctx_12 (running in another process)
+BUSY I07 ctx_13 (running in another process)
+BUSY I07 ctx_14 (running in another process)
+RUN  I07 ctx_15 (env_069_06.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=2000 failure=None
+c000_t1 success=0 steps=2000 failure=None
+c000_t2 success=0 steps=2000 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I07/ctx_15
+DONE I07 ctx_15 success 0.00 812s
+SKIP I07 ctx_16 (done by junhyuk)
+SKIP I08 ctx_07 (done by junhyuk)
+SKIP I08 ctx_08 (done by junhyuk)
+BUSY I08 ctx_09 (running in another process)
+BUSY I08 ctx_10 (running in another process)
+BUSY I08 ctx_11 (running in another process)
+BUSY I08 ctx_12 (running in another process)
+BUSY I08 ctx_13 (running in another process)
+RUN  I08 ctx_14 (env_060_06.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=2000 failure=None
+c000_t1 success=1 steps=830 failure=None
+c000_t2 success=1 steps=712 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I08/ctx_14
+DONE I08 ctx_14 success 0.67 420s
+BUSY I08 ctx_15 (running in another process)
+SKIP I08 ctx_16 (done by junhyuk)
+BUSY I09 ctx_07 (running in another process)
+BUSY I09 ctx_08 (running in another process)
+BUSY I09 ctx_09 (running in another process)
+RUN  I09 ctx_10 (env_040_05.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1127 failure=None
+c000_t1 success=1 steps=1348 failure=None
+c000_t2 success=1 steps=1147 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I09/ctx_10
+DONE I09 ctx_10 success 1.00 420s
+BUSY I09 ctx_11 (running in another process)
+BUSY I09 ctx_12 (running in another process)
+BUSY I09 ctx_13 (running in another process)
+RUN  I09 ctx_14 (env_060_06.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1021 failure=None
+c000_t1 success=1 steps=1230 failure=None
+c000_t2 success=1 steps=1138 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I09/ctx_14
+DONE I09 ctx_14 success 1.00 398s
+SKIP I09 ctx_15 (done by junhyuk)
+BUSY I09 ctx_16 (running in another process)
+BUSY I10 ctx_07 (running in another process)
+BUSY I10 ctx_08 (running in another process)
+BUSY I10 ctx_09 (running in another process)
+BUSY I10 ctx_10 (running in another process)
+RUN  I10 ctx_11 (env_041_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1219 failure=None
+c000_t1 success=1 steps=1371 failure=None
+c000_t2 success=1 steps=1359 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I10/ctx_11
+DONE I10 ctx_11 success 1.00 546s
+SKIP I10 ctx_12 (done by junhyuk)
+BUSY I10 ctx_13 (running in another process)
+BUSY I10 ctx_14 (running in another process)
+BUSY I10 ctx_15 (running in another process)
+BUSY I10 ctx_16 (running in another process)
+RUN  I11 ctx_07 (env_031_05.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1291 failure=None
+c000_t1 success=1 steps=1371 failure=None
+c000_t2 success=0 steps=2000 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I11/ctx_07
+DONE I11 ctx_07 success 0.67 648s
+SKIP I11 ctx_08 (done by junhyuk)
+BUSY I11 ctx_09 (running in another process)
+BUSY I11 ctx_10 (running in another process)
+RUN  I11 ctx_11 (env_041_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=2000 failure=None
+c000_t1 success=0 steps=2000 failure=None
+c000_t2 success=1 steps=1513 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I11/ctx_11
+DONE I11 ctx_11 success 0.33 763s
+SKIP I11 ctx_12 (done by junhyuk)
+SKIP I11 ctx_13 (done by junhyuk)
+SKIP I11 ctx_14 (done by junhyuk)
+BUSY I11 ctx_15 (running in another process)
+BUSY I11 ctx_16 (running in another process)
+BUSY I12 ctx_07 (running in another process)
+BUSY I12 ctx_08 (running in another process)
+BUSY I12 ctx_09 (running in another process)
+RUN  I12 ctx_10 (env_040_05.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1261 failure=None
+c000_t1 success=1 steps=1350 failure=None
+c000_t2 success=1 steps=1076 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I12/ctx_10
+DONE I12 ctx_10 success 1.00 432s
+BUSY I12 ctx_11 (running in another process)
+BUSY I12 ctx_12 (running in another process)
+BUSY I12 ctx_13 (running in another process)
+BUSY I12 ctx_14 (running in another process)
+BUSY I12 ctx_15 (running in another process)
+RUN  I12 ctx_16 (env_077_05.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=979 failure=None
+c000_t1 success=1 steps=986 failure=None
+c000_t2 success=1 steps=1454 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I12/ctx_16
+DONE I12 ctx_16 success 1.00 401s
+BUSY I13 ctx_07 (running in another process)
+BUSY I13 ctx_08 (running in another process)
+BUSY I13 ctx_09 (running in another process)
+BUSY I13 ctx_10 (running in another process)
+RUN  I13 ctx_11 (env_041_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=2000 failure=None
+c000_t1 success=1 steps=1000 failure=None
+c000_t2 success=0 steps=2000 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I13/ctx_11
+DONE I13 ctx_11 success 0.33 580s
+SKIP I13 ctx_12 (done by junhyuk)
+BUSY I13 ctx_13 (running in another process)
+BUSY I13 ctx_14 (running in another process)
+BUSY I13 ctx_15 (running in another process)
+BUSY I13 ctx_16 (running in another process)
+BUSY I14 ctx_07 (running in another process)
+RUN  I14 ctx_08 (env_034_02.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=2000 failure=None
+c000_t1 success=1 steps=869 failure=None
+c000_t2 success=0 steps=2000 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I14/ctx_08
+DONE I14 ctx_08 success 0.33 672s
+SKIP I14 ctx_09 (done by junhyuk)
+SKIP I14 ctx_10 (done by junhyuk)
+BUSY I14 ctx_11 (running in another process)
+BUSY I14 ctx_12 (running in another process)
+BUSY I14 ctx_13 (running in another process)
+BUSY I14 ctx_14 (running in another process)
+BUSY I14 ctx_15 (running in another process)
+RUN  I14 ctx_16 (env_077_05.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=2000 failure=None
+c000_t1 success=1 steps=1319 failure=None
+c000_t2 success=1 steps=1712 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I14/ctx_16
+DONE I14 ctx_16 success 0.67 696s
+SKIP I15 ctx_07 (done by junhyuk)
+SKIP I15 ctx_08 (done by junhyuk)
+BUSY I15 ctx_09 (running in another process)
+BUSY I15 ctx_10 (running in another process)
+BUSY I15 ctx_11 (running in another process)
+BUSY I15 ctx_12 (running in another process)
+RUN  I15 ctx_13 (env_050_05.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=984 failure=None
+c000_t1 success=1 steps=816 failure=None
+c000_t2 success=1 steps=1074 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I15/ctx_13
+DONE I15 ctx_13 success 1.00 401s
+BUSY I15 ctx_14 (running in another process)
+BUSY I15 ctx_15 (running in another process)
+RUN  I15 ctx_16 (env_077_05.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=2000 failure=None
+c000_t1 success=1 steps=1049 failure=None
+c000_t2 success=1 steps=1167 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I15/ctx_16
+DONE I15 ctx_16 success 0.67 584s
+BUSY I16 ctx_07 (running in another process)
+BUSY I16 ctx_08 (running in another process)
+BUSY I16 ctx_09 (running in another process)
+BUSY I16 ctx_10 (running in another process)
+RUN  I16 ctx_11 (env_041_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1269 failure=None
+c000_t1 success=1 steps=1356 failure=None
+c000_t2 success=1 steps=1103 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I16/ctx_11
+DONE I16 ctx_11 success 1.00 447s
+BUSY I16 ctx_12 (running in another process)
+BUSY I16 ctx_13 (running in another process)
+BUSY I16 ctx_14 (running in another process)
+BUSY I16 ctx_15 (running in another process)
+BUSY I16 ctx_16 (running in another process)
+RUN  I17 ctx_07 (env_031_05.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=747 failure=None
+c000_t1 success=1 steps=884 failure=None
+c000_t2 success=1 steps=1008 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I17/ctx_07
+DONE I17 ctx_07 success 1.00 317s
+BUSY I17 ctx_08 (running in another process)
+BUSY I17 ctx_09 (running in another process)
+BUSY I17 ctx_10 (running in another process)
+BUSY I17 ctx_11 (running in another process)
+RUN  I17 ctx_12 (env_048_01.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1174 failure=None
+c000_t1 success=1 steps=1114 failure=None
+c000_t2 success=1 steps=1235 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I17/ctx_12
+DONE I17 ctx_12 success 1.00 422s
+BUSY I17 ctx_13 (running in another process)
+BUSY I17 ctx_14 (running in another process)
+BUSY I17 ctx_15 (running in another process)
+BUSY I17 ctx_16 (running in another process)
+RUN  I18 ctx_07 (env_031_05.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=679 failure=None
+c000_t1 success=1 steps=827 failure=None
+c000_t2 success=1 steps=1395 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I18/ctx_07
+DONE I18 ctx_07 success 1.00 403s
+BUSY I18 ctx_08 (running in another process)
+BUSY I18 ctx_09 (running in another process)
+BUSY I18 ctx_10 (running in another process)
+RUN  I18 ctx_11 (env_041_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1092 failure=None
+c000_t1 success=0 steps=2000 failure=None
+c000_t2 success=1 steps=1557 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I18/ctx_11
+DONE I18 ctx_11 success 0.67 644s
+SKIP I18 ctx_12 (done by junhyuk)
+BUSY I18 ctx_13 (running in another process)
+BUSY I18 ctx_14 (running in another process)
+BUSY I18 ctx_15 (running in another process)
+BUSY I18 ctx_16 (running in another process)
+BUSY I19 ctx_07 (running in another process)
+RUN  I19 ctx_08 (env_034_02.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=752 failure=None
+c000_t1 success=1 steps=1032 failure=None
+c000_t2 success=1 steps=796 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I19/ctx_08
+DONE I19 ctx_08 success 1.00 358s
+BUSY I19 ctx_09 (running in another process)
+BUSY I19 ctx_10 (running in another process)
+BUSY I19 ctx_11 (running in another process)
+BUSY I19 ctx_12 (running in another process)
+RUN  I19 ctx_13 (env_050_05.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1014 failure=None
+c000_t1 success=1 steps=1466 failure=None
+c000_t2 success=1 steps=1206 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I19/ctx_13
+DONE I19 ctx_13 success 1.00 513s
+BUSY I19 ctx_14 (running in another process)
+RUN  I19 ctx_15 (env_069_06.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=2000 failure=None
+c000_t1 success=0 steps=2000 failure=None
+c000_t2 success=0 steps=2000 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I19/ctx_15
+DONE I19 ctx_15 success 0.00 841s
+SKIP I19 ctx_16 (done by junhyuk)
+SKIP I20 ctx_07 (done by junhyuk)
+BUSY I20 ctx_08 (running in another process)
+SKIP I20 ctx_09 (done by junhyuk)
+SKIP I20 ctx_10 (done by junhyuk)
+BUSY I20 ctx_11 (running in another process)
+BUSY I20 ctx_12 (running in another process)
+BUSY I20 ctx_13 (running in another process)
+BUSY I20 ctx_14 (running in another process)
+RUN  I20 ctx_15 (env_069_06.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1218 failure=None
+c000_t1 success=0 steps=1113 failure=None
+c000_t2 success=0 steps=2000 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I20/ctx_15
+DONE I20 ctx_15 success 0.33 503s
+SKIP I20 ctx_16 (done by junhyuk)
+SKIP I21 ctx_07 (done by junhyuk)
+BUSY I21 ctx_08 (running in another process)
+BUSY I21 ctx_09 (running in another process)
+BUSY I21 ctx_10 (running in another process)
+BUSY I21 ctx_11 (running in another process)
+RUN  I21 ctx_12 (env_048_01.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1174 failure=None
+c000_t1 success=1 steps=1114 failure=None
+c000_t2 success=1 steps=1235 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I21/ctx_12
+DONE I21 ctx_12 success 1.00 423s
+BUSY I21 ctx_13 (running in another process)
+BUSY I21 ctx_14 (running in another process)
+BUSY I21 ctx_15 (running in another process)
+BUSY I21 ctx_16 (running in another process)
+RUN  I22 ctx_07 (env_031_05.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=679 failure=None
+c000_t1 success=1 steps=827 failure=None
+c000_t2 success=1 steps=1398 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I22/ctx_07
+DONE I22 ctx_07 success 1.00 408s
+BUSY I22 ctx_08 (running in another process)
+BUSY I22 ctx_09 (running in another process)
+BUSY I22 ctx_10 (running in another process)
+RUN  I22 ctx_11 (env_041_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1092 failure=None
+c000_t1 success=0 steps=2000 failure=None
+c000_t2 success=1 steps=1557 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I22/ctx_11
+DONE I22 ctx_11 success 0.67 669s
+SKIP I22 ctx_12 (done by junhyuk)
+BUSY I22 ctx_13 (running in another process)
+BUSY I22 ctx_14 (running in another process)
+BUSY I22 ctx_15 (running in another process)
+BUSY I22 ctx_16 (running in another process)
+BUSY I23 ctx_07 (running in another process)
+RUN  I23 ctx_08 (env_034_02.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=761 failure=None
+c000_t1 success=1 steps=1032 failure=None
+c000_t2 success=1 steps=796 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I23/ctx_08
+DONE I23 ctx_08 success 1.00 363s
+BUSY I23 ctx_09 (running in another process)
+BUSY I23 ctx_10 (running in another process)
+RUN  I23 ctx_11 (env_041_03.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=936 failure=None
+c000_t1 success=0 steps=2000 failure=None
+c000_t2 success=1 steps=1318 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I23/ctx_11
+DONE I23 ctx_11 success 0.67 598s
+BUSY I23 ctx_12 (running in another process)
+BUSY I23 ctx_13 (running in another process)
+BUSY I23 ctx_14 (running in another process)
+BUSY I23 ctx_15 (running in another process)
+BUSY I23 ctx_16 (running in another process)
+RUN  I24 ctx_07 (env_031_05.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=877 failure=None
+c000_t1 success=1 steps=1588 failure=None
+c000_t2 success=0 steps=2000 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I24/ctx_07
+DONE I24 ctx_07 success 0.67 541s
+BUSY I24 ctx_08 (running in another process)
+BUSY I24 ctx_09 (running in another process)
+BUSY I24 ctx_10 (running in another process)
+BUSY I24 ctx_11 (running in another process)
+RUN  I24 ctx_12 (env_048_01.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1052 failure=None
+c000_t1 success=1 steps=842 failure=None
+c000_t2 success=1 steps=1334 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I24/ctx_12
+DONE I24 ctx_12 success 1.00 400s
+BUSY I24 ctx_13 (running in another process)
+BUSY I24 ctx_14 (running in another process)
+BUSY I24 ctx_15 (running in another process)
+BUSY I24 ctx_16 (running in another process)
+RUN  I25 ctx_07 (env_031_05.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=2000 failure=None
+c000_t1 success=1 steps=1592 failure=None
+c000_t2 success=1 steps=860 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I25/ctx_07
+DONE I25 ctx_07 success 0.67 554s
+SKIP I25 ctx_08 (done by junhyuk)
+SKIP I25 ctx_09 (done by junhyuk)
+SKIP I25 ctx_10 (done by junhyuk)
+BUSY I25 ctx_11 (running in another process)
+BUSY I25 ctx_12 (running in another process)
+BUSY I25 ctx_13 (running in another process)
+BUSY I25 ctx_14 (running in another process)
+BUSY I25 ctx_15 (running in another process)
+RUN  I25 ctx_16 (env_077_05.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=841 failure=None
+c000_t1 success=1 steps=971 failure=None
+c000_t2 success=0 steps=800 failure=solver_failure
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I25/ctx_16
+DONE I25 ctx_16 success 0.67 329s
+BUSY I26 ctx_07 (running in another process)
+BUSY I26 ctx_08 (running in another process)
+BUSY I26 ctx_09 (running in another process)
+RUN  I26 ctx_10 (env_040_05.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=911 failure=None
+c000_t1 success=0 steps=2000 failure=None
+c000_t2 success=1 steps=1170 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I26/ctx_10
+DONE I26 ctx_10 success 0.67 588s
+SKIP I26 ctx_11 (done by junhyuk)
+BUSY I26 ctx_12 (running in another process)
+BUSY I26 ctx_13 (running in another process)
+BUSY I26 ctx_14 (running in another process)
+BUSY I26 ctx_15 (running in another process)
+RUN  I26 ctx_16 (env_077_05.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=937 failure=None
+c000_t1 success=1 steps=974 failure=None
+c000_t2 success=1 steps=907 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I26/ctx_16
+DONE I26 ctx_16 success 1.00 404s
+BUSY I27 ctx_07 (running in another process)
+BUSY I27 ctx_08 (running in another process)
+RUN  I27 ctx_09 (env_039_01.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1027 failure=None
+c000_t1 success=0 steps=2000 failure=None
+c000_t2 success=1 steps=1485 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I27/ctx_09
+DONE I27 ctx_09 success 0.67 653s
+BUSY I27 ctx_10 (running in another process)
+BUSY I27 ctx_11 (running in another process)
+SKIP I27 ctx_12 (done by junhyuk)
+BUSY I27 ctx_13 (running in another process)
+BUSY I27 ctx_14 (running in another process)
+BUSY I27 ctx_15 (running in another process)
+RUN  I27 ctx_16 (env_077_05.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=2000 failure=None
+c000_t1 success=0 steps=2000 failure=None
+c000_t2 success=1 steps=835 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I27/ctx_16
+DONE I27 ctx_16 success 0.33 698s
+BUSY I28 ctx_07 (running in another process)
+BUSY I28 ctx_08 (running in another process)
+BUSY I28 ctx_09 (running in another process)
+BUSY I28 ctx_10 (running in another process)
+BUSY I28 ctx_11 (running in another process)
+RUN  I28 ctx_12 (env_048_01.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1052 failure=None
+c000_t1 success=1 steps=842 failure=None
+c000_t2 success=1 steps=1334 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I28/ctx_12
+DONE I28 ctx_12 success 1.00 400s
+BUSY I28 ctx_13 (running in another process)
+BUSY I28 ctx_14 (running in another process)
+BUSY I28 ctx_15 (running in another process)
+BUSY I28 ctx_16 (running in another process)
+RUN  I29 ctx_07 (env_031_05.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=0 steps=2000 failure=None
+c000_t1 success=1 steps=1592 failure=None
+c000_t2 success=1 steps=860 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I29/ctx_07
+DONE I29 ctx_07 success 0.67 553s
+SKIP I29 ctx_08 (done by junhyuk)
+SKIP I29 ctx_09 (done by junhyuk)
+SKIP I29 ctx_10 (done by junhyuk)
+BUSY I29 ctx_11 (running in another process)
+BUSY I29 ctx_12 (running in another process)
+BUSY I29 ctx_13 (running in another process)
+BUSY I29 ctx_14 (running in another process)
+BUSY I29 ctx_15 (running in another process)
+RUN  I29 ctx_16 (env_077_05.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=841 failure=None
+c000_t1 success=1 steps=971 failure=None
+c000_t2 success=0 steps=800 failure=solver_failure
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I29/ctx_16
+DONE I29 ctx_16 success 0.67 318s
+BUSY I30 ctx_07 (running in another process)
+BUSY I30 ctx_08 (running in another process)
+RUN  I30 ctx_09 (env_039_01.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1510 failure=None
+c000_t1 success=0 steps=2000 failure=None
+c000_t2 success=1 steps=1471 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I30/ctx_09
+DONE I30 ctx_09 success 0.67 714s
+SKIP I30 ctx_10 (done by junhyuk)
+BUSY I30 ctx_11 (running in another process)
+BUSY I30 ctx_12 (running in another process)
+BUSY I30 ctx_13 (running in another process)
+BUSY I30 ctx_14 (running in another process)
+BUSY I30 ctx_15 (running in another process)
+RUN  I30 ctx_16 (env_077_05.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=937 failure=None
+c000_t1 success=1 steps=974 failure=None
+c000_t2 success=1 steps=907 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I30/ctx_16
+DONE I30 ctx_16 success 1.00 406s
+BUSY I31 ctx_07 (running in another process)
+RUN  I31 ctx_08 (env_034_02.npz) seeds [0, 1, 2]
+[ models/temporal ] Channel dimensions: [(18, 64), (64, 128), (128, 256), (256, 512)]
+[(18, 64), (64, 128), (128, 256), (256, 512)]
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+c000_t0 success=1 steps=1715 failure=None
+c000_t1 success=0 steps=2000 failure=None
+c000_t2 success=1 steps=1057 failure=None
+Saved: /workspace/yflow-d3il-main/fm_constraint/runs/experiment_id_v1/full/inserting/I31/ctx_08
+DONE I31 ctx_08 success 0.67 692s
+BUSY I31 ctx_09 (running in another process)
+SKIP I31 ctx_10 (done by junhyuk)
+SKIP I31 ctx_11 (done by junhyuk)
+SKIP I31 ctx_12 (done by junhyuk)
+BUSY I31 ctx_13 (running in another process)
+BUSY I31 ctx_14 (running in another process)
+BUSY I31 ctx_15 (running in another process)
+BUSY I31 ctx_16 (running in another process)
