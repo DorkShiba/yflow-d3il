@@ -34,8 +34,8 @@ yflow-d3il/
 ├── fm_constraint/              # train-free 5개 방법, D3IL 평가 루프, 32조합 runner
 ├── configs/                    # 5개 방법·제약 설정 (schema v4, pushing/inserting.yaml)
 ├── ood/                        # OOD 조건 정의·생성·검증·지표
-├── scripts/run_experiment.sh   # 본실험: 맡은 context × 원하는 조합 순차 실행
-├── experiments/id_v1/          # 본실험 결과 (git 추적)
+├── scripts/run_experiment.sh   # 본실험(ID·OOD): 맡은 context × 원하는 조합 순차 실행
+├── experiments/                # 본실험 단위 결과 (로컬 전용, git 제외. 공유는 docs/report_*.md)
 ├── visualizer/                 # 로컬 3D rollout viewer
 ├── preprocess/                 # data/를 만든 전처리·검증 스크립트
 ├── tests/, fm_constraint/tests/
@@ -205,7 +205,7 @@ python -m pytest fm_constraint/tests tests -q     # visualizer 테스트는 visu
 ./visualizer/run.sh                                # 로컬 3D rollout viewer (visualizer/README.md)
 ```
 
-## 11. 실험 분담 (ID 본실험)
+## 11. 실험 분담 (ID·OOD 본실험)
 
 프로토콜은 [`docs/report.md`](docs/report.md)에 있다. 태스크마다 30개 context(`configs/experiment_contexts.json`, 번호 0~29)를 고정해 두었고, context마다 FM 입력 noise seed 0·1·2로 3회 실행한다. **Pushing과 Inserting은 같은 번호를 쓴다.** 각자 맡은 context에 대해 32조합을 모두 실행하므로, 같은 context의 조합 비교는 항상 같은 장비에서 이루어진다.
 
@@ -224,9 +224,48 @@ python -m pytest fm_constraint/tests tests -q     # visualizer 테스트는 visu
 - **나눠서 실행:** 맡은 범위를 여러 번에 나눠도 된다. 예: `--contexts 0-3`과 `--contexts 4-6`을 다른 GPU(`--device cuda:1`)나 다른 날 실행. 태스크만(`--task inserting`) 또는 조합 일부만(`--combos 16-31`) 실행할 수도 있다. 단, **같은 context의 32조합은 같은 장비에서** 끝낸다.
 - **중단·재실행:** 같은 명령을 다시 실행하면 완료된 단위(task × 조합 × context)는 건너뛰고, 중단된 단위만 처음부터 다시 실행한다.
 - **동작 확인:** `--smoke 24`(24 step만, 결과는 로컬에만 저장)와 `--dry-run`을 먼저 실행한다.
-- **결과 공유:**
-  - 끝나면 `docs/report_<이름>.md`가 생성된다.
-  - `experiments/id_v1/`(단위마다 `result.json`과 작은 `trajectories.npz`)와 보고서를 commit해서 push한다. 스크립트가 마지막에 명령을 출력한다.
-  - 전체 계획 로그(`rollouts.json`, Inserting rollout 1개에 최대 약 8 MB)는 `fm_constraint/runs/experiment_id_v1/full/`에 로컬로만 남는다.
-- **통합(팀장):** 모든 결과가 push되면 `python -m fm_constraint.experiment merge`로 30 context 전체의 `추정값 [95% CI]`와 Complementarity Δ를 `docs/report_results.md`에 만든 뒤 `docs/report.md`에 옮긴다. 코드 버전이 섞였거나 누락된 context가 있으면 표시하거나 멈춘다.
+- **OOD 실험:** 같은 분담·같은 명령에 `--ood <조건>`만 붙인다. 예: `bash scripts/run_experiment.sh --name hyeongbin --contexts 0-6 --ood A_mid`.
+  - ID와 같은 30 context, 같은 noise seed 0·1·2, **같은 FM noise**를 쓰고 OOD 조건(A_mid는 블록 초기 위치)만 다르다. 그래서 ID 결과와 context·seed 단위로 짝지어 비교할 수 있다.
+  - 조건 정의는 [`ood/README.md`](ood/README.md), 사례는 `data/ood/`(commit된 파일, sha256을 보고서에 기록)에 있다.
+- **결과 공유 — 보고서만 git에 올린다:**
+  - 단위 결과는 **로컬에만** 남는다(`.gitignore`): `experiments/id_v1/`, `experiments/ood_v1/<조건>/`(단위마다 `result.json`, `trajectories.npz`), 전체 계획 로그 `fm_constraint/runs/experiment_<protocol>/full/`(`rollouts.json`, Inserting rollout 1개에 최대 약 8 MB). 다시 만들려면 재실행해야 하므로 지우지 말고 필요하면 각자 백업한다.
+  - 실행이 끝나면 스크립트가 보고서를 만든다. ID는 `docs/report_<이름>.md`, OOD는 `docs/report_ood_<조건>_<이름>.md`. 결과를 나중에 더 실행했다면 `python -m fm_constraint.experiment report --name <이름> [--ood <조건>]`로 다시 만든다(덮어쓴다).
+  - **그 보고서 파일 하나만** commit해서 push한다. 스크립트가 마지막에 명령을 출력한다.
+  - 이름 `results`와 `ood`로 시작하는 이름은 통합 보고서와 겹치므로 쓸 수 없다.
+
+### 결과 통합 (누구나 할 수 있다)
+
+보고서 끝의 접힌 블록(`merge용 원시 데이터`)에 단위(task × 조합 × context)마다 context별 지표 7개(성공률, 위반 step, 평가 step, action change, jerk, entropy, 방법 실패율)와 code fingerprint·seed·OOD 파일 hash가 JSON으로 들어 있다. 그래서 다른 팀원의 결과 파일 없이 **보고서만으로** 30 context 전체의 CI를 계산할 수 있다. 이 블록은 손으로 고치지 않는다.
+
+```bash
+git pull                                                   # 모든 팀원의 docs/report_*.md 받기
+python -m fm_constraint.experiment merge                   # ID  → docs/report_results.md, .json
+python -m fm_constraint.experiment merge --ood A_mid       # OOD → docs/report_ood_A_mid_results.md, .json
+git add docs/report_results.* docs/report_ood_*_results.* && git commit -m "report: merge" && git push
+```
+
+- `merge`는 `docs/report_*.md` 중 **같은 protocol**(ID는 `id_v1`, OOD는 `ood_v1_<조건>`)의 보고서만 읽는다. 파일 이름이 아니라 블록 안의 protocol로 구분하고, 통합본(`*_results.md`)은 데이터 블록이 없어 입력에서 빠진다.
+- 출력: 조합별 `추정값 [95% CI]`(context cluster bootstrap 2,000회, seed 2026)와 Complementarity Δ. `.md`는 사람용, `.json`은 같은 수치와 입력 보고서 목록(`meta`)을 담는다. 둘 다 commit한다.
+- 멈추는 경우: code fingerprint가 둘 이상(다른 코드로 실행한 결과 혼합), OOD 파일 hash가 둘 이상, 같은 단위가 두 보고서에 있음(분담 중복), seed가 0·1·2가 아님.
+- 누락된 context가 있는 조합은 `미완료(누락 context 수)`로 표시하고 CI를 계산하지 않는다. 모두 모일 때까지 몇 번이든 다시 실행해도 된다(결과는 매번 같다).
+- 최종 표는 `docs/report.md` 8절(ID)이나 OOD 절로 옮긴다.
+
+#### ID 결과 통합 (2026-11-09 이전 방식으로 실행한 결과)
+
+**ID 통합은 이미 끝났다**(2026-11-09, `docs/report_results.md`·`.json`, 30 context 전체, code fingerprint `0167b01b63c1`). 아래는 ID를 다시 통합해야 할 때의 절차다.
+
+ID 본실험은 결과를 git에 올리던 때 실행해서 `experiments/id_v1/`이 저장소에 이미 commit되어 있다. `.gitignore`는 이미 추적 중인 파일에는 적용되지 않으므로 이 폴더는 그대로 남는다. 새로 생기는 OOD 결과(`experiments/ood_v1/`)만 git에서 빠진다. 그때 만든 `docs/report_<이름>.md`는 예전 형식이라 merge용 원시 데이터 블록이 없어서 **merge 입력으로 쓰이지 않는다**. 실험을 다시 돌릴 필요는 없다. 한 사람이 commit된 결과로 모든 팀원의 보고서를 다시 만든 뒤 merge한다.
+
+```bash
+git pull                                                   # experiments/id_v1/ 전체와 이 코드 받기
+for n in hyeongbin junhyuk jaeyeop seongmin; do            # 결과에 기록된 member 이름
+    python -m fm_constraint.experiment report --name "$n"  # docs/report_<이름>.md를 새 형식으로 덮어씀
+done
+python -m fm_constraint.experiment merge                   # → docs/report_results.md, .json
+git add docs/report_*.md docs/report_results.json && git commit -m "report: ID merge" && git push
+```
+
+- 다시 만든 보고서의 위쪽 점추정 표는 예전과 같고, 끝에 원시 데이터 블록만 추가된다. 이 절차로 만든 merge 결과는 기존 `report_results.json`과 모든 값이 같다(2026-11-09 확인).
+- 보고서에는 결과 파일에 기록된 code fingerprint가 그대로 들어간다. 모든 ID 결과가 같은 코드로 실행됐다면 merge가 통과한다.
+- 한 팀원의 결과가 git에 없으면 `No results by <이름>`이 나온다. 그 팀원은 자기 로컬 결과로 같은 `report` 명령을 실행해서 보고서를 push한다.
 - **예상 시간(baseline 기준, 방법을 켜면 더 길다):** Pushing은 context 1개 × 32조합에 약 20분, Inserting은 약 4시간이다. 예를 들어 10개를 맡으면 Inserting에 약 40시간이 걸린다. 첫 실행 로그의 단위별 시간으로 다시 계산한다.

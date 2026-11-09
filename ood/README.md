@@ -18,6 +18,7 @@
 - 요인별 seed: `seed_for(root, task, context_id, 'B'|'C'|'D')`. 강도와 조합이 달라도 같은 context는 같은 방향·노이즈를 쓴다(예: `AB_mid`의 블록 배치 = `A_mid`, `BC_mid`의 시작 위치 = `B_mid`).
 - 관측 노이즈 값: `gauss(seed_for(noise_seed, rollout, step, block, 'x'|'y'|'yaw'))`. 재계획 횟수·호출 순서와 무관하다.
 - 정책 noise: 사례의 `policy_seeds`(4개, `seed_for(root, task, context_id, 'policy', j)`)를 rollout마다 `torch.Generator`에 넣는다.
+- 단, 본실험(`fm_constraint.experiment run --ood`)은 seed를 직접 준다(0·1·2). 이때 FM noise는 ID 평가의 context ID(Pushing `test_007` → `7`)로 만들어 **ID 본실험과 같은 noise**가 되고, `policy_seeds`는 쓰지 않는다. 관측 노이즈(C)·push(D)는 사례 seed와 rollout 번호(0·1·2)로 정해진다.
 
 ## 사용
 
@@ -28,7 +29,7 @@ MUJOCO_GL=disable python -m fm_constraint.eval_pushing --config configs/pushing.
 python -m ood.metrics --eval-dir fm_constraint/runs/<id> --label id --eval-dir fm_constraint/runs/<D_mid> --label D_mid
 ```
 
-`--ood`를 주면 context·로봇 시작·노이즈·push·지연·정책 seed를 모두 파일에서 읽는다. `eval.n_contexts`로 앞쪽 일부만, `eval.n_traj`로 `policy_seeds` 앞쪽 일부만 쓸 수 있다. 결과의 `results.json`에는 `ood`(파일 sha256, 조건, 요인)와 rollout별 `ood_events`(push 기록)가 남고, `rollouts.json`의 각 step에는 chunk 시작 여부 `seam`이 있다.
+`--ood`를 주면 context·로봇 시작·노이즈·push·지연·정책 seed를 모두 파일에서 읽는다(본실험 runner는 정책 seed만 0·1·2로 바꾼다. 위 seed 규칙 참고). `eval.n_contexts`로 앞쪽 일부만, `eval.n_traj`로 `policy_seeds` 앞쪽 일부만 쓸 수 있다. 결과의 `results.json`에는 `ood`(파일 sha256, 조건, 요인)와 rollout별 `ood_events`(push 기록)가 남고, `rollouts.json`의 각 step에는 chunk 시작 여부 `seam`이 있다.
 
 | 파일 | 역할 |
 |---|---|

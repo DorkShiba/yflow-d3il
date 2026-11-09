@@ -66,8 +66,8 @@
 3. **본실험:** `bash scripts/run_experiment.sh --name <이름> --contexts <번호>`. 분담은 루트 `README.md` 11절에 있다.
    - 맡은 context마다 두 태스크 × 32조합 × seed 3을 실행한다.
    - 단위(task × 조합 × context)마다 결과를 저장한다. 다시 실행하면 완료된 단위는 건너뛴다.
-4. **공유:** `experiments/id_v1/`와 `docs/report_<이름>.md`를 commit하고 push한다.
-5. **통합(팀장):** `python -m fm_constraint.experiment merge`로 `docs/report_results.md`를 만들어 8절 표를 채운다. 결과를 보고 특정 조합만 다시 돌리거나 seed를 바꾸지 않는다.
+4. **공유:** `docs/report_<이름>.md`(OOD는 `docs/report_ood_<조건>_<이름>.md`)만 commit하고 push한다. 단위 결과(`experiments/`)는 로컬에만 둔다(2026-11-09 변경).
+5. **통합(누구나):** `python -m fm_constraint.experiment merge [--ood <조건>]`가 보고서의 context별 원시 데이터로 `docs/report_results.{md,json}`(OOD는 `docs/report_ood_<조건>_results.{md,json}`)를 만든다. 이것으로 8절 표를 채운다. 절차는 루트 `README.md` 11절. 결과를 보고 특정 조합만 다시 돌리거나 seed를 바꾸지 않는다.
 
 ### 6.1 결정 사항 (2026-11-08)
 
@@ -78,8 +78,9 @@
 | 3 | 반복 | noise seed `0, 1, 2` (3회) |
 | 4 | OOD | 이번 실험은 ID만. OOD(20조건)는 별도 실험 |
 | 5 | 장비 | 통일하지 않음. 대신 **context 단위로 분담**해, 같은 context의 32조합은 같은 장비에서 실행한다. FM noise는 장비와 무관하게 CPU 난수로 생성한다 |
-| 6 | 결과 공유 | git으로 추적: 단위별 `result.json`(지표·episode)과 `trajectories.npz`(실행 행동·seam·위반). 전체 계획 로그는 각자 로컬에 둔다 |
-| 7 | 보고서 | 팀원별 `docs/report_<이름>.md`(점추정). 팀장이 merge로 30 context 전체 값을 계산해 이 문서에 정리한다. 이 문서도 git으로 추적한다 |
+| 6 | 결과 공유 | ID는 git으로 추적했다: 단위별 `result.json`(지표·episode)과 `trajectories.npz`(실행 행동·seam·위반). (2026-11-09 변경) OOD부터는 단위 결과·계획 로그를 각자 로컬에만 두고 git에는 보고서만 올린다 |
+| 7 | 보고서 | 팀원별 `docs/report_<이름>.md`(점추정 + merge용 context별 원시 데이터). merge로 30 context 전체 값을 계산해 이 문서에 정리한다. 이 문서도 git으로 추적한다 |
+| 8 | OOD seed | OOD도 noise seed `0, 1, 2`와 ID와 같은 FM noise를 쓴다(OOD 파일의 `policy_seeds`는 본실험에서 쓰지 않음). 같은 context·seed의 ID 결과와 짝지어 비교한다 |
 
 ### 6.2 해석할 때 주의할 점
 - **entropy 상한:** context당 성공이 최대 3개라서 Inserting(행동 방식 6가지)의 entropy는 최대 log3/log6 ≈ 0.61이다. Pushing은 0.79다.

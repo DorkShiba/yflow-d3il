@@ -1,16 +1,24 @@
-"""ID 본실험: 32조합 × (30 context × noise 3) × Pushing·Inserting.
+"""본실험(ID·OOD): 32조합 × (30 context × noise 3) × Pushing·Inserting.
 
     python -m fm_constraint.experiment select                 # 평가 목록 생성 (한 번, commit)
     python -m fm_constraint.experiment run --task pushing --combos 0-31 --contexts 0-6 \\
-        --device cuda:0 --name hyeongbin                       # 맡은 context 실행
-    python -m fm_constraint.experiment report --name hyeongbin # docs/report_hyeongbin.md
-    python -m fm_constraint.experiment merge                   # 팀장: 전체 집계 docs/report_results.md
+        --device cuda:0 --name hyeongbin [--ood A_mid]         # 맡은 context 실행
+    python -m fm_constraint.experiment report --name hyeongbin [--ood A_mid]
+        # docs/report_hyeongbin.md (OOD: docs/report_ood_A_mid_hyeongbin.md)
+    python -m fm_constraint.experiment merge [--ood A_mid]
+        # 누구나: docs/report_*.md만 읽어 docs/report_results.{md,json}
+        #         (OOD: docs/report_ood_A_mid_results.{md,json})
 
 평가 단위는 (task, 조합, context 번호) 하나이며 noise seed 0, 1, 2의 rollout 3개를 담는다.
+OOD도 ID와 같은 30 context·같은 seed·같은 FM noise를 쓰고, 초기 배치 등 OOD 조건만 다르다.
 단위마다 결과를 바로 저장하므로 중단 후 같은 명령을 다시 실행하면 완료된 단위를 건너뛴다.
 
-git으로 추적하는 결과: experiments/id_v1/<task>/<조합>/ctx_NN/{result.json, trajectories.npz}
-로컬 전용(용량이 큼): fm_constraint/runs/experiment_id_v1/... 의 전체 rollouts.json
+결과는 모두 로컬에만 둔다(git 제외):
+    experiments/id_v1/<task>/<조합>/ctx_NN/{result.json, trajectories.npz}
+    experiments/ood_v1/<조건>/<task>/<조합>/ctx_NN/...
+    fm_constraint/runs/experiment_<protocol>/...   전체 rollouts.json
+git에는 보고서(docs/report_*.md)만 올린다. 보고서에 context별 원시 지표가 들어 있어
+merge는 보고서만으로 30 context bootstrap CI를 계산한다.
 """
 
 import argparse
@@ -31,14 +39,18 @@ import numpy as np
 from configs.config import METHODS, ExperimentConfig, REPO
 
 PROTOCOL = 'id_v1'
+OOD_PROTOCOL = 'ood_v1'
+REPORT_FORMAT = 'yflow-report-v1'
+REPORT_MARKER = '<!-- yflow-report-data: merge가 읽는다. 수정하지 않는다 -->'
 SELECTION_SEED = 20261108
 N_CONTEXTS = 30
 SEEDS = (0, 1, 2)
 TASKS = ('pushing', 'inserting')
 BITS = dict(zip(METHODS, (16, 8, 4, 2, 1)))
 CONTEXT_FILE = REPO / 'configs/experiment_contexts.json'
-RESULT_ROOT = REPO / 'experiments' / PROTOCOL
-LOCAL_ROOT = REPO / 'fm_constraint/runs' / f'experiment_{PROTOCOL}'
+RESULT_BASE = REPO / 'experiments'            # 단위 결과(로컬 전용, .gitignore)
+LOCAL_BASE = REPO / 'fm_constraint/runs'        # 전체 rollout 로그·잠금(로컬 전용)
+REPORT_DIR = REPO / 'docs'                      # git에 올리는 보고서
 # 결과에 영향을 주는 코드·설정. 팀원이 결과를 push해 HEAD가 바뀌어도 이 hash는 같아야 한다.
 CODE_FILES = ('configs/config.py', 'configs/pushing.yaml', 'configs/inserting.yaml',
               'configs/experiment_contexts.json', 'requirements.txt',
@@ -54,6 +66,44 @@ LOWER_BETTER = {'constraint_violation_rate_pct', 'action_change_m', 'command_jer
 
 
 # ---- 공통 --------------------------------------------------------------------------
+def ood_conditions():
+    """본실험에서 쓸 수 있는 OOD 조건 이름('id'는 ID 실험이므로 제외)."""
+    from ood.conditions import conditions
+    return [name for name, _ in conditions() if name != 'id']
+
+
+def check_ood(ood):
+    if ood is not None and ood not in ood_conditions():
+        raise ValueError(f'Unknown OOD condition {ood!r}; available: {ood_conditions()} (ID는 --ood 없이)')
+    return ood
+
+
+def protocol(ood=None):
+    """결과·보고서를 구분하는 이름. ID: id_v1, OOD: ood_v1_<조건>."""
+    return PROTOCOL if ood is None else f'{OOD_PROTOCOL}_{check_ood(ood)}'
+
+
+def result_root(ood=None):
+    return RESULT_BASE / (PROTOCOL if ood is None else f'{OOD_PROTOCOL}/{check_ood(ood)}')
+
+
+def local_root(ood=None):
+    return LOCAL_BASE / f'experiment_{protocol(ood)}'
+
+
+def report_path(name, ood=None):
+    """팀원 보고서: report_<이름>.md, OOD는 report_ood_<조건>_<이름>.md. 통합본은 name='results'."""
+    return REPORT_DIR / (f'report_{name}.md' if ood is None else f'report_ood_{check_ood(ood)}_{name}.md')
+
+
+def check_name(name):
+    if not name or not all(c.isascii() and (c.isalnum() or c in '_-') for c in name):
+        raise ValueError('--name must be ASCII letters/digits/_/-')
+    if name == 'results' or name.startswith('ood'):
+        raise ValueError(f'--name {name!r} is reserved (통합 보고서·OOD 파일 이름과 겹친다)')
+    return name
+
+
 def sha256_bytes(data):
     return hashlib.sha256(data).hexdigest()
 
@@ -200,26 +250,42 @@ def slim_trajectories(rollouts, tolerance):
     return arrays
 
 
-def run(task, combos, indices, device, name, max_steps=None):
+def run(task, combos, indices, device, name, max_steps=None, ood=None):
+    check_name(name)
+    check_ood(ood)
     rows = None
     fingerprint = code_fingerprint()
     smoke = max_steps is not None
-    tracked = (LOCAL_ROOT / 'smoke') if smoke else RESULT_ROOT
+    tracked = (local_root(ood) / 'smoke') if smoke else result_root(ood)
     info = device_info(device)
     commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=REPO, text=True).strip()
     for number in combos:
         for index in indices:
-            with unit_lock(task, number, index, smoke) as acquired:
+            with unit_lock(task, number, index, smoke, ood) as acquired:
                 if not acquired:
                     # 다른 프로세스(다른 GPU 등)가 지금 이 단위를 실행 중이다. 건너뛰고 다음 단위로 간다.
                     print(f'BUSY {combo_id(task, number)} ctx_{index:02d} (running in another process)', flush=True)
                     continue
-                rows = run_unit(task, number, index, device, name, max_steps, rows, fingerprint, info, commit, tracked)
+                rows = run_unit(task, number, index, device, name, max_steps, rows, fingerprint, info, commit,
+                                tracked, ood)
 
 
-def run_unit(task, number, index, device, name, max_steps, rows, fingerprint, info, commit, tracked):
+def check_ood_base(task, rows, ood_root):
+    """OOD 파일의 원래 배치('id' 조건)가 평가 목록의 초기 상태와 같은지 확인한다."""
+    from ood.apply import context_from_json, load_cases
+    from .evaluation import ood_context_id
+    cases, _ = load_cases(ood_root, task, 'id')
+    by_id = {case['context_id']: case for case in cases}
+    for row in rows:
+        case = by_id.get(ood_context_id(task, row['context_id']))
+        if case is None or context_sha(context_from_json(case['context'])) != row['context_sha256']:
+            raise ValueError(f'{task} context {row["index"]} ({row["context_id"]}) is missing or differs in '
+                             f'{ood_root}; the OOD file does not match {CONTEXT_FILE.name}')
+
+
+def run_unit(task, number, index, device, name, max_steps, rows, fingerprint, info, commit, tracked, ood=None):
     """잠금을 잡은 상태에서 단위 하나를 실행한다. 이미 완료됐으면 건너뛴다. 평가 목록을 반환한다."""
-    from .evaluation import evaluate
+    from .evaluation import evaluate, ood_context_id
     smoke = max_steps is not None
     out = unit_dir(tracked, task, number, index)
     result_path = out / 'result.json'
@@ -231,21 +297,27 @@ def run_unit(task, number, index, device, name, max_steps, rows, fingerprint, in
         return rows
     overrides = {**{f'methods.{k}.enabled': v for k, v in combo_flags(number).items()},
                  'device': device, 'eval.n_contexts': 0, 'eval.execute_steps': 8,
-                 'sampling.predict_steps': 10,
-                 'paths.output_root': str(LOCAL_ROOT)}
+                 'sampling.predict_steps': 10, 'eval.ood': ood,
+                 'paths.output_root': str(local_root(ood))}
     if smoke:
         overrides['eval.max_steps'] = max_steps
     cfg = ExperimentConfig.from_yaml(REPO / f'configs/{task}.yaml', overrides)
     if rows is None:
         rows = load_selection(task, cfg.values['paths']['d3il_root'])
+        if ood is not None:
+            check_ood_base(task, rows, cfg.values['paths']['ood_root'])
     row = rows[index]
-    local = unit_dir(LOCAL_ROOT / ('smoke' if smoke else 'full'), task, number, index)
+    # OOD 파일의 context ID(Pushing 'test_007')로 같은 초기 배치의 OOD 사례를 고른다.
+    # FM noise는 evaluation이 ID context ID로 만들므로 ID 결과와 같은 noise다.
+    eval_id = row['context_id'] if ood is None else ood_context_id(task, row['context_id'])
+    local = unit_dir(local_root(ood) / ('smoke' if smoke else 'full'), task, number, index)
     if local.exists():
         # 중단된 이전 시도는 지우지 않고 이름을 바꿔 보존한다.
         local.rename(local.with_name(local.name + '.interrupted.' + datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')))
     started = perf_counter()
-    print(f'RUN  {combo_id(task, number)} ctx_{index:02d} ({row["context_id"]}) seeds {list(SEEDS)}', flush=True)
-    result = evaluate(cfg, sampling_seeds=list(SEEDS), context_ids=[row['context_id']], output_directory=local)
+    print(f'RUN  {protocol(ood)} {combo_id(task, number)} ctx_{index:02d} ({row["context_id"]}) seeds {list(SEEDS)}',
+          flush=True)
+    result = evaluate(cfg, sampling_seeds=list(SEEDS), context_ids=[eval_id], output_directory=local)
     rollouts = json.loads((local / 'rollouts.json').read_text())
     out.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(out / 'trajectories.npz',
@@ -253,7 +325,7 @@ def run_unit(task, number, index, device, name, max_steps, rows, fingerprint, in
     summary = {k: result[k] for k in ('success_rate', 'plan_ms', 'plan_attempts', 'model_calls', 'qp_calls',
                                       'pf_calls', 'executed_actions', 'execution_intervention_rate',
                                       'filter_abort_rate', 'mean_steps')}
-    record = {'protocol': PROTOCOL, 'task': task, 'combo': combo_id(task, number), 'number': number,
+    record = {'protocol': protocol(ood), 'ood': result.get('ood'), 'task': task, 'combo': combo_id(task, number), 'number': number,
               'methods': combo_flags(number), 'context_index': index, 'context_id': row['context_id'],
               'context_sha256': row['context_sha256'], 'noise_seeds': list(SEEDS), 'member': name,
               'device': info, 'code_fingerprint': fingerprint, 'git_commit': commit,
@@ -268,13 +340,13 @@ def run_unit(task, number, index, device, name, max_steps, rows, fingerprint, in
 
 
 @contextmanager
-def unit_lock(task, number, index, smoke):
+def unit_lock(task, number, index, smoke, ood=None):
     """같은 장비에서 동시에 실행한 프로세스끼리 같은 단위를 두 번 돌리지 않게 한다(비차단 flock).
 
     잠금 파일은 로컬(fm_constraint/runs)에 있으므로 서로 다른 장비 사이에는 적용되지 않는다.
     장비 사이의 중복은 README의 context 분담으로 막는다.
     """
-    path = LOCAL_ROOT / 'locks' / ('smoke' if smoke else 'full') / f'{combo_id(task, number)}_ctx_{index:02d}.lock'
+    path = local_root(ood) / 'locks' / ('smoke' if smoke else 'full') / f'{combo_id(task, number)}_ctx_{index:02d}.lock'
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open('w') as handle:
         try:
@@ -324,9 +396,9 @@ def aggregate(frame):
                      _mean(frame[..., 4], -1), _mean(frame[..., 5], -1), frame[..., 6].mean(-1) * 100], axis=-1)
 
 
-def load_units(root=None):
+def load_units(root):
     units = []
-    for path in sorted(Path(root or RESULT_ROOT).glob('*/*/ctx_*/result.json')):
+    for path in sorted(Path(root).glob('*/*/ctx_*/result.json')):
         units.append(json.loads(path.read_text()))
     return units
 
@@ -335,18 +407,63 @@ def fmt(value, unit=1., digits=3):
     return '—' if value is None or not np.isfinite(value) else f'{value * unit:.{digits}g}'
 
 
-def report(name, out=None):
-    """한 팀원이 실행한 단위만 모은 부분 보고서. CI는 전체 30 context가 모인 merge에서 계산한다."""
-    units = [u for u in load_units() if u['member'] == name]
+def _finite_or_none(values):
+    return [float(v) if np.isfinite(v) else None for v in np.asarray(values, dtype=float)]
+
+
+def report_data(units, name, ood):
+    """보고서에 넣는 merge용 원시 데이터: 단위마다 context_row 7개 값."""
+    out = {'format': REPORT_FORMAT, 'protocol': protocol(ood), 'ood': ood, 'member': name,
+           'noise_seeds': list(SEEDS), 'units': []}
+    for u in sorted(units, key=lambda u: (u['task'], u['number'], u['context_index'])):
+        out['units'].append({
+            'task': u['task'], 'number': u['number'], 'context_index': u['context_index'],
+            'context_id': u.get('context_id'), 'code_fingerprint': u['code_fingerprint'],
+            'git_commit': u.get('git_commit'), 'gpu': u['device'].get('gpu', 'cpu'), 'wall_s': u['wall_s'],
+            'ood_sha256': (u.get('ood') or {}).get('sha256'),
+            'seeds': sorted(e['sampling_seed'] for e in u['episodes']),
+            'row': _finite_or_none(context_row(u['episodes'], u['task']))})
+    return out
+
+
+def parse_report(path):
+    """보고서의 원시 데이터 블록. 없으면(통합본 등) None."""
+    text = Path(path).read_text()
+    if REPORT_MARKER not in text:
+        return None
+    block = text.split(REPORT_MARKER, 1)[1]
+    start = block.index('```json\n') + len('```json\n')
+    data = json.loads(block[start:block.index('\n```', start)])
+    if data.get('format') != REPORT_FORMAT:
+        raise SystemExit(f'{path}: unknown report format {data.get("format")!r}')
+    return data
+
+
+def report(name, out=None, ood=None):
+    """한 팀원이 실행한 단위만 모은 보고서. 점추정 표 + merge용 context별 원시 데이터.
+
+    결과(result.json)는 로컬에만 있으므로, git에는 이 보고서만 올린다.
+    """
+    check_name(name)
+    root = result_root(ood)
+    units = [u for u in load_units(root) if u['member'] == name]
     if not units:
-        raise SystemExit(f'No results by {name} under {RESULT_ROOT}')
+        raise SystemExit(f'No results by {name} under {root}')
     fingerprints = {u['code_fingerprint'] for u in units}
-    lines = [f'# 실험 보고: {name}', '',
-             f'- protocol `{PROTOCOL}`, noise seed {list(SEEDS)}, 생성 {datetime.now(timezone.utc).isoformat()}',
+    ood_files = {(u.get('ood') or {}).get('sha256') for u in units}
+    title = 'ID' if ood is None else f'OOD {ood}'
+    lines = [f'# 실험 보고 ({title}): {name}', '',
+             f'- protocol `{protocol(ood)}`, noise seed {list(SEEDS)}, 생성 {datetime.now(timezone.utc).isoformat()}',
              f'- code fingerprint: {", ".join(sorted(f[:12] for f in fingerprints))}'
              + (' ⚠ 여러 개: 코드가 다른 결과가 섞였다' if len(fingerprints) > 1 else ''),
-             f'- 장비: {", ".join(sorted({u["device"].get("gpu", "cpu") for u in units}))}', '',
-             '값은 이 팀원이 실행한 context만의 점추정이다(신뢰구간 없음).', '']
+             f'- git commit: {", ".join(sorted({(u.get("git_commit") or "?")[:8] for u in units}))}',
+             f'- 장비: {", ".join(sorted({u["device"].get("gpu", "cpu") for u in units}))}']
+    if ood is not None:
+        factors = (units[0].get('ood') or {}).get('factors')
+        lines += [f'- OOD 조건 `{ood}`: {json.dumps({k: v for k, v in (factors or {}).items() if v}, ensure_ascii=False)}',
+                  f'- OOD 파일 sha256: {", ".join(sorted(str(f)[:12] for f in ood_files))}'
+                  + (' ⚠ 여러 개' if len(ood_files) > 1 else '')]
+    lines += ['', '값은 이 팀원이 실행한 context만의 점추정이다(신뢰구간 없음). 전체 CI는 merge 결과를 본다.', '']
     for task in TASKS:
         rows = [u for u in units if u['task'] == task]
         if not rows:
@@ -362,19 +479,53 @@ def report(name, out=None):
                          f'{fmt(values[0])} | {fmt(values[1])} | {fmt(values[2], 1e3)} | {fmt(values[3])} | '
                          f'{fmt(values[4])} | {fmt(values[5])} | {np.mean([u["wall_s"] for u in group]):.0f} |')
         lines.append('')
-    path = Path(out) if out else REPO / 'docs' / f'report_{name}.md'
+    data = json.dumps(report_data(units, name, ood), indent=None, separators=(',', ':'), allow_nan=False)
+    lines += ['<details><summary>merge용 원시 데이터 (context별 지표, 자동 생성)</summary>', '',
+              REPORT_MARKER, '', '```json', data.replace('},{', '},\n{'), '```', '', '</details>', '']
+    path = Path(out) if out else report_path(name, ood)
     path.write_text('\n'.join(lines))
     print(f'Saved {path}')
 
 
-def merge(out=None, n_boot=2000, seed=2026):
-    """모든 팀원의 결과를 합쳐 조합별 추정값 [95% CI]와 Complementarity Δ를 계산한다."""
-    units = load_units()
+def collect_reports(ood=None, report_dir=None):
+    """report_dir의 보고서 중 같은 protocol의 단위를 모은다. 같은 단위가 두 번 있으면 멈춘다."""
+    units, sources, owner = [], [], {}
+    for path in sorted(Path(report_dir or REPORT_DIR).glob('report_*.md')):
+        data = parse_report(path)
+        if data is None or data['protocol'] != protocol(ood):
+            continue
+        if data['noise_seeds'] != list(SEEDS):
+            raise SystemExit(f'{path.name}: noise seeds {data["noise_seeds"]} != {list(SEEDS)}')
+        sources.append((path.name, data['member'], len(data['units'])))
+        for u in data['units']:
+            key = (u['task'], u['number'], u['context_index'])
+            if key in owner:
+                raise SystemExit(f'{combo_id(u["task"], u["number"])} ctx_{u["context_index"]:02d} appears in both '
+                                 f'{owner[key]} and {path.name}')
+            owner[key] = path.name
+            units.append({**u, 'row': [np.nan if v is None else v for v in u['row']]})
+    return units, sources
+
+
+def merge(out=None, n_boot=2000, seed=2026, ood=None, report_dir=None):
+    """모든 팀원의 보고서(docs/report_*.md)를 합쳐 조합별 추정값 [95% CI]와 Complementarity Δ를 계산한다.
+
+    결과 파일(result.json) 없이 보고서만 있으면 된다. 누구나 실행할 수 있다.
+    """
+    units, sources = collect_reports(ood, report_dir)
+    if not units:
+        raise SystemExit(f'No reports for {protocol(ood)} in {report_dir or REPORT_DIR}')
     fingerprints = {u['code_fingerprint'] for u in units}
     if len(fingerprints) > 1:
         raise SystemExit(f'Results from {len(fingerprints)} code versions; rerun mismatched units first')
-    lines = ['# 통합 결과 (merge)', '', f'protocol `{PROTOCOL}`, context bootstrap {n_boot}회(seed {seed}), '
-             f'code fingerprint {next(iter(fingerprints))[:12] if fingerprints else "—"}', '']
+    ood_files = {u.get('ood_sha256') for u in units}
+    if len(ood_files) > 1:
+        raise SystemExit(f'Results from {len(ood_files)} different OOD files')
+    title = 'ID' if ood is None else f'OOD {ood}'
+    lines = [f'# 통합 결과 ({title}, merge)', '', f'protocol `{protocol(ood)}`, context bootstrap {n_boot}회(seed {seed}), '
+             f'code fingerprint {next(iter(fingerprints))[:12]}'
+             + (f', OOD 파일 sha256 {str(next(iter(ood_files)))[:12]}' if ood is not None else ''), '',
+             '입력 보고서: ' + ', '.join(f'`{f}`({m}, 단위 {n}개)' for f, m, n in sources), '']
     summary = {}
     for task in TASKS:
         expected = list(range(N_CONTEXTS))
@@ -386,9 +537,9 @@ def merge(out=None, n_boot=2000, seed=2026):
                 missing.append(f'{combo_id(task, number)}: {len(absent)}개')
                 continue
             for u in group.values():
-                if sorted(e['sampling_seed'] for e in u['episodes']) != list(SEEDS):
+                if u['seeds'] != list(SEEDS):
                     raise SystemExit(f'{combo_id(task, number)} ctx_{u["context_index"]}: seeds incomplete')
-            table[number] = np.array([context_row(group[i]['episodes'], task) for i in expected], dtype=float)
+            table[number] = np.array([group[i]['row'] for i in expected], dtype=float)
         lines += [f'## {task}', '']
         if missing:
             lines += ['미완료(누락 context 수): ' + ', '.join(missing), '']
@@ -427,10 +578,13 @@ def merge(out=None, n_boot=2000, seed=2026):
                          f'{cells[4]} | {cells[5]} | {delta} |')
             summary[task][combo_id(task, number)] = row
         lines.append('')
-    path = Path(out) if out else REPO / 'docs' / 'report_results.md'
+    path = Path(out) if out else report_path('results', ood)
     path.write_text('\n'.join(lines))
-    path.with_suffix('.json').write_text(json.dumps(summary, indent=1, default=float))
-    print(f'Saved {path}')
+    meta = {'protocol': protocol(ood), 'ood': ood, 'n_boot': n_boot, 'bootstrap_seed': seed,
+            'code_fingerprint': next(iter(fingerprints)), 'ood_sha256': next(iter(ood_files)),
+            'reports': [f for f, _, _ in sources]}
+    path.with_suffix('.json').write_text(json.dumps({'meta': meta, **summary}, indent=1, default=float))
+    print(f'Saved {path} and {path.with_suffix(".json").name}')
 
 
 def main():
@@ -450,16 +604,18 @@ def main():
     p.add_argument('--out')
     m = sub.add_parser('merge')
     m.add_argument('--out')
+    for command in (r, p, m):
+        command.add_argument('--ood', default=None, help='OOD 조건(예: A_mid). 생략하면 ID 실험')
     args = parser.parse_args()
     if args.command == 'select':
         select(args.d3il_root)
     elif args.command == 'run':
         run(args.task, parse_combos(args.combos), parse_indices(args.contexts, N_CONTEXTS),
-            args.device, args.name, args.max_steps)
+            args.device, args.name, args.max_steps, args.ood)
     elif args.command == 'report':
-        report(args.name, args.out)
+        report(args.name, args.out, args.ood)
     else:
-        merge(args.out)
+        merge(args.out, ood=args.ood)
 
 
 if __name__ == '__main__':

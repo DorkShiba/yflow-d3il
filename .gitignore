@@ -10,6 +10,9 @@ fm_baseline/results/*/eval_*/
 
 fm_constraint/runs/
 
+# 본실험 결과(ID·OOD)는 로컬에만 둔다. git에는 docs/report_*.md(와 통합본 .json)만 올린다
+experiments/
+
 # 태스크별 재생성 가능한 KDE 캐시
 data/*/pf2mp_cache/
 

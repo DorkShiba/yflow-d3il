@@ -20,6 +20,24 @@ from .tasks import get_task
 from ood.apply import Episode, context_from_json, load_cases
 
 
+def id_context_key(task, ood_context_id):
+    """OOD 파일의 context ID → 같은 초기 배치의 ID 평가 context ID.
+
+    Pushing ID 평가는 test 배열 index('7'), OOD 파일은 'test_007'이다. Inserting은 같다.
+    """
+    if task == 'pushing':
+        prefix, _, number = ood_context_id.rpartition('_')
+        if prefix != 'test' or not number.isdigit():
+            raise ValueError(f'Unexpected Pushing OOD context ID {ood_context_id!r}')
+        return str(int(number))
+    return ood_context_id
+
+
+def ood_context_id(task, id_context_id):
+    """id_context_key의 역. ID 평가 목록의 context ID → OOD 파일의 context ID."""
+    return f'test_{int(id_context_id):03d}' if task == 'pushing' else id_context_id
+
+
 def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
                    task, settings, config, observe_safety=None, spec=None):
     """계획 실패를 실행하지 않고, 실제 실행 행동으로만 이전 행동을 갱신한다.
@@ -28,7 +46,8 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
     safe success는 null로 둔다. all-off에서는 제약 위반을 측정만 한다.
 
     context에 'ood' 사례(data/ood JSONL 한 행)가 있으면 OOD 조건을 적용한다.
-    정책 seed는 사례의 policy_seeds를 쓰고, 관측 노이즈(C)는 정책과 실행 직전
+    정책 seed는 sampling_seeds가 주어지면 그것을(본실험: ID와 같은 seed 0·1·2, FM noise는
+    item['noise_key']로 ID와 같은 값), 없으면 사례의 policy_seeds를 쓴다. 관측 노이즈(C)는 정책과 실행 직전
     필터가 보는 관측에만 넣는다. 제약 위반 측정은 항상 실제 상태로 한다.
     지연(E)이 있으면 남은 행동이 d개일 때 다음 계획을 세우고 새 chunk는 index d부터 실행한다.
 
@@ -58,7 +77,10 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
     walls = spec.walls(env) if spec is not None and any('ood' in item for item in contexts) else []
     for ci, item in enumerate(contexts):
         case = item.get('ood')
-        item_seeds = case['policy_seeds'][:settings['n_traj']] if case else seeds
+        if seeds is not None:
+            item_seeds = seeds
+        else:
+            item_seeds = case['policy_seeds'][:settings['n_traj']] if case else None
         for ti in range(len(item_seeds) if item_seeds is not None else settings['n_traj']):
             # 조합·이전 rollout의 길이와 독립적인 FM 전용 RNG를 사용한다.
             generator = None
@@ -66,10 +88,12 @@ def run_evaluation(env, policy, contexts, read_state, build_obs, quat2euler,
             noise_seed = None
             if item_seeds is not None:
                 import torch
-                if case:
+                if case and seeds is None:
                     noise_seed = int(sampling_seed) % (2**63 - 1)
                 else:
-                    payload = json.dumps([task, item['id'], sampling_seed], separators=(',', ':'))
+                    # noise_key: OOD 사례가 ID와 같은 FM noise를 쓰도록 ID 평가의 context ID를 넣는다.
+                    key = item.get('noise_key', item['id'])
+                    payload = json.dumps([task, key, sampling_seed], separators=(',', ':'))
                     noise_seed = int.from_bytes(hashlib.sha256(payload.encode()).digest()[:8], 'big') % (2**63 - 1)
                 # noise는 장비와 무관하게 CPU 난수로 만든 뒤 옮긴다. CUDA 난수열은 CPU와 달라서
                 # 장비가 다른 팀원 사이에 같은 seed의 noise가 달라지는 것을 막는다.
@@ -351,12 +375,10 @@ def evaluate(cfg, *, sampling_seeds=None, context_ids=None,
             delays = {case['delay_steps'] for case in cases}
             if max(delays) + settings['execute_steps'] > v['model']['horizon']:
                 raise ValueError('OOD delay_steps + execute_steps must not exceed the horizon')
-            items = [{'id': case['context_id'], 'context': context_from_json(case['context']), 'ood': case}
-                     for case in cases]
+            items = [{'id': case['context_id'], 'noise_key': id_context_key(cfg.task, case['context_id']),
+                      'context': context_from_json(case['context']), 'ood': case} for case in cases]
             spec = get_task(cfg.task)
             spec.quat2euler = quat2euler
-            if sampling_seeds is not None:
-                raise ValueError('OOD evaluation uses the policy_seeds stored in the OOD file')
         if context_ids is not None:
             available = {item['id']: item for item in items}
             if len(set(context_ids)) != len(context_ids) or any(key not in available for key in context_ids):
