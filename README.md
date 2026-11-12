@@ -227,6 +227,17 @@ python -m pytest fm_constraint/tests tests -q     # visualizer 테스트는 visu
 - **OOD 실험:** 같은 분담·같은 명령에 `--ood <조건>`만 붙인다. 예: `bash scripts/run_experiment.sh --name hyeongbin --contexts 0-6 --ood A_mid`.
   - ID와 같은 30 context, 같은 noise seed 0·1·2, **같은 FM noise**를 쓰고 OOD 조건(A_mid는 블록 초기 위치)만 다르다. 그래서 ID 결과와 context·seed 단위로 짝지어 비교할 수 있다.
   - 조건 정의는 [`ood/README.md`](ood/README.md), 사례는 `data/ood/`(commit된 파일, sha256을 보고서에 기록)에 있다.
+- **OOD A_weak·A_strong 분담 (2026-11-12, A 수치 1/5/18 cm, `data/ood` v3):** A_mid는 다시 실행하지 않는다. 30 context를 네 명이 같은 양(8·8·7·7)으로 나누고, 각자 맡은 context에서 **A_weak와 A_strong을 같은 장비로** 둘 다 실행한다(강도 간 비교도 같은 장비에서 이루어지게). 한 명령이 A_weak → A_strong 순서로 돌고, 조건마다 보고서를 만든다.
+
+  | 담당 | context 번호 | 개수 | 실행 명령 |
+  |---|---|---:|---|
+  | 형빈 | 0–7 | 8 | `bash scripts/run_experiment.sh --name hyeongbin --contexts 0-7 --ood A_weak,A_strong` |
+  | 준혁 | 8–15 | 8 | `bash scripts/run_experiment.sh --name junhyuk --contexts 8-15 --ood A_weak,A_strong` |
+  | 재엽 | 16–22 | 7 | `bash scripts/run_experiment.sh --name jaeyeop --contexts 16-22 --ood A_weak,A_strong` |
+  | 성민 | 23–29 | 7 | `bash scripts/run_experiment.sh --name seongmin --contexts 23-29 --ood A_weak,A_strong` |
+
+  - 올릴 보고서: `docs/report_ood_A_weak_<이름>.md`, `docs/report_ood_A_strong_<이름>.md`. 통합은 `python -m fm_constraint.experiment merge --ood A_weak`(A_strong도 같다).
+  - Pushing A_strong의 context 13(test_028)은 17 cm, context 29(test_059)은 8 cm로 낮춰져 있다(배치 불가·시뮬레이터 안착 실패, `shift[].shift_m`). 분석할 때 따로 표시한다.
 - **결과 공유 — 보고서만 git에 올린다:**
   - 단위 결과는 **로컬에만** 남는다(`.gitignore`): `experiments/id_v1/`, `experiments/ood_v1/<조건>/`(단위마다 `result.json`, `trajectories.npz`), 전체 계획 로그 `fm_constraint/runs/experiment_<protocol>/full/`(`rollouts.json`, Inserting rollout 1개에 최대 약 8 MB). 다시 만들려면 재실행해야 하므로 지우지 말고 필요하면 각자 백업한다.
   - 실행이 끝나면 스크립트가 보고서를 만든다. ID는 `docs/report_<이름>.md`, OOD는 `docs/report_ood_<조건>_<이름>.md`. 결과를 나중에 더 실행했다면 `python -m fm_constraint.experiment report --name <이름> [--ood <조건>]`로 다시 만든다(덮어쓴다).
