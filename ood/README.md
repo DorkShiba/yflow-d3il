@@ -4,11 +4,13 @@
 
 | 요인 | 내용 | weak / mid / strong |
 |---|---|---|
-| A 블록 초기 위치 | 모든 블록을 시연 초기 범위 밖 d로, 가장 가까운 가능한 면부터 이동(결정적) | 2.5 / 5 / 10 cm |
+| A 블록 초기 위치 | 모든 블록을 시연 초기 범위 밖 d로, 가장 가까운 가능한 면부터 이동(결정적). strong은 팔 도달 고리(베이스에서 0.30–0.81 m) 안에만 두고, 다른 블록 시작 범위와는 5 cm만 띄운다(`generate.shift_blocks_far`) | 1 / 5 / 18 cm |
 | B 로봇 시작 | 손을 시연 시작점에서 d만큼 seed 방향으로 이동. 시뮬레이터에서 블록 미이동(<1 mm)·도착 오차(<5 mm) 확인 | 2 / 5 / 10 cm |
 | C 관측 노이즈 | 정책·실행 직전 필터가 보는 블록 x, y와 yaw에 함께 Gaussian. 실제 상태와 위반 측정에는 넣지 않음 | 2.5 mm·2.5° / 5 mm·5° / 10 mm·10° |
 | D 실행 중 push | `push_step`(Pushing 80, Inserting 300) 이후 chunk 중간(남은 행동 4개)에 손에 가장 가까운 블록을 d만큼 순간이동 | 2 / 4 / 8 cm |
 | E 추론 지연 | 남은 행동이 d개일 때 다음 계획을 세우고 새 chunk는 index d부터 실행(단순 비동기, RTC 논문의 baseline) | 1 / 2 / 4 step |
+
+A 수치는 2026-11-12에 2.5/5/10 cm에서 1/5/18 cm로 바꿨다(데이터 v3). A_mid 배치는 v2와 같다. A_strong은 배치 후 시뮬레이터에서 2 s 동안 블록이 2 mm 안에 머무는지 확인하고, 안 되면 그 context만 1 cm씩 낮춘다(v3: Pushing test_028 17 cm·test_059 8 cm, Inserting env_011_04 17 cm). 실제 d는 `shift[].shift_m`에 있다. 블록별 이동 방향은 각 행의 `shift[].face`(x−/x+/y−/y+)에 있다. y+는 목표 쪽 이동이라 쉬워지므로 결과를 방향별로 나눠 보는 것이 좋다.
 
 조건 20개: `id`, `{A,B,C}_{weak,mid,strong}`, `{AB,AC,BC,ABC}_mid`, `{D,E}_{weak,mid,strong}`. 손끝 yaw는 제외했다.
 

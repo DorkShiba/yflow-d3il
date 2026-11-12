@@ -1,6 +1,6 @@
 {
- "version": "v2",
- "created_utc": "2026-11-07T14:21:20Z",
+ "version": "v3",
+ "created_utc": "2026-11-12T08:28:11Z",
  "root_seed": 20261106,
  "policy_repeats": 4,
  "push_phase": "mid",
@@ -31,7 +31,7 @@
  "tasks": {
   "pushing": {
    "file": "pushing.jsonl",
-   "sha256": "720f31be8a2ff3fdb6a8f287d3e133655459ff2523e65e52acfb2a4b95876b25",
+   "sha256": "4d1da91e8a06fc1bf882e57b1d999136fe422f708c7af6e44c0ab08a1026752b",
    "n_rows": 1200,
    "n_contexts": 60,
    "contexts": "d3il pushing test_contexts.pkl",
@@ -42,9 +42,9 @@
    "push_step": 80,
    "levels": {
     "A": [
-     0.025,
+     0.01,
      0.05,
-     0.1
+     0.18
     ],
     "B": [
      0.02,
@@ -89,7 +89,7 @@
     "A_weak": {
      "factors": {
       "A": {
-       "shift_m": 0.025,
+       "shift_m": 0.01,
        "level": "weak"
       },
       "B": null,
@@ -113,14 +113,15 @@
     "A_strong": {
      "factors": {
       "A": {
-       "shift_m": 0.1,
+       "shift_m": 0.18,
        "level": "strong"
       },
       "B": null,
       "C": null,
       "D": null,
       "E": null
-     }
+     },
+     "A_lowered": 2
     },
     "B_weak": {
      "factors": {
@@ -342,7 +343,7 @@
   },
   "inserting": {
    "file": "inserting.jsonl",
-   "sha256": "8615ee2d1d0b9cfd32fad703748e10b4ac69aa6ee43f64abb0b3ccbed6fdfd79",
+   "sha256": "32cc30491d5b6e5b169470e2c3a38941a23670e859de267d405c30c2e89ed6a1",
    "n_rows": 1640,
    "n_contexts": 82,
    "contexts": "fm_baseline/contexts/inserting_val.pkl",
@@ -353,9 +354,9 @@
    "push_step": 300,
    "levels": {
     "A": [
-     0.025,
+     0.01,
      0.05,
-     0.1
+     0.18
     ],
     "B": [
      0.02,
@@ -400,7 +401,7 @@
     "A_weak": {
      "factors": {
       "A": {
-       "shift_m": 0.025,
+       "shift_m": 0.01,
        "level": "weak"
       },
       "B": null,
@@ -424,14 +425,15 @@
     "A_strong": {
      "factors": {
       "A": {
-       "shift_m": 0.1,
+       "shift_m": 0.18,
        "level": "strong"
       },
       "B": null,
       "C": null,
       "D": null,
       "E": null
-     }
+     },
+     "A_lowered": 1
     },
     "B_weak": {
      "factors": {

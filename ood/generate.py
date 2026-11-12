@@ -25,15 +25,22 @@ sys.path.insert(0, str(REPO / 'fm_baseline'))
 from fm_constraint.tasks import get_task  # noqa: E402
 from train import resolve_d3il  # noqa: E402
 
-from .apply import CLEAR, context_to_json, file_sha256, shift_blocks  # noqa: E402
+from .apply import CLEAR, context_to_json, file_sha256, free, shift_blocks  # noqa: E402
 from .conditions import (LEVELS, POLICY_REPEATS, PUSH_PHASE, ROOT_SEED, conditions,  # noqa: E402
                          context_seeds, factor_values)
 
-VERSION = 'v2'
+VERSION = 'v3'
 HAND_TOL = 0.005        # m: 도착한 손과 목표의 최대 거리
 BLOCK_TOL = 0.001       # m: 손을 옮기는 동안 블록 최대 이동
 B_ANGLES = 128          # 시도할 방향 후보 수
 B_SIM_TRIES = 8         # 시뮬레이터로 확인할 최대 후보 수
+A_FAR_FROM = 0.05       # m: 이보다 큰 A 이동(A_strong)은 shift_blocks_far 규칙을 쓴다
+A_NEAR_MAX = 0.05       # m: A_strong에서 다른 블록 시작 범위와 둘 최소 거리
+REACH_IN, REACH_OUT = 0.30, 0.81            # m: 손 도달 고리(로봇 베이스 기준), 2026-11-12 측정
+TABLE_XY = ((-0.09, 0.89), (-0.98, 0.98))   # m: 테이블 윗면(lab_surrounding.xml)
+A_LOWER_STEP = 0.01      # m: A_strong 배치가 안 되면 그 context만 이만큼씩 낮춘다
+SETTLE_S = 2.0           # s: A_strong 배치 후 블록 안착 확인 시간
+BLOCK_SETTLE_TOL = 0.002 # m
 
 
 def path_clear(spec, a, b, blocks, radii, walls):
@@ -50,6 +57,75 @@ def path_clear(spec, a, b, blocks, radii, walls):
         if any(np.linalg.norm(np.maximum(np.abs(p - c) - h, 0.0)) < spec.hand_r + CLEAR for c, h in walls):
             return False
     return True
+
+
+def shift_blocks_far(spec, walls, ctx, d, hand_xy):
+    """A_strong(d > A_FAR_FROM): ``shift_blocks``와 같은 규칙(모든 블록, 가장 가까운 면부터)에 두 가지를 더한다.
+
+    1. 다른 블록 시작 범위와의 최소 거리를 d 대신 min(d, A_NEAR_MAX)로 둔다. d로 두면 시작 범위가
+       5~10 cm 간격인 Inserting에서 거의 모든 후보가 막힌다(18 cm에서 배치 가능 context 1%).
+    2. 블록 중심이 팔 도달 고리 안(REACH_IN + m ≤ |p| ≤ REACH_OUT − m, 베이스 = 원점)에 있어야 한다.
+       m = 블록 외접 반지름 + 손 반지름 + CLEAR, 손이 블록 뒤까지 들어가 밀 수 있어야 하기 때문이다.
+       고리는 평가와 같은 제어(고정 z·자세, step당 8 mm)로 28방향을 재서 얻었다(오차 1 cm 기준).
+    TaskSpec.workspace 대신 테이블 범위를 쓴다(고리가 더 좁다). weak·mid는 ``shift_blocks`` 그대로라 기존 배치가 같다.
+    ``ood/apply.py``는 결과 code fingerprint에 들어가 있어 이미 끝난 ID·A_mid 결과와 맞추려고 여기 둔다.
+    """
+    radii = spec.block_radii()
+    pos = [np.asarray(spec.ctx_box_xy(ctx, i), dtype=float).copy() for i in range(spec.n_boxes)]
+    near_d = min(d, A_NEAR_MAX)
+    workspace, spec.workspace = spec.workspace, TABLE_XY
+    applied = []
+    try:
+        for i in range(spec.n_boxes):
+            (x0, x1), (y0, y1) = spec.INIT_RANGE[i]
+            p = pos[i]
+            candidates = sorted([(p[0] - x0, np.array([x0 - d, p[1]]), 'x-'), (x1 - p[0], np.array([x1 + d, p[1]]), 'x+'),
+                                 (p[1] - y0, np.array([p[0], y0 - d]), 'y-'), (y1 - p[1], np.array([p[0], y1 + d]), 'y+')],
+                                key=lambda c: c[0])
+            others = [(pos[j], radii[j]) for j in range(spec.n_boxes) if j != i]
+            other_ranges = [spec.INIT_RANGE[j] for j in range(spec.n_boxes)
+                            if j != i and spec.INIT_RANGE[j] != spec.INIT_RANGE[i]]
+            margin = radii[i] + spec.hand_r + CLEAR
+            for _, q, face in candidates:
+                near_other = any(math.hypot(max(rx[0] - q[0], 0.0, q[0] - rx[1]), max(ry[0] - q[1], 0.0, q[1] - ry[1]))
+                                 < near_d for rx, ry in other_ranges)
+                reach = REACH_IN + margin <= float(np.linalg.norm(q)) <= REACH_OUT - margin
+                if not near_other and reach and free(spec, walls, q, others, hand_xy, r=radii[i]):
+                    pos[i] = q
+                    applied.append({'box': i, 'face': face, 'from': p.tolist(), 'to': q.tolist()})
+                    break
+            else:
+                applied.append({'box': i, 'face': None, 'from': p.tolist(), 'to': p.tolist()})
+    finally:
+        spec.workspace = workspace
+    for i in range(spec.n_boxes):
+        ctx = spec.ctx_set_box_xy(ctx, i, pos[i])
+    return ctx, applied
+
+
+def blocks_settle(spec, env, ctx):
+    """배치를 D3IL에 넣고 손을 시작점에 둔 채 SETTLE_S초 기다려 모든 블록이 BLOCK_SETTLE_TOL 안에 있는가.
+    Pushing의 일부 두 블록 배치는 약 1 s 뒤 블록 하나가 저절로 5 cm 밀려난다(원인 미상, 배치 조합에 의존)."""
+    spec.reset(env, ctx)
+    hand = spec.read(env).c[:2].copy()
+    for _ in range(round(SETTLE_S / 0.2)):
+        spec.move_hand(env, hand, duration=0.2)
+    state = spec.read(env)
+    return all(np.linalg.norm(np.asarray(b[0][:2]) - spec.ctx_box_xy(ctx, i)) < BLOCK_SETTLE_TOL
+               for i, b in enumerate(state.boxes))
+
+
+def shift_far_checked(spec, env, walls, ctx, d, hand_xy):
+    """A_strong: shift_blocks_far 배치가 모든 블록을 옮기고 시뮬레이터에서 제자리에 있을 때까지
+    그 context만 d를 A_LOWER_STEP씩 낮춘다(PLAN: 가능한 최대값으로 낮춘다). 각 기록에 실제 d(shift_m)를 남긴다."""
+    k = 0
+    while True:
+        dk = round(d - k * A_LOWER_STEP, 6)
+        new, applied = shift_blocks_far(spec, walls, ctx, dk, hand_xy)
+        last = dk - A_LOWER_STEP <= A_FAR_FROM
+        if (all(e['face'] is not None for e in applied) and blocks_settle(spec, env, new)) or last:
+            return new, [{**e, 'shift_m': dk} for e in applied]
+        k += 1
 
 
 def robot_start(spec, env, ctx, hand0, d, seed, walls):
@@ -90,16 +166,19 @@ def generate_task(task, d3il, out_root):
     shift_cache, start_cache = {}, {}
     for cond, selected in conditions():
         values = factor_values(task, selected)
-        failures = {'A_blocks_not_shifted': 0, 'B_without_robot_shift': 0}
+        failures = {'A_blocks_not_shifted': 0, 'A_lowered': 0, 'B_without_robot_shift': 0}
         for context_id, base in contexts:
             seeds = context_seeds(task, context_id)
             ctx, shift = base, None
             if values['A']:
                 key = (context_id, values['A']['shift_m'])
                 if key not in shift_cache:
-                    shift_cache[key] = shift_blocks(spec, walls, base, values['A']['shift_m'], hand0)
+                    d = values['A']['shift_m']
+                    shift_cache[key] = (shift_far_checked(spec, env, walls, base, d, hand0) if d > A_FAR_FROM
+                                        else shift_blocks(spec, walls, base, d, hand0))
                 ctx, shift = shift_cache[key]
                 failures['A_blocks_not_shifted'] += sum(e['face'] is None for e in shift)
+                failures['A_lowered'] += any(e.get('shift_m', values['A']['shift_m']) < values['A']['shift_m'] for e in shift)
             robot = None
             if values['B']:
                 key = (context_id, values['B']['dist_m'], bool(values['A']), values['A'] and values['A']['shift_m'])

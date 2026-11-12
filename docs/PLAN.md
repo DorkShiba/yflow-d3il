@@ -155,7 +155,7 @@ HEAD 테스트는 `pytest fm_constraint/tests`에서 **102개 모두 통과**한
 
 | | 구현 1 (pushing·inserting·aligning) | 구현 2 (sorting·stacking·avoiding) |
 |---|---|---|
-| A 물체 위치 | **모든 블록**을 시연 초기 범위 밖 d로 이동. d = 2.5/5/10 cm (aligning 5/10/12) | **한 블록만** 초기 영역 밖 d로 이동. d = 3/6/10 cm (stacking 1.5/3/6) |
+| A 물체 위치 | **모든 블록**을 시연 초기 범위 밖 d로 이동. d = 2.5/5/10 cm (aligning 5/10/12). **2026-11-12 Pushing·Inserting은 1/5/18 cm로 변경**(mid 유지, strong은 팔 도달 범위 검사, `ood/README.md`) | **한 블록만** 초기 영역 밖 d로 이동. d = 3/6/10 cm (stacking 1.5/3/6) |
 | B 로봇 시작 | 2/5/10 cm, 임의 방향, 시뮬레이터에서 경로 검증 | 2/5/10 cm, 8방향, stacking은 yaw ±5/10/20° 추가 |
 | C 관측 노이즈 | xy σ 2.5/5/10 mm와 yaw 2.5/5/10°를 **함께** 적용 | xy σ 3/6/12 mm와 yaw 2.5/5/10°를 **각각 다른 조건**으로 분리 |
 | 조합 조건 | AB/AC/BC/ABC_mid 포함 (14개) | 단일 요인만 (sorting 13개) |
