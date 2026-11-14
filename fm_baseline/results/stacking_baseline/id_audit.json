@@ -1,0 +1,29 @@
+{
+  "passed": true,
+  "rollouts": 400,
+  "successes": 138,
+  "success_rate": 0.345,
+  "context_bootstrap_95ci": [
+    0.2975,
+    0.3925
+  ],
+  "selected_step": 350000,
+  "train_only_normalizer": true,
+  "raw_metrics_recomputed": true,
+  "hashes": {
+    "id-eval/part0/results.json": "7c88dffa4da9cb0da25e81e687852aab0f982a3684e8b9f43e1ca62cab37d8a0",
+    "id-eval/part0/rollouts.npz": "8e613f6da2ec64dbace230156f6bcdd5805e3ba99930cf90c3c58153a4d4cedf",
+    "id-eval/part1/results.json": "04b44a457af3ad3a715c5c410192eee93137f30714ee994b86d9ede65c09b1f1",
+    "id-eval/part1/rollouts.npz": "b75d1b1647953162fb190ef7f4bd3586c64ff9c3c0231fefa95f2e494597c1c7",
+    "id-eval/part2/results.json": "8fee137c9fb3b8f1ff2a93bde7079cfa65a0ef8654923262404b02316960ac32",
+    "id-eval/part2/rollouts.npz": "f3e70920dd2e257b0e5dd61295f60eb5dae8ee1f41c032b970c1c6a6ae54d194",
+    "id-eval/part3/results.json": "2fe317b266ae2f8b0e52412e1da3678ba51ae98ddfe3bf9fc931b1a5efc6e9f8",
+    "id-eval/part3/rollouts.npz": "6d3186ac8e2a340e58aef15344bf953dd49f64903f6f82be804aa6960e246245"
+  },
+  "partial1_rate": 0.7775,
+  "partial2_rate": 0.585,
+  "hand_jerk_rms_mean": 12.139266777288762,
+  "joint_boundary_velocity_change_mean": 0.31201208528131247,
+  "plan_ms_mean": 83.2420908282098,
+  "scope": "single training seed; generated ID simulator contexts; mirror split not official benchmark; 4 parallel GPU workers timings include contention"
+}

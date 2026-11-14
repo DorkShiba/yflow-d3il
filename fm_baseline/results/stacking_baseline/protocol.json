@@ -1,0 +1,95 @@
+{
+  "task": "stacking",
+  "status": "fixed before main training",
+  "training": {
+    "implementation": "fm_baseline/train.py (existing pushing/inserting FM trainer)",
+    "observations": "desired joint angles 7, actual gripper width 1, red/green/blue xyz+sin(yaw)+cos(yaw) each5, total23",
+    "actions": "delta desired joint angles7 + next observed gripper width1; latter is imitation target not original gripper command",
+    "normalizer": "training episodes only; frozen for all evaluations",
+    "steps": 1000000,
+    "seed": 42,
+    "batch_size": 32,
+    "lr": 0.0002,
+    "optimizer": "Adam",
+    "scheduler": "cosine",
+    "ema_decay": 0.995,
+    "horizon": 16,
+    "dim": 64,
+    "dim_mults": [
+      1,
+      2,
+      4,
+      8
+    ],
+    "attention": false,
+    "checkpoint_selection": "Highest fixed ID development success; ties lower validation EMA loss (last 5000 steps mean), then earlier checkpoint",
+    "release_split": {
+      "train_episodes": 1001,
+      "validation_episodes": 93
+    },
+    "data": "Original vision state PKLs from Zeus-Omni/D3IL-Vision mirror, 1094 hashes matched to its metadata; official ZIP blocked by quota, no independent official byte comparison",
+    "val_batches": 32
+  },
+  "id_evaluation": {
+    "source": "new deterministic contexts from official manager Box ranges, seed20261107; NOT official released test contexts",
+    "context_start": 0,
+    "n_contexts": 100,
+    "n_traj": 4,
+    "policy_seed": 0,
+    "paired_noise": true,
+    "ode_steps": 10,
+    "execute_steps": 8,
+    "max_steps": 1000,
+    "control_dt_seconds": 0.03,
+    "inference_delay_steps": 0,
+    "initial_arm": "none",
+    "post_id": "ID baseline only; no OOD or XY LiPo on joint actions",
+    "parallel_workers": 4,
+    "timing": "4 concurrent GPU evaluations; not uncontended latency",
+    "success_rule": "all3 boxes at XY distance <=.06m from fixed goal and pairwise Z differences>.03m; no dwell-time requirement",
+    "partial_metrics": "historical goal-entry of1/2 distinct boxes; not stable stack levels",
+    "controller": "jointTrackingController; desired joint increments accumulated from reset actual joints; width>.075 opens else closes; fresh physical state read after step",
+    "observation_difference_from_official_wrapper": "sin/cos instead of tan yaw; actual gripper width instead of preceding predicted width for train/eval consistency"
+  },
+  "scope": "state-based FM imitation learning; single training seed42; simulation ID only; original vision-data state mirror split and new simulator ID contexts, not official benchmark reproduction",
+  "early_stopping": {
+    "interval_steps": 50000,
+    "min_stop_step": 200000,
+    "patience_checks": 3,
+    "meaningful_loss_relative_decrease": 0.01,
+    "meaningful_success_absolute_increase": 0.025,
+    "loss_summary": "mean EMA validation loss at last five 1000-step evaluations",
+    "improvement_rule": "Either loss or success reaches improvement threshold against its retained improvement anchor; reset patience; cumulative small gains count",
+    "dev_context_start": 100,
+    "dev_n_contexts": 40,
+    "dev_n_traj": 2,
+    "dev_seed": 0,
+    "dev_parallel_workers": 4,
+    "same_cases_and_noise_every_check": true,
+    "max_steps_per_rollout": 1000,
+    "trainer_paused_during_dev": true,
+    "scheduler": "Original 1m cosine schedule retained; no restart or schedule compression",
+    "final_checkpoint": "selected.pt",
+    "final_test_contexts": "0:100, untouched until selection",
+    "dev_compute_timing": "Not used for reported compute comparison due to parallel execution",
+    "trainer_pause": "cooperative file gate after atomic checkpoint; same Adam/RNG resumes"
+  },
+  "evaluation_contexts": {
+    "test": [
+      0,
+      100
+    ],
+    "dev": [
+      100,
+      140
+    ],
+    "smoke": [
+      140,
+      142
+    ],
+    "exclusive_ranges": true,
+    "target": "manager target sample is unused in official set_context; keep fixed simulator target",
+    "overlap": "all142 unique contexts, none matches any demo context rounded to6 decimals",
+    "filtering": "no policy-dependent exclusions or sample replacement"
+  }
+}

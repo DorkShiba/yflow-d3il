@@ -129,3 +129,10 @@ train-free 5개 방법(제약 정의, 위반 지표, 조합 실험)은 `fm_const
 ## 10. LiPo 후처리와 smoothness 평가
 
 학습된 EMA 모델을 고정한 `none / lipo` 비교를 지원한다. ⑤ LiPo(고정 한도 jerk QP)를 baseline 평가 스크립트에서 켜는 방식이며, 실행 명령과 지표는 [LIPO.md](LIPO.md)에 있다. 추가 태스크(avoiding, aligning, sorting, stacking)의 baseline 평가는 `python fm_baseline/eval_task.py --task <태스크> --run-dir <run>`으로 한다.
+
+## Sorting-2 · Stacking ID checkpoints
+
+- [Sorting-2 baseline](results/sorting2_baseline/README.md) — 74% (296/400), 20만 step EMA.
+- [Stacking baseline](results/stacking_baseline/README.md) — 34.5% (138/400), 35만 step EMA.
+
+각 폴더에 추론용 EMA 모델, config, train-only normalizer, 학습 로그, ID 결과와 출처·선택 기록이 있습니다.

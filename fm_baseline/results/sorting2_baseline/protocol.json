@@ -1,0 +1,68 @@
+{
+  "task": "sorting2",
+  "status": "revision 2: user-authorized ID-only early stopping; live training retained",
+  "training": {
+    "implementation": "fm_baseline/train.py (existing pushing/inserting FM trainer)",
+    "official_split": {
+      "train_episodes": 540,
+      "validation_episodes": 60
+    },
+    "observations": "desired hand XY, actual hand XY, red XY sin(yaw) cos(yaw), blue XY sin(yaw) cos(yaw)",
+    "actions": "next desired XY minus current desired XY",
+    "normalizer": "training episodes only; frozen for all evaluations",
+    "steps": 1000000,
+    "seed": 42,
+    "batch_size": 32,
+    "lr": 0.0002,
+    "optimizer": "Adam",
+    "scheduler": "cosine",
+    "ema_decay": 0.995,
+    "horizon": 16,
+    "dim": 64,
+    "dim_mults": [
+      1,
+      2,
+      4,
+      8
+    ],
+    "attention": false,
+    "checkpoint_selection": "Highest fixed ID development success; ties lower validation EMA loss (last 5000 steps mean), then earlier checkpoint"
+  },
+  "id_evaluation": {
+    "source": "official sorting/2_test_contexts.pkl",
+    "context_start": 0,
+    "n_contexts": 100,
+    "n_traj": 4,
+    "policy_seed": 0,
+    "paired_noise": true,
+    "ode_steps": 10,
+    "execute_steps": 8,
+    "max_steps": 500,
+    "control_dt_seconds": 0.035,
+    "inference_delay_steps": 0,
+    "initial_arm": "none",
+    "post_id": "Review observation/control consistency and ID success before interpreting OOD; no OOD-based training tuning"
+  },
+  "scope": "state-based imitation learning; simulation only; single training seed; no new expert OOD demonstrations",
+  "early_stopping": {
+    "interval_steps": 50000,
+    "min_stop_step": 200000,
+    "patience_checks": 3,
+    "meaningful_loss_relative_decrease": 0.01,
+    "meaningful_success_absolute_increase": 0.025,
+    "loss_summary": "mean EMA validation loss at last five 1000-step evaluations",
+    "improvement_rule": "Either loss or success reaches improvement threshold against its retained improvement anchor; reset patience; cumulative small gains count",
+    "dev_context_start": 100,
+    "dev_n_contexts": 40,
+    "dev_n_traj": 2,
+    "dev_seed": 0,
+    "dev_parallel_workers": 4,
+    "same_cases_and_noise_every_check": true,
+    "max_steps_per_rollout": 500,
+    "trainer_paused_during_dev": true,
+    "scheduler": "Original 1m cosine schedule retained; no restart or schedule compression",
+    "final_checkpoint": "selected.pt",
+    "final_test_contexts": "0:100, untouched until selection",
+    "dev_compute_timing": "Not used for reported compute comparison due to parallel execution"
+  }
+}

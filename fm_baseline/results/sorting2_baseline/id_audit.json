@@ -1,0 +1,34 @@
+{
+  "verified": true,
+  "rollouts": 400,
+  "successes": 296,
+  "success_rate": 0.74,
+  "success_context_bootstrap_ci95": [
+    0.685,
+    0.7925
+  ],
+  "selected_step": 200000,
+  "stop_step": 300000,
+  "actual_jerk_rms_mean_m_s3": 36.511079348579585,
+  "seam_velocity_jump_rms_mean_m_s": 0.16888548821135693,
+  "plan_ms": 83.34285573232698,
+  "postprocess_ms": 0.017505123437561925,
+  "wall_sec": 5747.3491904735565,
+  "metrics_recomputed_from_400_rollouts": true,
+  "source_sha256": {
+    "compare_smoothness.py": "fef116172544598f3b847b32e1c5978dbd1cb4cf2d5b2d3af50a725393c52e7e",
+    "eval_inserting.py": "a877c342e3b1043de6f0809b78631ea64fe69adc2facb237f1577ada844d3100",
+    "eval_pushing.py": "46d552393bf26ebf17b2fb3afbd21f5a20d07f98237c33ecab34d1e0b483d372",
+    "eval_smoothness.py": "3ff5dec4c7b8f36eb0e0706af165a3f924725d4718228a7d7d7e7f015f6040d7",
+    "eval_sorting.py": "b808238eadd1f16a6bf0e0a3c6b7ae601d871cf1b45dfd0ce7e5a2e2b44dab24",
+    "lipo.py": "c70ced272c9eb88bceacd1d8649ff9885286bf7171c6e5efd374159353f169d4",
+    "run_lipo_comparison.py": "a6211629b38a1ae57464e2c4c10dc9344bfeebee4e63ecd3a246a7a5a196c7f5",
+    "run_lipo_sharded.py": "98fcd25f1f7cbf05cfe4f3c0f12706845df0817272dbc836e093f2a2abc96135",
+    "sample.py": "ea41efea1170ae4abc7fe02c9b3e4b75be2686d715a27ee7d4a68d70dd06b128",
+    "smoothness.py": "b12dab955d92c7445317b7b97ee46d87a0d729ad90824563bce61376350cdaa6",
+    "train.py": "8e19efd160329f08c25f37292f9e0e53be120f12719c0a4264362473b0983dea"
+  },
+  "normalizer_sha256": "4d2670f19852633d80119a8a7ffc60a8595f1876b2fbea50f3eb28e2651c933d",
+  "checkpoint_sha256": "7ec1e278d5146875bcc835ae82bde22e4fa09597c43a2d16a8cf7bf288e54ed0",
+  "scope": "one training seed; zero-delay XY simulation; no OOD result yet"
+}

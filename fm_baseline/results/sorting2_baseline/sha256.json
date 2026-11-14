@@ -1,0 +1,12 @@
+{
+  "README.md": "ef503c45951b5bbaaa0edc1212fabba907d4265350bae23c937f538062f93f2a",
+  "baseline_ema.pt": "7572410946a844cf96323a385e3dc9f986dbff0d9bd025751ed7a9d771097b31",
+  "config.json": "843a4fa47a4d9c34f81b4df27f56d98eeaaf9474ace8e1d184968b89130fbd3f",
+  "early_stop_history.json": "fcd94d1f25861581df7ac713a5737f043885e747ae1ce5d3b73fe14e5c5ba7f8",
+  "id_audit.json": "07add4dbd1e1682a9cb066a24b7ce8cd87d9d170a575029887de0066c74028ea",
+  "id_results.json": "9414681a8e198bf39097297b932ba06b0c8d6a0ccf37b4c4bb3e73db40cfd4a1",
+  "metrics.csv": "4c1c10a9624836812a72a795eb7e531d96a9889380a1efcd50e32f8e9c64c0ba",
+  "normalizer.npz": "4d2670f19852633d80119a8a7ffc60a8595f1876b2fbea50f3eb28e2651c933d",
+  "protocol.json": "1e0ab441dc0ebf4e1c473daf763fee75dd4e202e80bc375b072ca3a54f1d06b2",
+  "provenance.json": "7173e8defa2f45b2db605699c6202fd69a7906e322f6b3825e6007564a12e2d3"
+}

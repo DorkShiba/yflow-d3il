@@ -1,0 +1,92 @@
+[
+  {
+    "step": 50000,
+    "val_ema_last5_mean": 0.1241944,
+    "dev_success": 0.55,
+    "checkpoint_sha256": "d8f9d49e3aac729b89688bab88ff52baff14e91f6cfca69e921bd4ba54b3f40e",
+    "decision": {
+      "loss_anchor": 0.1241944,
+      "success_anchor": 0.55,
+      "stale": 0,
+      "best_step": 50000,
+      "best_success": 0.55,
+      "best_loss": 0.1241944,
+      "stop": false
+    }
+  },
+  {
+    "step": 100000,
+    "val_ema_last5_mean": 0.1167154,
+    "dev_success": 0.7,
+    "checkpoint_sha256": "3957bad5e92b8db10630db1929d3873f5c0a91f5dcb782907f7d6234b03a8c32",
+    "decision": {
+      "loss_anchor": 0.1167154,
+      "success_anchor": 0.7,
+      "stale": 0,
+      "best_step": 100000,
+      "best_success": 0.7,
+      "best_loss": 0.1167154,
+      "stop": false
+    }
+  },
+  {
+    "step": 150000,
+    "val_ema_last5_mean": 0.122645,
+    "dev_success": 0.75,
+    "checkpoint_sha256": "ef117beb30f58cda5a47c40914c9acd726bf7d1ba6672e402114a7faf10d85c9",
+    "decision": {
+      "loss_anchor": 0.1167154,
+      "success_anchor": 0.75,
+      "stale": 0,
+      "best_step": 150000,
+      "best_success": 0.75,
+      "best_loss": 0.122645,
+      "stop": false
+    }
+  },
+  {
+    "step": 200000,
+    "val_ema_last5_mean": 0.1333912,
+    "dev_success": 0.7625,
+    "checkpoint_sha256": "7ec1e278d5146875bcc835ae82bde22e4fa09597c43a2d16a8cf7bf288e54ed0",
+    "decision": {
+      "loss_anchor": 0.1167154,
+      "success_anchor": 0.75,
+      "stale": 1,
+      "best_step": 200000,
+      "best_success": 0.7625,
+      "best_loss": 0.1333912,
+      "stop": false
+    }
+  },
+  {
+    "step": 250000,
+    "val_ema_last5_mean": 0.14427859999999998,
+    "dev_success": 0.65,
+    "checkpoint_sha256": "d4f1d843c55f0d0c09f95b0ac212b5dd59edbe05f39de8148af6afa79c005990",
+    "decision": {
+      "loss_anchor": 0.1167154,
+      "success_anchor": 0.75,
+      "stale": 2,
+      "best_step": 200000,
+      "best_success": 0.7625,
+      "best_loss": 0.1333912,
+      "stop": false
+    }
+  },
+  {
+    "step": 300000,
+    "val_ema_last5_mean": 0.1526148,
+    "dev_success": 0.725,
+    "checkpoint_sha256": "33921d444d62d910c52d636b6e1f630c1b4160b95210744b1f22ff80bc701dc0",
+    "decision": {
+      "loss_anchor": 0.1167154,
+      "success_anchor": 0.75,
+      "stale": 3,
+      "best_step": 200000,
+      "best_success": 0.7625,
+      "best_loss": 0.1333912,
+      "stop": true
+    }
+  }
+]

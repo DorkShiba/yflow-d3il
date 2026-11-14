@@ -1,0 +1,14 @@
+{
+  "README.md": "54c99635815b03edabeb13edb92f45ac8c474081a9cf2c398568f7dafb89cf41",
+  "baseline_ema.pt": "4a7cd110882848a94cece6fd0df7a6fe6d53d55ad48d7d85fc9a717fb0a6fd38",
+  "config.json": "c9ecae6d970f7b434a6fcd733d5f97c09572dd89ce93cab7d40412c6eafa9b0f",
+  "early_stop_history.json": "6720a9d5bda4e123dc9396988a1d288f6ad1f551ad2452af5b90ba832c6d048b",
+  "id_audit.json": "3737cb6f10e8679259f961ac4d721952ba249b885b1c14586fb796c5e24634e2",
+  "id_contexts.pkl": "2af092ea7991c02ea1b6cbf851928b18922c5672d692d9ee2a64f6adc7e3340a",
+  "id_results.json": "08d0b58e3dc55b127fff28e6aaea722123c2159d68e4f82ebe478f0e8d0566a9",
+  "learning_curve.png": "374d13b4cbc42128c5eff6cab35478e7a68cb3a3df2413702ac4230a68afb0c7",
+  "metrics.csv": "75bd9a11a5d2424bb179c635defa7385ed5fc9ca209e43dac7e45b441617407f",
+  "normalizer.npz": "07126b892bf2b66229ede3d79cb4265864db4524307e0834ce2b574d52ed23e5",
+  "protocol.json": "9682471cf2704f68f7e0f42456a1640a345695c25ca3c83efda272915c78e124",
+  "provenance.json": "ab3f78b108d7882fce483744d73f13f40182c5ce4d6a495b2191fe576703fad5"
+}

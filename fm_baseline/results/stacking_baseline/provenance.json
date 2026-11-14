@@ -1,0 +1,12 @@
+{
+  "original_checkpoint_sha256": "5b096837c84f499c4083c1a9edf51d0e45e27006e0c80e6791760dbb4f41eacc",
+  "published_checkpoint_sha256": "4a7cd110882848a94cece6fd0df7a6fe6d53d55ad48d7d85fc9a717fb0a6fd38",
+  "normalizer_sha256": "07126b892bf2b66229ede3d79cb4265864db4524307e0834ce2b574d52ed23e5",
+  "selected_step": 350000,
+  "stopped_step": 500000,
+  "weights": "ema",
+  "ema_tensors_bit_identical_to_selected": true,
+  "packaging": "EMA weights exported without duplicate online weights or optimizer; portable config paths; original archives retained locally",
+  "source_d3il_commit": "1d9c71850d4fc1477cee17b557c8b97d70b13071",
+  "source_hardflow_commit": "a85105080dd0a28dca76b49ac0414f275de146ed"
+}
