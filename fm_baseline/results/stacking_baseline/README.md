@@ -27,3 +27,5 @@ python fm_baseline/eval_stacking.py \
 [joint_pf_cache.npz](joint_pf_cache.npz)는 2026-11-15 ID ①②③⑤ 비교에 사용한 원본 frozen 캐시입니다. 약313 KiB이며 train 시연에서 선택한 3,000개 7관절 support, 2,951개 고밀도 anchor와 정규화 정보를 담았습니다. 검증 split은 캐시 구성에 사용하지 않았습니다. 공개 normalizer와 배열·해시 대조를 마쳤으며 [provenance](joint_pf_cache.provenance.json)에 기록했습니다.
 
 [조합 평가 실행 방법](../../../docs/results/sorting2_stacking_combo29_id_20261115/README.md#stacking-재실행)의 `--cache fm_baseline/results/stacking_baseline/joint_pf_cache.npz`로 바로 사용할 수 있습니다.
+
+Stacking을 새로 clone하여 baseline vs ①②③④⑤를 실행하려면 [팀원 실행 안내](../../../docs/stacking_team_run.md)를 참고합니다. 모델·캐시 파일 목록, 설치, smoke와 전체 paired 비교 명령을 제공합니다. 기존 ①②③⑤ 보고 결과와 ④를 추가한 실행은 구분합니다.

@@ -16,6 +16,8 @@ from fm_constraint.joint import (
     JointPotential,
     joint_lipo,
     solve_qp,
+    JointRTCReference,
+    joint_rtc_velocity,
 )
 from fm_constraint.comparison_io import check_output_signature
 from fm_constraint.calibrate_sorting import calibrate
@@ -220,3 +222,103 @@ def test_published_paired_metrics_match_success_and_motion():
                 atol=1e-10,
             )
             np.testing.assert_allclose(result["ci95"], stored["ci95"], atol=1e-10)
+
+
+def test_joint_rtc_matches_main_vjp_on_joint_channels_and_preserves_gripper():
+    from fm_constraint.rtc import guided_velocity, rtc_target, soft_mask
+
+    base = fake_base()
+    base.horizon, base.act_dim = 16, 8
+    x = torch.randn(1, 16, 31, generator=torch.Generator().manual_seed(41))
+    suffix = np.full((8, 7), 0.001)
+    # Give the main rule the identical 7-channel inpainting objective.
+    target, mask = rtc_target(base, np.c_[suffix, np.zeros(8)], soft_mask(16, 8, 0))
+    mask = mask.expand(-1, -1, 8).clone()
+    mask[:, :, 7] = 0
+    main = guided_velocity(base, x, torch.tensor(0.3), target, mask, 0.3, 5.0)
+    joint = joint_rtc_velocity(base, x.double(), torch.tensor(0.3), suffix, 0.3, 5.0)
+    torch.testing.assert_close(joint.float(), main)
+    torch.testing.assert_close(joint[:, :, 7].float(), base.model(x, 0)[:, :, 7])
+    assert joint[:, 0, 8:].count_nonzero() == 0
+    assert not torch.equal(joint[:, :, :7].float(), base.model(x, 0)[:, :, :7])
+
+
+def test_joint_rtc_reference_suffix_and_filter_reset():
+    ref = JointRTCReference()
+    assert ref.suffix() is None
+    plan = np.arange(16 * 31).reshape(16, 31)
+    ref.install(plan)
+    for _ in range(8):
+        ref.executed()
+    np.testing.assert_array_equal(ref.suffix(), plan[8:, :7])
+    ref.executed(invalidated=True)
+    assert ref.suffix() is None
+    ref.install(plan)
+    ref.executed()
+    ref.clear()
+    assert ref.suffix() is None
+
+
+def test_joint_rtc_no_reference_and_zero_beta_preserve_combo29(settings):
+    base = fake_base()
+    q = (np.array(settings["joint_low_rad"]) + settings["joint_high_rad"]) / 2
+    obs = np.r_[q, 0.08, np.zeros(15)].astype(np.float32)
+    potential = SimpleNamespace(guidance=lambda x, c, s: (torch.zeros_like(x), {}))
+    noise = torch.randn(1, 16, 31, generator=torch.Generator().manual_seed(47))
+    old = JointPolicy(base, settings, potential, True).plan(
+        obs, np.zeros(7), [q], noise
+    )
+    for beta, suffix in [(5.0, None), (0.0, np.zeros((8, 7)))]:
+        cfg = dict(settings, rtc=dict(enabled=True, beta=beta))
+        policy = JointPolicy(base, cfg, potential, True)
+        actual = policy.plan(obs, np.zeros(7), [q], noise, rtc_suffix=suffix)
+        np.testing.assert_array_equal(actual, old)
+        assert policy.last_report["rtc_calls"] == 0
+    cfg = dict(settings, rtc=dict(enabled=True, beta=5.0))
+    policy = JointPolicy(base, cfg, potential, True)
+    assert (
+        policy.plan(obs, np.zeros(7), [q], noise, rtc_suffix=np.zeros((8, 8))) is None
+    )
+    assert policy.last_report["failure_stage"] == "rtc"
+
+
+def test_stacking_summary_pairs_rollouts_and_exposes_missing_metrics(tmp_path):
+    from fm_constraint.summarize_stacking import summarize
+
+    (tmp_path / "COMPLETE.json").write_text(
+        json.dumps(
+            dict(
+                arms=["baseline", "joint_combo31"],
+                contexts=2,
+                repeats=1,
+            )
+        )
+    )
+    for arm in ["baseline", "joint_combo31"]:
+        directory = tmp_path / arm
+        directory.mkdir()
+        rows = [
+            dict(
+                context=i,
+                repeat=0,
+                success=arm != "baseline",
+                failure=None,
+                hand_xyz_jerk_rms=None if i == 0 else 2.0 if arm == "baseline" else 1.0,
+                boundary_joint_velocity_jump_rms=0.2,
+                plan_ms_mean=5.0,
+                filter_ms_sum=0.0,
+            )
+            for i in range(2)
+        ]
+        (directory / "results.json").write_text(json.dumps(dict(episodes=rows)))
+    summary = summarize(tmp_path)
+    assert summary["paired_differences"]["success"]["combo_minus_baseline"] == 1.0
+    assert summary["paired_differences"]["hand_xyz_jerk_rms"]["valid_pairs"] == 1
+    assert (
+        summary["paired_differences"]["hand_xyz_jerk_rms"]["combo_minus_baseline"]
+        == -1.0
+    )
+    bad = tmp_path / "joint_combo31/results.json"
+    bad.write_text(json.dumps(dict(episodes=[])))
+    with pytest.raises(ValueError, match="Incomplete arm"):
+        summarize(tmp_path)

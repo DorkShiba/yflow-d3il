@@ -8,7 +8,12 @@ from fm_constraint.tasks import setup_d3il
 from fm_constraint.joint import solve_qp
 from fm_baseline.eval_pushing import load_model, Policy as BasePolicy
 from fm_baseline.eval_stacking import setup, state, observation, full_success
-from fm_constraint.joint import JointPolicy, JointPotential, JointConstraints
+from fm_constraint.joint import (
+    JointPolicy,
+    JointPotential,
+    JointConstraints,
+    JointRTCReference,
+)
 from fm_constraint import checkpoint_reads
 from fm_constraint.comparison_io import check_output_signature
 
@@ -23,7 +28,9 @@ def main():
     p.add_argument("--run-dir", default="fm_baseline/results/stacking_baseline")
     p.add_argument("--checkpoint", default="baseline_ema.pt")
     p.add_argument("--settings", default="configs/stacking_combo29.json")
-    p.add_argument("--cache", required=True)
+    p.add_argument(
+        "--cache", default="fm_baseline/results/stacking_baseline/joint_pf_cache.npz"
+    )
     p.add_argument("--d3il-root", required=True)
     p.add_argument(
         "--contexts-file",
@@ -44,6 +51,12 @@ def main():
     cache = Path(a.cache).resolve()
     settings_path = Path(a.settings).resolve()
     settings = json.loads(settings_path.read_text())
+    rtc_enabled = settings.get("rtc", {}).get("enabled", False)
+    if rtc_enabled and (
+        not np.isfinite(settings["rtc"]["beta"]) or settings["rtc"]["beta"] < 0
+    ):
+        raise ValueError("RTC beta must be finite and nonnegative")
+    combo_arm = "joint_combo31" if rtc_enabled else "joint_combo29"
     with checkpoint_reads():
         c, model, norm, cond, solver, step = load_model(
             str(RUN), a.checkpoint, "ema", a.device
@@ -59,8 +72,18 @@ def main():
             repeats=a.repeats,
             steps=a.steps,
             device=a.device,
+            rtc_reference_rule="unexecuted_joint_suffix_reset_on_filter_v1",
         ),
-        [RUN / a.checkpoint, RUN / "normalizer.npz", contexts_file, cache],
+        [
+            RUN / a.checkpoint,
+            RUN / "config.json",
+            RUN / "normalizer.npz",
+            contexts_file,
+            cache,
+            Path(__file__),
+            Path(__file__).with_name("joint.py"),
+            Path(__file__).with_name("rtc.py"),
+        ],
     )
     setup_d3il(str(D3))
     Env, _, quat = setup(D3)
@@ -71,9 +94,7 @@ def main():
     base = BasePolicy(model, norm, c, cond, solver, 10, a.device)
     assert a.start + a.count <= len(contexts)
     order = (
-        ["baseline", "joint_combo29"]
-        if (a.start // 5) % 2 == 0
-        else ["joint_combo29", "baseline"]
+        ["baseline", combo_arm] if (a.start // 5) % 2 == 0 else [combo_arm, "baseline"]
     )
     for arm in order:
         d = out / arm
@@ -89,7 +110,7 @@ def main():
         if d.exists():
             d.rename(out / (arm + ".partial." + str(time.time_ns())))
         d.mkdir()
-        enabled = arm == "joint_combo29"
+        enabled = arm == combo_arm
         policy = JointPolicy(base, settings, potential if enabled else None, enabled)
         records = []
         arrays = {}
@@ -116,6 +137,7 @@ def main():
                 previous = np.zeros(7)
                 history = [des.copy()]
                 queue = []
+                reference = JointRTCReference()
                 acts = []
                 commands = []
                 actual = []
@@ -141,8 +163,13 @@ def main():
                         ).to(base.device)
                         synchronize(a.device)
                         started = time.perf_counter()
+                        suffix = reference.suffix() if enabled and rtc_enabled else None
                         plan = policy.plan(
-                            obs, previous.copy(), np.asarray(history[-3:]), noise
+                            obs,
+                            previous.copy(),
+                            np.asarray(history[-3:]),
+                            noise,
+                            rtc_suffix=suffix,
                         )
                         synchronize(a.device)
                         ms = 1000 * (time.perf_counter() - started)
@@ -160,17 +187,22 @@ def main():
                                     history[-3:]
                                 ).tolist(),
                                 report=copy.deepcopy(policy.last_report),
+                                rtc_suffix_rad=(
+                                    None if suffix is None else suffix.tolist()
+                                ),
                             )
                         )
                         if plan is None:
                             failure = policy.last_report["status"]
                             break
+                        reference.install(plan)
                         queue = [
                             (plan_id, index, row[:8].astype(np.float64))
                             for index, row in enumerate(plan[:8])
                         ]
                         seam = True
                     active, index, action = queue.pop(0)
+                    reference.executed()
                     nominal = action.copy()
                     filtered = None
                     con = JointConstraints(des, previous, 1, settings)
@@ -201,6 +233,7 @@ def main():
                             > settings["intervention_tolerance_rad"]
                         ):
                             queue = []
+                            reference.clear()
                             entry["queue_invalidated"] = True
                         entry["executed_residual_rad"] = con.residual(action[:7])
                         assert (
@@ -304,6 +337,9 @@ def main():
                     )
                     + len(filter_logs),
                     pf_calls=sum(row["report"]["pf_calls"] for row in plan_logs),
+                    rtc_guided_plans=sum(
+                        row["report"]["rtc_guided"] for row in plan_logs
+                    ),
                     filter_interventions=sum(
                         row["queue_invalidated"] for row in filter_logs
                     ),
@@ -332,6 +368,8 @@ def main():
         result = dict(
             task="stacking",
             profile="joint_space_analogue_v2_float64",
+            pipeline_order=["rtc", "pf2mp", "projection", "lipo", "filter"],
+            inference_delay_steps=0,
             arm=arm,
             context_start=a.start,
             n_contexts=a.count,
@@ -357,7 +395,7 @@ def main():
                 projection=enabled,
                 pf2mp=enabled,
                 filter=enabled,
-                rtc=False,
+                rtc=enabled and rtc_enabled,
                 lipo=enabled,
             ),
             episodes=records,

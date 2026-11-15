@@ -79,3 +79,5 @@ bash scripts/run_experiment.sh --name <이름> --contexts 0-1 --smoke 24  # 동�
 ## Sorting-2와 Stacking ID 조합 비교
 
 [①②③⑤ 실행 코드와 결과](../docs/results/sorting2_stacking_combo29_id_20261115/README.md)를 제공합니다. Sorting-2는 메인의 XY Policy를 사용하고, Stacking은 7관절 공간 확장입니다. `eval_sorting`, `eval_stacking`, train-only calibration/cache 준비와 paired 지표 재계산 CLI를 포함합니다.
+
+Stacking을 새로 clone하여 baseline vs ①②③④⑤를 실행하려면 [팀원 실행 안내](../docs/stacking_team_run.md)를 참고합니다. 모델·캐시 파일 목록, 설치, smoke와 전체 paired 비교 명령을 제공합니다. 기존 ①②③⑤ 보고 결과와 ④를 추가한 실행은 구분합니다.

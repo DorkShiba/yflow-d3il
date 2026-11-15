@@ -280,3 +280,5 @@ git add docs/report_*.md docs/report_results.json && git commit -m "report: ID m
 - 보고서에는 결과 파일에 기록된 code fingerprint가 그대로 들어간다. 모든 ID 결과가 같은 코드로 실행됐다면 merge가 통과한다.
 - 한 팀원의 결과가 git에 없으면 `No results by <이름>`이 나온다. 그 팀원은 자기 로컬 결과로 같은 `report` 명령을 실행해서 보고서를 push한다.
 - **예상 시간(baseline 기준, 방법을 켜면 더 길다):** Pushing은 context 1개 × 32조합에 약 20분, Inserting은 약 4시간이다. 예를 들어 10개를 맡으면 Inserting에 약 40시간이 걸린다. 첫 실행 로그의 단위별 시간으로 다시 계산한다.
+
+Stacking을 새로 clone하여 baseline vs ①②③④⑤를 실행하려면 [팀원 실행 안내](docs/stacking_team_run.md)를 참고합니다. 모델·캐시 파일 목록, 설치, smoke와 전체 paired 비교 명령을 제공합니다. 기존 ①②③⑤ 보고 결과와 ④를 추가한 실행은 구분합니다.

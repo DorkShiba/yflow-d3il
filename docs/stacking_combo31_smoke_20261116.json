@@ -1,0 +1,44 @@
+{
+  "validation": "short simulator smoke, not an ID performance result",
+  "d3il_commit": "1d9c71850d4fc1477cee17b557c8b97d70b13071",
+  "device": "cuda:0",
+  "checkpoint_step": 350000,
+  "contexts": [
+    140,
+    141
+  ],
+  "repeats": 1,
+  "steps_per_rollout": 24,
+  "arms": [
+    "baseline",
+    "joint_combo31"
+  ],
+  "rollouts": 4,
+  "failures": 0,
+  "rtc_guided_plans": 4,
+  "rtc_calls": 40,
+  "paired_context_repeat_seeds_match": true,
+  "first_plan_has_no_rtc_reference": true,
+  "max_joint_residual_rad": 0.0,
+  "max_lipo_correction_rad": 0.0002999999999999944,
+  "input_sha256": [
+    "4a7cd110882848a94cece6fd0df7a6fe6d53d55ad48d7d85fc9a717fb0a6fd38",
+    "c9ecae6d970f7b434a6fcd733d5f97c09572dd89ce93cab7d40412c6eafa9b0f",
+    "07126b892bf2b66229ede3d79cb4265864db4524307e0834ce2b574d52ed23e5",
+    "2af092ea7991c02ea1b6cbf851928b18922c5672d692d9ee2a64f6adc7e3340a",
+    "f1c45e9b3f16ff538a9333a9687d96cca83d0c4156fd813367e092f62b7e065c",
+    "ca060b524872539836f8a9587c6ac4eeffd8164f1151e1c74ef8d0320df6f1b6",
+    "5f87c1eb37f12e1f10d14dbddc225d9db72a9ff25f1d06c816ce15dac49ab5a4",
+    "ff3dca1a6419a65c1738f4cd8e5c3dc7390715a143065069f9afe35c719db17c"
+  ],
+  "source_files": [
+    "fm_constraint/eval_stacking.py",
+    "fm_constraint/joint.py",
+    "fm_constraint/rtc.py"
+  ],
+  "regression_tests": {
+    "passed": 142,
+    "skipped": 1
+  },
+  "raw_smoke_archive_sha256": "f3b170f3386dbc280a14961236d78648e1eb37cb4ca3659c7b645984843a8fb9"
+}

@@ -5,6 +5,64 @@ import numpy as np
 import torch
 from scipy import sparse
 from .qp import solve_qp as _primary_qp
+from .rtc import soft_mask
+
+
+class JointRTCReference:
+    """Unexecuted joint deltas of the current H=16, execute=8 plan, per episode."""
+
+    def __init__(self):
+        self.clear()
+
+    def clear(self):
+        self.actions = None
+        self.index = 0
+
+    def install(self, plan):
+        self.actions = np.asarray(plan, dtype=np.float64)[:, :7].copy()
+        self.index = 0
+
+    def executed(self, invalidated=False):
+        self.index += 1
+        if invalidated:
+            self.clear()
+
+    def suffix(self):
+        if self.actions is None:
+            return None
+        value = self.actions[self.index : self.index + 8]
+        return value.copy() if len(value) == 8 else None
+
+
+def joint_rtc_velocity(p, x, t, suffix, tau, beta):
+    """Main RTC VJP/soft-mask rule for seven joint deltas, with gripper held free.
+
+    The network stays float32; constraints and latent bookkeeping stay float64.
+    RTC adds no direct gripper correction and never changes the first observation.
+    Future observation channels can receive a VJP, as in the main RTC method.
+    """
+    with torch.enable_grad():
+        source = x.detach().to(p.center.dtype).requires_grad_(True)
+        v = p.model(source, t)
+        free = torch.ones_like(v)
+        free[:, 0, 8:] = 0
+        v = v * free
+        target = torch.zeros_like(source[..., :7])
+        target[:, :8] = (
+            torch.as_tensor(suffix, dtype=source.dtype, device=p.device) - p.center[:7]
+        ) / p.scale[:7]
+        mask = torch.as_tensor(soft_mask(16, 8, 0), dtype=source.dtype, device=p.device)
+        clean = (source + (1 - tau) * v)[..., :7]
+        error = ((target - clean) * mask[None, :, None]).detach()
+        gradient = torch.autograd.grad(clean, source, grad_outputs=error)[0]
+        gradient = gradient * free
+        gradient[:, :, 7] = 0
+        strength = (
+            beta
+            if tau == 0
+            else min(beta, (tau * tau + (1 - tau) ** 2) / (tau * (1 - tau)))
+        )
+        return (v + strength * gradient).detach().to(x.dtype)
 
 
 def solve_qp(nominal, G, d, settings):
@@ -238,7 +296,7 @@ class JointPolicy:
         self.last_report = {}
 
     @torch.no_grad()
-    def plan(self, obs, previous, history, noise):
+    def plan(self, obs, previous, history, noise, rtc_suffix=None):
         p = self.base
         s = self.settings
         started = time.perf_counter()
@@ -252,8 +310,24 @@ class JointPolicy:
             projection_calls=0,
             latency_ms=0.0,
             stages={},
+            rtc_enabled=bool(self.enabled and s.get("rtc", {}).get("enabled", False)),
+            rtc_guided=False,
+            rtc_calls=0,
         )
         self.last_report = r
+        use_rtc = r["rtc_enabled"] and rtc_suffix is not None
+        beta = s.get("rtc", {}).get("beta", 5.0)
+        if use_rtc:
+            rtc_suffix = np.asarray(rtc_suffix, dtype=np.float64)
+            if (
+                rtc_suffix.shape != (8, 7)
+                or not np.isfinite(rtc_suffix).all()
+                or not np.isfinite(beta)
+                or beta < 0
+            ):
+                r.update(status="invalid_input", failure_stage="rtc")
+                return None
+            r["rtc_guided"] = beta > 0
         observation = torch.as_tensor(obs, dtype=p.center.dtype, device=p.device)[None]
         cond = {0: (observation - p.center[8:]) / p.scale[8:]}
         x = p.apply_conditioning(noise.clone().to(p.device), cond, 8)
@@ -269,7 +343,11 @@ class JointPolicy:
         times = torch.linspace(0, 1, 11, device=p.device)[:-1]
         dt = times[1] - times[0]
         for k, t in enumerate(times):
-            velocity = p.model(x.to(p.center.dtype), t).to(x.dtype)
+            if use_rtc and beta > 0:
+                velocity = joint_rtc_velocity(p, x, t, rtc_suffix, k / 10, beta)
+                r["rtc_calls"] += 1
+            else:
+                velocity = p.model(x.to(p.center.dtype), t).to(x.dtype)
             velocity[:, 0, 8:] = 0
             r["model_calls"] += 1
             if self.enabled:
