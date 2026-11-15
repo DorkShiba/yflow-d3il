@@ -1,0 +1,110 @@
+{
+ "version": "stacking-v1",
+ "created_utc": "2026-11-15T14:37:32Z",
+ "root_seed": 20261106,
+ "d3il_commit": "1d9c71850d4fc1477cee17b557c8b97d70b13071",
+ "task": "stacking",
+ "base_contexts": {
+  "file": "fm_baseline/results/stacking_baseline/id_contexts.pkl",
+  "sha256": "2af092ea7991c02ea1b6cbf851928b18922c5672d692d9ee2a64f6adc7e3340a",
+  "indices": [
+   0,
+   100
+  ],
+  "ids": "test_NNN = index in base file"
+ },
+ "conditions": [
+  "A_weak",
+  "A_mid",
+  "A_strong"
+ ],
+ "levels_m": {
+  "A_weak": 0.01,
+  "A_mid": 0.05,
+  "A_strong": 0.18
+ },
+ "demo_hand_start": [
+  0.5249775724144821,
+  -9.639540931846772e-12,
+  0.30151422282484863
+ ],
+ "settle": {
+  "seconds": 2.0,
+  "tol_m": 0.002
+ },
+ "stats": {
+  "A_weak": {
+   "shift_m": 0.01,
+   "rule": "shift_blocks",
+   "contexts": 100,
+   "blocks_moved_3": 100,
+   "reverted_unstable": 0,
+   "unsettled_after": 0,
+   "faces": {
+    "blue:x+": 48,
+    "blue:x-": 39,
+    "blue:y+": 4,
+    "blue:y-": 9,
+    "green:x+": 17,
+    "green:x-": 29,
+    "green:y+": 29,
+    "green:y-": 25,
+    "red:x+": 32,
+    "red:x-": 30,
+    "red:y+": 14,
+    "red:y-": 24
+   }
+  },
+  "A_mid": {
+   "shift_m": 0.05,
+   "rule": "shift_blocks",
+   "contexts": 100,
+   "blocks_moved_3": 99,
+   "reverted_unstable": 1,
+   "unsettled_after": 0,
+   "blocks_moved_2": 1,
+   "faces": {
+    "blue:x+": 62,
+    "blue:x-": 11,
+    "blue:y+": 13,
+    "blue:y-": 14,
+    "green:x+": 12,
+    "green:x-": 47,
+    "green:y+": 41,
+    "red:x+": 21,
+    "red:x-": 47,
+    "red:y-": 31,
+    "red:None": 1
+   }
+  },
+  "A_strong": {
+   "shift_m": 0.18,
+   "rule": "shift_blocks_far, movable blocks only",
+   "contexts": 100,
+   "blocks_moved_2": 36,
+   "reverted_unstable": 1,
+   "unsettled_after": 0,
+   "blocks_moved_1": 51,
+   "blocks_moved_3": 12,
+   "blocks_moved_0": 1,
+   "faces": {
+    "blue:y-": 34,
+    "blue:None": 66,
+    "green:y+": 26,
+    "green:None": 74,
+    "red:x+": 1,
+    "red:y-": 98,
+    "red:None": 1
+   }
+  }
+ },
+ "files": {
+  "stacking.jsonl": "c0fc52526fa4d74754c23ce2a9491f20ad1dc01144cb7602f0049a8a0d9db3c6",
+  "max_shift.json": "db5999c2395f135be0e481bb428dc0412540092acc43199c82989a0f169e3724",
+  "stacking_A_weak_contexts.pkl": "cde61b4e82ea7014a912988510c528e8811545f7571721de3c5abc8d7a84b2bb",
+  "stacking_A_mid_contexts.pkl": "12d014920a83ef8566e384e075e906a72a5f89e885457e2374e975006c7f4531",
+  "stacking_A_strong_contexts.pkl": "41e921dcaab904c7a95e0b1dd652813adb53148e431d1abea4e0e287380fd4c5"
+ },
+ "pkl_order": "same order as base_contexts.indices; element i = test_{start+i:03d}",
+ "policy_seed_rule": "seed_for(root_seed, task, context_id, \"policy\", j) (runner may override)"
+}
