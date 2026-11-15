@@ -1,0 +1,17 @@
+{
+ "protocol": "stacking_v1",
+ "decided": "2026-11-15: 32 combos x {id, A_weak, A_mid, A_strong}, 30 contexts x noise seeds 0,1,2; RTC excludes the gripper channel; violation = joint position/acceleration box",
+ "run_dir": "fm_baseline/results/stacking_baseline",
+ "checkpoint": "baseline_ema.pt",
+ "contexts_file": "fm_baseline/results/stacking_baseline/id_contexts.pkl",
+ "test_range": [0, 100],
+ "ood_root": "data/ood_stacking",
+ "settings_file": "configs/stacking_combo29.json",
+ "pf_cache": "data/stacking_sincos_v1/pf2mp_cache/joint/joint_pf_cache.npz",
+ "pf_cache_sha256": null,
+ "d3il_root": "../d3il",
+ "ode_steps": 10,
+ "execute_steps": 8,
+ "max_steps": 1000,
+ "rtc_beta": 5.0
+}
