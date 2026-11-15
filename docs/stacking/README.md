@@ -15,6 +15,8 @@ Stacking에서 ①②③④⑤ 32조합을 ID와 A_weak/A_mid/A_strong에서 비
 
 ## 실행
 
+팀원 분담과 기본 명령은 루트 [README.md](../../README.md) 11절 "Stacking 분담"에 있다. 보통은 `bash scripts/run_stacking_experiment.sh --name <이름> --contexts <범위>`로 실행한다. 이 스크립트는 코드·GPU 검사, 로그 저장, 조건별 보고서 생성까지 한다. 아래는 스크립트가 부르는 Python 명령이다.
+
 ```bash
 # 동작 확인 (결과는 fm_constraint/runs/experiment_stacking_v1/smoke에만 저장)
 MUJOCO_GL=disable python -m fm_constraint.stacking_experiment run --cond id --combos 0,29 \

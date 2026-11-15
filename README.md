@@ -35,6 +35,7 @@ yflow-d3il/
 ├── configs/                    # 5개 방법·제약 설정 (schema v4, pushing/inserting.yaml)
 ├── ood/                        # OOD 조건 정의·생성·검증·지표
 ├── scripts/run_experiment.sh   # 본실험(ID·OOD): 맡은 context × 원하는 조합 순차 실행
+├── scripts/run_stacking_experiment.sh  # Stacking 본실험(ID·OOD A), 11절 "Stacking 분담"
 ├── experiments/                # 본실험 단위 결과 (로컬 전용, git 제외. 공유는 docs/report_*.md)
 ├── visualizer/                 # 로컬 3D rollout viewer
 ├── preprocess/                 # data/를 만든 전처리·검증 스크립트
@@ -243,6 +244,32 @@ python -m pytest fm_constraint/tests tests -q     # visualizer 테스트는 visu
   - 실행이 끝나면 스크립트가 보고서를 만든다. ID는 `docs/report_<이름>.md`, OOD는 `docs/report_ood_<조건>_<이름>.md`. 결과를 나중에 더 실행했다면 `python -m fm_constraint.experiment report --name <이름> [--ood <조건>]`로 다시 만든다(덮어쓴다).
   - **그 보고서 파일 하나만** commit해서 push한다. 스크립트가 마지막에 명령을 출력한다.
   - 이름 `results`와 `ood`로 시작하는 이름은 통합 보고서와 겹치므로 쓸 수 없다.
+
+### Stacking 분담 (ID·OOD A, 2026-11-16)
+
+Stacking도 32조합을 **ID, A_weak, A_mid, A_strong** 네 조건에서 비교한다. 모델은 재엽이 학습한 관절 공간 모델(`fm_baseline/results/stacking_baseline`)이고, 방법은 같은 5개를 7관절 공간으로 옮긴 버전이다(④ RTC 포함, 그리퍼는 수정하지 않음). context는 Pushing·Inserting과 **다른** 30개(`configs/stacking_experiment_contexts.json`)를 쓴다. Stacking test 0–99에서 고정 seed로 뽑았다. 각 context를 noise seed 0·1·2로 3회 실행한다. 정의·지표·검증은 [`docs/stacking/README.md`](docs/stacking/README.md)에 있다.
+
+각자 맡은 context에서 **네 조건 × 32조합을 같은 장비로** 실행한다. 한 명령이 id → A_weak → A_mid → A_strong 순서로 돌고, 조건이 끝날 때마다 보고서를 만든다.
+
+| 담당 | context 번호 | 개수 | 실행 명령 |
+|---|---|---:|---|
+| 형빈 | 0–7 | 8 | `bash scripts/run_stacking_experiment.sh --name hyeongbin --contexts 0-7` |
+| 준혁 | 8–15 | 8 | `bash scripts/run_stacking_experiment.sh --name junhyuk --contexts 8-15` |
+| 재엽 | 16–22 | 7 | `bash scripts/run_stacking_experiment.sh --name jaeyeop --contexts 16-22` |
+| 성민 | 23–29 | 7 | `bash scripts/run_stacking_experiment.sh --name seongmin --contexts 23-29` |
+
+- **준비:** `git pull`만 하면 된다. 모델, PF 캐시(`joint_pf_cache.npz`, sha256 고정), OOD 배치(`data/ood_stacking/`)가 모두 저장소에 있다. 학습 시연 데이터는 필요 없다. D3IL은 기존과 같이 `../d3il`(커밋 `1d9c718`)을 쓴다.
+- **동작 확인 먼저:** `bash scripts/run_stacking_experiment.sh --name <이름> --contexts <맡은 첫 번호> --cond id --combos 0,29 --smoke 40`. 40 step만 돌고 결과는 로컬에만 저장된다. `--dry-run`은 실행할 명령만 출력한다.
+- **같은 실험 보장:** 다음 중 하나라도 어긋나면 시작하지 않는다.
+  - 커밋하지 않은 코드 변경이 있다.
+  - 요청한 GPU를 쓸 수 없다.
+  - PF 캐시 sha256이 고정값과 다르다.
+  - 초기 상태가 목록 파일과 다르다.
+  - OOD 파일이 manifest와 다르다.
+- **나눠서 실행·중단:** 기존과 같다. `--contexts 0-3`과 `4-7`을 다른 GPU(`--device cuda:1`)나 다른 날 실행해도 된다. 조건만(`--cond A_strong`), 조합 일부만(`--combos 16-31`) 실행할 수도 있다. 같은 명령을 다시 실행하면 완료된 단위(조건 × 조합 × context)는 건너뛴다. 시뮬레이터가 CPU 시간 대부분을 쓰므로 GPU 하나에 프로세스를 2–4개 띄워도 된다. 단, **같은 context는 모든 조건·조합을 같은 장비에서** 끝낸다. GPU가 다르면 같은 seed라도 수치가 조금 달라진다.
+- **예상 시간:** context 1개 × 4조건 × 32조합 = 384 rollout이다. 3090 기준 rollout당 약 25초라 context 1개에 약 2.7시간, 8개면 약 21시간이다. 첫 실행 로그의 단위별 시간으로 다시 계산한다.
+- **결과 공유:** 단위 결과(`experiments/stacking_v1/`)는 로컬에만 남는다. 스크립트가 만드는 보고서 `docs/stacking/report_<조건>_<이름>.md` 4개만 commit해서 push한다. 마지막에 명령이 출력된다. 보고서를 다시 만들려면 `python -m fm_constraint.stacking_experiment report --cond <조건> --name <이름>`.
+- **통합(누구나):** `python -m fm_constraint.stacking_experiment merge --cond <조건>` → `docs/stacking/report_<조건>_results.{md,json}`. 조합별 추정값 [95% CI], Complementarity Δ, **목표 진입 1개·2개 비율**, 관절 기준 위반율에 더해, A 조건에서는 옮겨진 블록 수(1·2·3개)별 성공률도 낸다. A_strong에서는 옮길 수 있는 블록만 18 cm 옮겼다. 30개 중 1개만 옮겨진 context가 18개, 2개가 8개, 3개가 4개다.
 
 ### 결과 통합 (누구나 할 수 있다)
 

@@ -491,7 +491,7 @@ def report(cond, name, out=None):
              f'- code fingerprint: {", ".join(sorted(f[:12] for f in fingerprints))}'
              + (' ⚠ 여러 개: 코드가 다른 결과가 섞였다' if len(fingerprints) > 1 else ''),
              f'- git commit: {", ".join(sorted({u["git_commit"][:8] for u in units}))}',
-             f'- PF cache sha256: {", ".join(sorted(str(u["pf_cache_sha256"])[:12] for u in units))}',
+             f'- PF cache sha256: {", ".join(sorted({str(u["pf_cache_sha256"])[:12] for u in units}))}',
              f'- 장비: {", ".join(sorted({u["device"].get("gpu", "cpu") for u in units}))}']
     if cond != 'id':
         lines.append(f'- OOD 파일 sha256: {", ".join(sorted({u["ood"]["sha256"][:12] for u in units}))}')
