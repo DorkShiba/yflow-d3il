@@ -1,0 +1,287 @@
+{
+  "passed": true,
+  "rollouts": 800,
+  "contexts": 100,
+  "repeats": 4,
+  "arms": {
+    "baseline": {
+      "successes": 139,
+      "success_rate": 0.3475,
+      "termination_counts": {
+        "success": 139,
+        "step_budget": 261
+      },
+      "zero_step_rollouts": 0,
+      "metrics": {
+        "success": {
+          "mean": 0.3475,
+          "ci95": [
+            0.2925,
+            0.4025
+          ],
+          "valid_rollouts": 400,
+          "valid_contexts": 100
+        },
+        "hand_xyz_jerk_rms": {
+          "mean": 11.827433869982926,
+          "ci95": [
+            11.310992589516484,
+            12.343887482640397
+          ],
+          "valid_rollouts": 400,
+          "valid_contexts": 100
+        },
+        "actual_joint_jerk_rms": {
+          "mean": 36.161127911736536,
+          "ci95": [
+            34.96372981047017,
+            37.407205727928485
+          ],
+          "valid_rollouts": 400,
+          "valid_contexts": 100
+        },
+        "boundary_joint_velocity_jump_rms": {
+          "mean": 0.3769647179465587,
+          "ci95": [
+            0.3678982126531587,
+            0.38646458557125374
+          ],
+          "valid_rollouts": 400,
+          "valid_contexts": 100
+        },
+        "command_joint_jerk_rms": {
+          "mean": 230.65794634218253,
+          "ci95": [
+            225.10403908293824,
+            236.43600006322367
+          ],
+          "valid_rollouts": 400,
+          "valid_contexts": 100
+        },
+        "plan_ms_mean": {
+          "mean": 83.60572345107583,
+          "ci95": [
+            83.37871699711351,
+            83.82330602810744
+          ],
+          "valid_rollouts": 400,
+          "valid_contexts": 100
+        },
+        "steps": {
+          "mean": 869.8675,
+          "ci95": [
+            846.98475,
+            892.2642500000001
+          ],
+          "valid_rollouts": 400,
+          "valid_contexts": 100
+        }
+      },
+      "planning_ms_per_call": 83.59537690859419,
+      "filter_ms_per_executed_step": 0.0
+    },
+    "joint_combo29": {
+      "successes": 181,
+      "success_rate": 0.4525,
+      "termination_counts": {
+        "success": 181,
+        "step_budget": 219
+      },
+      "zero_step_rollouts": 0,
+      "metrics": {
+        "success": {
+          "mean": 0.4525,
+          "ci95": [
+            0.395,
+            0.5125
+          ],
+          "valid_rollouts": 400,
+          "valid_contexts": 100
+        },
+        "hand_xyz_jerk_rms": {
+          "mean": 10.875289695503696,
+          "ci95": [
+            10.330339483124265,
+            11.438069056922219
+          ],
+          "valid_rollouts": 400,
+          "valid_contexts": 100
+        },
+        "actual_joint_jerk_rms": {
+          "mean": 30.908555712420384,
+          "ci95": [
+            29.652840475040122,
+            32.22984192512873
+          ],
+          "valid_rollouts": 400,
+          "valid_contexts": 100
+        },
+        "boundary_joint_velocity_jump_rms": {
+          "mean": 0.19016800349158916,
+          "ci95": [
+            0.18699586149395164,
+            0.19353675198021114
+          ],
+          "valid_rollouts": 400,
+          "valid_contexts": 100
+        },
+        "command_joint_jerk_rms": {
+          "mean": 100.24764751576414,
+          "ci95": [
+            97.92534293212854,
+            102.67079887885515
+          ],
+          "valid_rollouts": 400,
+          "valid_contexts": 100
+        },
+        "plan_ms_mean": {
+          "mean": 183.93139133984153,
+          "ci95": [
+            183.03312275216746,
+            184.86240835318915
+          ],
+          "valid_rollouts": 400,
+          "valid_contexts": 100
+        },
+        "steps": {
+          "mean": 826.0225,
+          "ci95": [
+            800.9570625,
+            849.797625
+          ],
+          "valid_rollouts": 400,
+          "valid_contexts": 100
+        }
+      },
+      "planning_ms_per_call": 184.86660783511007,
+      "filter_ms_per_executed_step": 0.026923086756075527
+    }
+  },
+  "paired_differences": {
+    "success": {
+      "combo_minus_baseline": 0.105,
+      "ci95": [
+        0.0375,
+        0.1725
+      ],
+      "valid_pairs": 400,
+      "valid_contexts": 100,
+      "baseline_paired_mean": 0.3475,
+      "joint_combo29_paired_mean": 0.4525,
+      "relative_change_percent": 30.215827338129507
+    },
+    "hand_xyz_jerk_rms": {
+      "combo_minus_baseline": -0.9521441744792288,
+      "ci95": [
+        -1.6129179555076838,
+        -0.29171541548394453
+      ],
+      "valid_pairs": 400,
+      "valid_contexts": 100,
+      "baseline_paired_mean": 11.827433869982924,
+      "joint_combo29_paired_mean": 10.875289695503692,
+      "relative_change_percent": -8.050302245998575
+    },
+    "actual_joint_jerk_rms": {
+      "combo_minus_baseline": -5.252572199316152,
+      "ci95": [
+        -6.773001412842367,
+        -3.789016421353803
+      ],
+      "valid_pairs": 400,
+      "valid_contexts": 100,
+      "baseline_paired_mean": 36.16112791173654,
+      "joint_combo29_paired_mean": 30.908555712420387,
+      "relative_change_percent": -14.525465610853827
+    },
+    "boundary_joint_velocity_jump_rms": {
+      "combo_minus_baseline": -0.18679671445496956,
+      "ci95": [
+        -0.19575233693633168,
+        -0.1784292532462169
+      ],
+      "valid_pairs": 400,
+      "valid_contexts": 100,
+      "baseline_paired_mean": 0.3769647179465588,
+      "joint_combo29_paired_mean": 0.19016800349158916,
+      "relative_change_percent": -49.5528375898169
+    },
+    "command_joint_jerk_rms": {
+      "combo_minus_baseline": -130.41029882641834,
+      "ci95": [
+        -135.80388892399384,
+        -125.33538085163285
+      ],
+      "valid_pairs": 400,
+      "valid_contexts": 100,
+      "baseline_paired_mean": 230.65794634218247,
+      "joint_combo29_paired_mean": 100.24764751576414,
+      "relative_change_percent": -56.53839414357478
+    },
+    "plan_ms_mean": {
+      "combo_minus_baseline": 100.32566788876571,
+      "ci95": [
+        99.42858542844331,
+        101.23895332984773
+      ],
+      "valid_pairs": 400,
+      "valid_contexts": 100,
+      "baseline_paired_mean": 83.60572345107583,
+      "joint_combo29_paired_mean": 183.9313913398415,
+      "relative_change_percent": 119.9985643895229
+    },
+    "steps": {
+      "combo_minus_baseline": -43.845,
+      "ci95": [
+        -70.9003125,
+        -17.073312500000025
+      ],
+      "valid_pairs": 400,
+      "valid_contexts": 100,
+      "baseline_paired_mean": 869.8675,
+      "joint_combo29_paired_mean": 826.0225,
+      "relative_change_percent": -5.040422823016144
+    }
+  },
+  "profile": "user-approved joint-space analogue, not unchanged main XY profile",
+  "diagnostics": {
+    "baseline": {
+      "qp_status": {},
+      "failure_stage": {},
+      "max_qp_residual": 0.0,
+      "max_final_plan_residual_rad": 0.07512670016661287,
+      "max_lipo_correction_rad": 0.0,
+      "max_lipo_returned_correction_rad": 0.0,
+      "qp_calls": 0,
+      "pf_calls": 0
+    },
+    "joint_combo29": {
+      "qp_status": {
+        "ok:solved": 200425,
+        "ok:already_feasible": 213404,
+        "ok:Solved": 41372,
+        "filter:ok:already_feasible": 330272,
+        "ok:AlmostSolved": 11,
+        "filter:ok:solved": 137,
+        "ok:clarabel:Solved": 1
+      },
+      "failure_stage": {},
+      "max_qp_residual": 1.2510825708744733e-14,
+      "max_final_plan_residual_rad": 1.2510825708744733e-14,
+      "max_lipo_correction_rad": 0.0003,
+      "max_lipo_returned_correction_rad": 0.0003000000000000051,
+      "qp_calls": 785622,
+      "pf_calls": 413830
+    }
+  },
+  "shared_executed_prefix_hand_jerk_difference": {
+    "mean": -0.8625351972960406,
+    "ci95": [
+      -1.5084867160569417,
+      -0.22451915237798348
+    ],
+    "valid_rollouts": 400,
+    "valid_contexts": 100
+  },
+  "report_qa": "Corrected chart condition label, boundary axis scale, and CI annotation placement. Raw audited rollouts and all numeric metrics unchanged."
+}

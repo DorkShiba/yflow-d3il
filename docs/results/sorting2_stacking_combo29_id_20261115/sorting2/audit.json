@@ -1,0 +1,18 @@
+{
+  "frozen_hashes_pass": true,
+  "source_archive_matches_executed_files": true,
+  "train_only_normalizer_pass": true,
+  "train_only_pf_support_pass": true,
+  "pf_train_files": 540,
+  "pf_support_points": 3000,
+  "pf_safe_grid_points": 1497,
+  "smoke_pairing_pass": true,
+  "passed": true,
+  "rollouts": 800,
+  "paired_initial_states_pass": true,
+  "paired_cpu_noise_seeds_pass": true,
+  "qp_reports_and_calls_pass": true,
+  "lipo_bound_pass": true,
+  "raw_success_and_metrics_recomputed": true,
+  "all100_contexts_retained": true
+}

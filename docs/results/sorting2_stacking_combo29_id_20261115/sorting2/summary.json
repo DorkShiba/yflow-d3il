@@ -1,0 +1,300 @@
+{
+  "rollouts": 800,
+  "contexts": 100,
+  "repeats": 4,
+  "selected_step": 200000,
+  "arms": {
+    "baseline": {
+      "successes": 296,
+      "success_rate": 0.74,
+      "failure_counts": {
+        "None": 400
+      },
+      "termination_counts": {
+        "success": 296,
+        "step_budget": 104
+      },
+      "zero_step_rollouts": 0,
+      "short_lt3_step_rollouts": 0,
+      "planning_ms_per_call": 90.14578137598828,
+      "filter_ms_per_executed_step": 0.0,
+      "mean_control_steps": 256.9925,
+      "audit_counts": {
+        "plans": 13026,
+        "model_calls": 130260,
+        "qp_calls": 0,
+        "pf_calls": 0,
+        "plan_ms_sum": 1174238.9482036233,
+        "plan_report_ms_sum": 1172504.7639051918,
+        "filter_ms_sum": 0.0,
+        "qp_status": {},
+        "plan_status": {
+          "ok": 13026
+        },
+        "failure_stage": {},
+        "max_ok_qp_residual": 0.0,
+        "max_lipo_correction_m": 0.0,
+        "max_lipo_returned_dtype_correction_m": 0.0,
+        "step_violation_max_m": 0.3138708605058491,
+        "max_final_plan_violation_m": 0.0,
+        "queue_invalidations": 0
+      },
+      "metrics": {
+        "success": {
+          "mean": 0.74,
+          "ci95": [
+            0.6875,
+            0.7875
+          ],
+          "valid_rollouts": 400,
+          "valid_contexts": 100
+        },
+        "hand_xyz_jerk_rms": {
+          "mean": 41.91774444615358,
+          "ci95": [
+            40.363044199193745,
+            43.608947175747325
+          ],
+          "valid_rollouts": 400,
+          "valid_contexts": 100
+        },
+        "boundary_xy_velocity_jump_rms": {
+          "mean": 0.17628166319368788,
+          "ci95": [
+            0.16941987702378095,
+            0.18337977204265435
+          ],
+          "valid_rollouts": 400,
+          "valid_contexts": 100
+        },
+        "command_jerk_rms": {
+          "mean": 100.47983345586552,
+          "ci95": [
+            97.32058612872291,
+            103.7872897963083
+          ],
+          "valid_rollouts": 400,
+          "valid_contexts": 100
+        },
+        "plan_ms_mean": {
+          "mean": 89.8476013915311,
+          "ci95": [
+            88.75953008841118,
+            91.15435723284301
+          ],
+          "valid_rollouts": 400,
+          "valid_contexts": 100
+        },
+        "steps": {
+          "mean": 256.9925,
+          "ci95": [
+            239.409625,
+            275.48012500000004
+          ],
+          "valid_rollouts": 400,
+          "valid_contexts": 100
+        }
+      }
+    },
+    "combo29": {
+      "successes": 300,
+      "success_rate": 0.75,
+      "failure_counts": {
+        "None": 399,
+        "solver_failure": 1
+      },
+      "termination_counts": {
+        "success": 300,
+        "step_budget": 97,
+        "environment_done_without_final_success": 2,
+        "solver_failure": 1
+      },
+      "zero_step_rollouts": 0,
+      "short_lt3_step_rollouts": 0,
+      "planning_ms_per_call": 137.06799385927349,
+      "filter_ms_per_executed_step": 0.025943926046358978,
+      "mean_control_steps": 253.2025,
+      "audit_counts": {
+        "plans": 12844,
+        "model_calls": 128431,
+        "qp_calls": 242555,
+        "pf_calls": 128431,
+        "plan_ms_sum": 1760501.3131285086,
+        "plan_report_ms_sum": 1758703.751041554,
+        "filter_ms_sum": 2627.6267739012837,
+        "qp_status": {
+          "projection:ok:solved": 17096,
+          "projection:ok:already_feasible": 111334,
+          "lipo:ok:Solved": 12843,
+          "filter:ok:already_feasible": 101125,
+          "filter:ok:solved": 156,
+          "projection:solver_failure:solved inaccurate": 1
+        },
+        "plan_status": {
+          "ok": 12843,
+          "solver_failure": 1
+        },
+        "failure_stage": {
+          "projection": 1
+        },
+        "max_ok_qp_residual": 1.1557595158695477e-16,
+        "max_lipo_correction_m": 0.0003,
+        "max_lipo_returned_dtype_correction_m": 0.0003000125288963318,
+        "step_violation_max_m": 0.0,
+        "max_final_plan_violation_m": 1.0142684470082486e-09,
+        "queue_invalidations": 0
+      },
+      "metrics": {
+        "success": {
+          "mean": 0.75,
+          "ci95": [
+            0.7,
+            0.7975
+          ],
+          "valid_rollouts": 400,
+          "valid_contexts": 100
+        },
+        "hand_xyz_jerk_rms": {
+          "mean": 36.35681140814813,
+          "ci95": [
+            35.21853506371029,
+            37.49667597580855
+          ],
+          "valid_rollouts": 400,
+          "valid_contexts": 100
+        },
+        "boundary_xy_velocity_jump_rms": {
+          "mean": 0.16017862361309562,
+          "ci95": [
+            0.15440604319449644,
+            0.16614736105066064
+          ],
+          "valid_rollouts": 400,
+          "valid_contexts": 100
+        },
+        "command_jerk_rms": {
+          "mean": 77.87959407833941,
+          "ci95": [
+            75.35296575456566,
+            80.51555905580675
+          ],
+          "valid_rollouts": 400,
+          "valid_contexts": 100
+        },
+        "plan_ms_mean": {
+          "mean": 136.783051769714,
+          "ci95": [
+            134.26181394348916,
+            139.73187420671286
+          ],
+          "valid_rollouts": 400,
+          "valid_contexts": 100
+        },
+        "steps": {
+          "mean": 253.2025,
+          "ci95": [
+            235.907375,
+            271.04012500000005
+          ],
+          "valid_rollouts": 400,
+          "valid_contexts": 100
+        }
+      }
+    }
+  },
+  "paired_differences": {
+    "success": {
+      "combo_minus_baseline": 0.01,
+      "ci95": [
+        -0.0325,
+        0.0525
+      ],
+      "baseline_paired_mean": 0.74,
+      "combo29_paired_mean": 0.75,
+      "relative_change_percent": 1.3513513513513598,
+      "valid_pairs": 400,
+      "valid_contexts": 100
+    },
+    "hand_xyz_jerk_rms": {
+      "combo_minus_baseline": -5.560933038005442,
+      "ci95": [
+        -7.0342138364866695,
+        -4.155462208018678
+      ],
+      "baseline_paired_mean": 41.91774444615358,
+      "combo29_paired_mean": 36.35681140814813,
+      "relative_change_percent": -13.266298345677619,
+      "valid_pairs": 400,
+      "valid_contexts": 100
+    },
+    "boundary_xy_velocity_jump_rms": {
+      "combo_minus_baseline": -0.016103039580592268,
+      "ci95": [
+        -0.02165591093119646,
+        -0.01036767330358917
+      ],
+      "baseline_paired_mean": 0.17628166319368788,
+      "combo29_paired_mean": 0.16017862361309562,
+      "relative_change_percent": -9.134835290780751,
+      "valid_pairs": 400,
+      "valid_contexts": 100
+    },
+    "command_jerk_rms": {
+      "combo_minus_baseline": -22.6002393775261,
+      "ci95": [
+        -25.205360096935358,
+        -19.991057510840324
+      ],
+      "baseline_paired_mean": 100.47983345586552,
+      "combo29_paired_mean": 77.87959407833941,
+      "relative_change_percent": -22.49231373124536,
+      "valid_pairs": 400,
+      "valid_contexts": 100
+    },
+    "plan_ms_mean": {
+      "combo_minus_baseline": 46.93545037818294,
+      "ci95": [
+        44.664609989990026,
+        49.686251905181024
+      ],
+      "baseline_paired_mean": 89.8476013915311,
+      "combo29_paired_mean": 136.783051769714,
+      "relative_change_percent": 52.2389575806828,
+      "valid_pairs": 400,
+      "valid_contexts": 100
+    },
+    "steps": {
+      "combo_minus_baseline": -3.79,
+      "ci95": [
+        -17.182625,
+        9.640437499999994
+      ],
+      "baseline_paired_mean": 256.9925,
+      "combo29_paired_mean": 253.2025,
+      "relative_change_percent": -1.4747512086928705,
+      "valid_pairs": 400,
+      "valid_contexts": 100
+    }
+  },
+  "ci": "10000 context-cluster bootstrap draws; 4 repeats kept together; percentile95%; seed20261115",
+  "timing_scope": "Up to4 concurrent Slurm GPU jobs; one allocated GPU per shard, paired arms sequential on that same GPU. Cluster load and GPU allocation variation may affect timing. Not single-isolated end-to-end control latency.",
+  "paired_outcomes": {
+    "both_success": 260,
+    "baseline_only": 36,
+    "combo29_only": 40
+  },
+  "shared_executed_prefix_sensitivity": {
+    "valid_pairs": 400,
+    "valid_contexts": 100,
+    "baseline_jerk_rms_mean": 41.24485370925735,
+    "combo29_jerk_rms_mean": 36.047059195564835,
+    "combo_minus_baseline": -5.197794513692522,
+    "ci95": [
+      -6.684092396312143,
+      -3.84290726126903
+    ],
+    "mean_shared_executed_steps": 217.89,
+    "scope": "Equal executed prefix per pair; does not remove failure/coverage selection or represent full-horizon performance."
+  },
+  "report_qa": "Corrected chart condition label, boundary axis scale, and CI annotation placement. Raw audited rollouts and all numeric metrics unchanged."
+}

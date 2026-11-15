@@ -1,0 +1,45 @@
+{
+  "joint_numeric_definitions_ast_identical_ignoring_docstrings": true,
+  "original_joint_source_sha256": "621c2a46489e059e31ca6693bf39ca226ce2c074e3ba52d8631f1371c14a3135",
+  "original_main_commit": "b22441b5ab5d017be82779c259e2787d43ba0d62",
+  "refactoring": "imports/CLI paths/device/output-resume guard; numeric joint definitions unchanged",
+  "models": {
+    "sorting2": {
+      "ema_tensors_bit_identical": true,
+      "step": 200000,
+      "tensors": 196
+    },
+    "stacking": {
+      "ema_tensors_bit_identical": true,
+      "step": 350000,
+      "tensors": 196
+    }
+  },
+  "validation": {
+    "regression_tests_passed": 111,
+    "regression_suite": "joint_comparison/config/constraints/pf2mp/policy/evaluation",
+    "reported_aggregate_statistics_recomputed": true,
+    "source_privacy_scan_passed": true,
+    "smoke": {
+      "sorting2": {
+        "device": "cpu",
+        "context_start": 140,
+        "contexts": 1,
+        "repeats": 1,
+        "steps": 5,
+        "both_arms_completed": true,
+        "method_failures": 0
+      },
+      "stacking": {
+        "device": "cuda",
+        "context_start": 140,
+        "contexts": 1,
+        "repeats": 1,
+        "steps": 5,
+        "both_arms_completed": true,
+        "method_failures": 0
+      }
+    },
+    "full_1600_rollouts_rerun_after_packaging": false
+  }
+}

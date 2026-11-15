@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "checkpoint_step": 350000,
+  "baseline_bitwise_parity": true,
+  "alloff_baseline_euler_max_abs": 0.0,
+  "strict_residual_tolerance_rad": 1e-08,
+  "replayed_failures": 97,
+  "forced_fallback_same_qp": true,
+  "settings_and_pf_cache_unchanged": true,
+  "network_dtype": "torch.float32",
+  "max_replayed_residual_rad": 1.2243678293444304e-14
+}

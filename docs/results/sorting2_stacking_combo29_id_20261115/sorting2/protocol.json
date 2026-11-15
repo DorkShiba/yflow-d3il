@@ -1,0 +1,90 @@
+{
+  "task": "sorting_2",
+  "comparison": [
+    "baseline (all methods off)",
+    "combo29 (projection,pf2mp,filter,lipo on; rtc off)"
+  ],
+  "source_commit": "b22441b5ab5d017be82779c259e2787d43ba0d62",
+  "frozen_model": {
+    "selected_step": 200000,
+    "checkpoint_sha256": "7ec1e278d5146875bcc835ae82bde22e4fa09597c43a2d16a8cf7bf288e54ed0",
+    "normalizer_sha256": "4d2670f19852633d80119a8a7ffc60a8595f1876b2fbea50f3eb28e2651c933d"
+  },
+  "cases": {
+    "context_file": "original official raw_archive/sorting/2_test_contexts.pkl",
+    "test": [
+      0,
+      100
+    ],
+    "repeats": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "smoke": [
+      140,
+      142
+    ],
+    "n_rollouts_per_arm": 400,
+    "n_shards": 20,
+    "cases_per_shard": 5,
+    "paired_same_gpu_per_shard": true,
+    "context_sha256": "d214f4c6777b4110bfdb40978396cec8c4d6b0bc0e59dd480a28ebc695390a48"
+  },
+  "control": {
+    "plan": 16,
+    "execute": 8,
+    "euler": 10,
+    "dt_s": 0.035,
+    "max_steps": 500,
+    "inference_delay": 0
+  },
+  "settings_source": "Sorting2 train-only calibration plus analytical initial-support coverage; main calibration rules. No search over test success.",
+  "hard_constraints": {
+    "workspace_low_m": [
+      0.24,
+      -0.35
+    ],
+    "workspace_high_m": [
+      0.8,
+      0.45
+    ],
+    "acceleration_m_s2": 14.7,
+    "object_envelope_margin_m": 0.41
+  },
+  "adaptations": [
+    "config task/dimension validation for sorting_2, recognizing original checkpoint task sorting2 alias without changing checkpoint/config",
+    "PF manifest permits original red-box1/blue-box1 field names for sorting_2; unchanged cache/guidance math",
+    "reuse main run_evaluation via Sorting2 state/observation adapter"
+  ],
+  "paired_baseline": "Rerun identical main loop/CPU hash RNG; historical74% from a different loop/CUDA RNG is reference only",
+  "metrics": [
+    "success",
+    "actual hand XYZ jerk RMS",
+    "boundary XY command velocity change",
+    "command jerk",
+    "plan compute time",
+    "failure types and valid jerk denominators",
+    "context-paired bootstrap95CI"
+  ],
+  "rules": [
+    "no checkpoint reselection or tuning on evaluation",
+    "all100 test contexts retained regardless of outcomes",
+    "undefined metrics for <3 executed steps stay null, never zero",
+    "paired jerk difference only for jointly valid rollouts, with coverage",
+    "main all-off Euler parity and PF zero-action invariant checked before main run"
+  ],
+  "scope": "single training seed42, original official ID test contexts.600 mirror demos;101 direct official byte comparisons,499 not independently compared.",
+  "max_concurrent_gpu_jobs": 4,
+  "input_archives": {
+    "initial_sha256": "7a24a8ff3b7c13ce9c9411b52c4e6b600ea29decc3fbd5e49c8660382da16e0a"
+  },
+  "revision": 2,
+  "comparison_scope": "User-requested follow-up on the same exposed ID cases; not a new untouched holdout. No performance-based tuning or case exclusions. Frozen original checkpoint and normalizer retained.",
+  "corrections": [
+    "workspace effective bounds = outward1cm grid union of train desired/measured TCP positions, task workspace[.25,.80]x[-.35,.45], goals and canonical reset; config margin.01m outside effective bounds",
+    "acceleration = main calibrate_acceleration: ceil(1.05*maximum training polygon requirement*10)/10",
+    "object margin = ceil((max(train-start needed margin, analytical worst gap from canonical reset to official initial support[.40,.65]x[-.15,.10])+.01)*100)/100; fixed across episodes, no runtime expansion"
+  ]
+}

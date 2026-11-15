@@ -75,3 +75,7 @@ bash scripts/run_experiment.sh --name <이름> --contexts 0-1 --smoke 24  # 동�
 | `compute_metrics.py`, `render_rollouts.py`, `check_constraints.py`, `train.py` | 결과 비교·재생, 제약 통계, baseline 학습 위임 |
 
 결과 디렉터리에는 `results.json`, `rollouts.json`, `resolved_config.yaml`이 남는다. 계획마다 모델·PF·QP 호출과 시간, `rtc_guided`, `frozen_prefix`, ⑤ 보정량·jerk 비용, 실행 step마다 `seam`·③ 개입·실제 상태 기준 위반량을 기록한다.
+
+## Sorting-2와 Stacking ID 조합 비교
+
+[①②③⑤ 실행 코드와 결과](../docs/results/sorting2_stacking_combo29_id_20261115/README.md)를 제공합니다. Sorting-2는 메인의 XY Policy를 사용하고, Stacking은 7관절 공간 확장입니다. `eval_sorting`, `eval_stacking`, train-only calibration/cache 준비와 paired 지표 재계산 CLI를 포함합니다.

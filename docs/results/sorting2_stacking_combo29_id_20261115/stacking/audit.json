@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "rollouts": 800,
+  "frozen_hashes": true,
+  "train_normalizer_and_pf_support": true,
+  "train_acceleration_calibration": true,
+  "raw_success_and_partial": true,
+  "raw_motion_metrics": true,
+  "qp_status_and_constraints": true,
+  "lipo_bound": true,
+  "gripper_not_modified_by_postprocessing": true,
+  "paired_starts_seeds": true
+}

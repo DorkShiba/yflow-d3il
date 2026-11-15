@@ -1,0 +1,62 @@
+{
+  "acceleration": {
+    "training_files": 540,
+    "samples": 101072,
+    "dt_s": 0.035,
+    "polygon_sides": 32,
+    "training_sha256": "3718b93804a6a36d4cbdd764ddbbb7b17364aa83025032566f3511e77c09d912",
+    "l2_quantiles_m_s2": {
+      "p50": 0.0,
+      "p95": 5.922424175138635,
+      "p99": 7.31192241145876,
+      "p999": 9.620500926054964,
+      "max": 13.85800556690833
+    },
+    "episode_start_max_m_s2": 7.5327357096913525,
+    "polygon_required_max_m_s2": 13.92431574337577,
+    "recommended_max_m_s2": 14.7,
+    "training_polygon_retained_fraction": 1.0,
+    "selection": "ceil(max_training_polygon_requirement * 1.05 * 10) / 10"
+  },
+  "envelope_train": {
+    "training_files": 540,
+    "training_sha256": "3718b93804a6a36d4cbdd764ddbbb7b17364aa83025032566f3511e77c09d912",
+    "n_sides": 8,
+    "normal_offset_rad": 0.0,
+    "maximum_training_start_required_margin_m": 0.3450595401227474,
+    "selected_margin_m": 0.36,
+    "selection": "ceil((max(0,maximum_training_start_required_margin_m)+0.01)*100)/100",
+    "training_initial_positions_retained_fraction": 1.0,
+    "original_0_10_margin_outside_fraction_all_training_observations": 0.07687589045432959,
+    "scope": "Fixed per-task configuration calibrated from training starts only; no runtime expansion"
+  },
+  "canonical_reset_from_smoke140": [
+    0.5249632666754912,
+    -0.2992917961963433
+  ],
+  "official_initial_support": [
+    [
+      0.4,
+      0.65
+    ],
+    [
+      -0.15,
+      0.1
+    ]
+  ],
+  "analytical_worst_initial_support_gap_m": 0.3992917961963433,
+  "selected_fixed_envelope_margin_m": 0.41,
+  "effective_workspace_low_m": [
+    0.24,
+    -0.35
+  ],
+  "effective_workspace_high_m": [
+    0.8,
+    0.45
+  ],
+  "train_only_or_task_specification": true,
+  "not_tuned_on_test_success": true,
+  "all100_initial_feasible": true,
+  "initial_feasibility_cases": 100,
+  "initial_feasibility_max_residual_m": 0.0
+}

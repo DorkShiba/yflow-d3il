@@ -146,3 +146,7 @@
 # 3. Constraint
 
 제약 집합(workspace·가속도·object envelope)과 이를 쓰는 ① Projection, ③ 실행 직전 필터, ⑤ LiPo의 현재 정의는 [METHODS.md](METHODS.md) 1~2절에 있다. 이전 VLSA 전용 제약(축별 ±0.01 m, L2 0.012 m)은 폐기했다.
+
+# Sorting-2와 Stacking ID 조합 비교
+
+[2026-11-15 고정 모델 ①②③⑤ 비교 보고서](results/sorting2_stacking_combo29_id_20261115/README.md): 태스크별800회, 성공률·실제 손 jerk·청크 경계 변화·계산 시간과 paired95%CI, 관절 공간 확장 및 재실행 방법입니다.

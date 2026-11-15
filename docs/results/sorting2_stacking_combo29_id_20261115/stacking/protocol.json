@@ -1,0 +1,90 @@
+{
+  "task": "stacking",
+  "comparison": [
+    "baseline",
+    "joint_combo29"
+  ],
+  "user_choice": "2026-11-15: extend methods1/2/3/5 in joint space, gripper left untouched by guidance/QP; no retraining",
+  "source_commit": "b22441b5ab5d017be82779c259e2787d43ba0d62",
+  "checkpoint": {
+    "step": 350000,
+    "weights": "ema",
+    "sha256": "5b096837c84f499c4083c1a9edf51d0e45e27006e0c80e6791760dbb4f41eacc",
+    "normalizer_sha256": "07126b892bf2b66229ede3d79cb4265864db4524307e0834ce2b574d52ed23e5",
+    "contexts_sha256": "2af092ea7991c02ea1b6cbf851928b18922c5672d692d9ee2a64f6adc7e3340a"
+  },
+  "cases": {
+    "test": [
+      0,
+      100
+    ],
+    "smoke": [
+      140,
+      142
+    ],
+    "repeats": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "rollouts_per_arm": 400,
+    "shards": 20,
+    "contexts_per_shard": 5,
+    "workers": 4
+  },
+  "control": {
+    "plan": 16,
+    "execute": 8,
+    "euler": 10,
+    "dt_s": 0.03,
+    "max_steps": 1000,
+    "delay": 0
+  },
+  "joint_profile": {
+    "projection": "every Euler step; 7 desired-joint increments; joint position and axis-wise acceleration boxes",
+    "joint_position_bounds": "actual D3IL robot.joint_pos_min/max; no extra margin",
+    "acceleration_limits": "1.1 times each joint's train-only 99.5th percentile absolute diff(action)/dt^2; per-episode first previous action=0; floor1e-6 rad/s2; no test/dev calibration",
+    "pf": "7D KDE on train desired joints normalized with frozen joint minmax center/scale; bandwidth0.15 normalized units; weight0.01, alpha-1, support3000, seed42. Distance term uses high-density train support anchors rather than 2D Cartesian raster; explicit dimensional adaptation.",
+    "pf_density_quantile": 0.05,
+    "filter": "latest desired joint position / previous executed joint action; queue invalidated when correction norm>1e-7 rad",
+    "lipo_bound_rad": 0.0003,
+    "lipo": "min squared third difference of cumulative desired joint positions, all7 axes, last3 executed command positions; same position/acceleration constraints; gripper excluded",
+    "solver": {
+      "eps_abs": 1e-09,
+      "eps_rel": 1e-09,
+      "max_iter": 20000,
+      "feasibility_tolerance_rad": 1e-08,
+      "projection_numerical_fallback": "Clarabel identical objective/constraints; original residual threshold unchanged"
+    },
+    "no_tcp_constraints": true,
+    "precision": "float64 constraint/latent/action bookkeeping; float32 neural-network forward"
+  },
+  "seed_scheme": "CPU hash JSON compact [stacking,test_NNN,repeat0..3], SHA256 first8 bytes big endian modulo2^63-1; same per-arm initial states/noise stream; order counterbalanced by shard",
+  "metrics": [
+    "success",
+    "actual hand XYZ jerk RMS m/s3",
+    "actual7-joint jerk RMS rad/s3",
+    "chunk-boundary7-joint command velocity jump RMS rad/s",
+    "command7-joint jerk RMS rad/s3",
+    "planning/filter time",
+    "failure types/steps/null coverage",
+    "context-paired bootstrap95CI"
+  ],
+  "rules": [
+    "no retraining, checkpoint reselection, test-based tuning, case replacement, policy-dependent exclusions",
+    "all-off exact baseline Euler parity on fixed noise",
+    "guidance zero on all8 actions, first obs, gripper and block channels",
+    "project/filter/LiPo leave gripper channels unmodified",
+    "method failures retained in denominator; undefined metrics null not0"
+  ],
+  "scope": "single training seed42; original1001train/93val vision-state mirror split;1094 release hashes matched; official direct byte comparisons0. Existing generated simulator ID contexts; not official released benchmark. Historical34.5% uses another evaluator/CUDA RNG, reference only. Four shared-GPU workers; timing includes contention. Not the unchanged main XY method profile. Safety metrics excluded.",
+  "revision": 2,
+  "comparison_scope": "User-requested follow-up on the same exposed ID cases; not a new untouched holdout. No performance-based tuning or case exclusions. Frozen original checkpoint and normalizer retained.",
+  "numerical_corrections": [
+    "enabled arm maintains latent and raw-action state in float64; casts only network input and time to original float32 model; weights untouched",
+    "joint constraints anchor on exact executed command history[-1], not rounded model observation",
+    "projection/filter OSQP numerical failure may use Clarabel to solve identical strictly convex projection QP; same1e-8 rad feasibility test; all solver statuses preserved",
+    "float64 LiPo return; .0003rad bound and all physical constraints unchanged; no tolerance relaxation"
+  ]
+}

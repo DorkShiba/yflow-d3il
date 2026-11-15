@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "archive_sha256": "d59b488b28d21ffb95cb6912b05d512d8b9026e0f70d11413a7235406e077c44",
+  "artifact_count": 1421,
+  "uncompressed_bytes_verified": 597920230,
+  "raw_rollout_files_verified": 40,
+  "raw_rollouts": 800,
+  "all_manifest_entries_checked": true,
+  "checkpoint_and_normalizer_match_frozen": true,
+  "scope": "Private original archive verified; original time series are not distributed in this report."
+}

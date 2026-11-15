@@ -1,0 +1,14 @@
+{
+  "train_episodes": 1001,
+  "val_episodes": 93,
+  "train_rows": 626495,
+  "pf_support": 3000,
+  "safe_train_anchors": 2951,
+  "density_threshold": -0.4991104499469603,
+  "acceleration_quantile": 0.995,
+  "acceleration_multiplier": 1.1,
+  "all_train_only": true,
+  "normalizer_pass": true,
+  "source_manifest_sha256": "1f9c3314e51723fcb35e55ca68d0250af43f9a5356b580f82bb8fec4b82316af",
+  "all_raw_hashes_match": true
+}
