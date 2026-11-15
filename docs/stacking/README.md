@@ -2,11 +2,13 @@
 
 Stacking에서 ①②③④⑤ 32조합을 ID와 A_weak/A_mid/A_strong에서 비교한다(2026-11-15 결정). Pushing·Inserting 본실험과 코드 fingerprint·결과·보고서를 분리했다.
 
+[`docs/stacking_team_run.md`](../stacking_team_run.md)(재엽)는 **베이스라인 대 조합 31만** 100 context × 4회 ID로 비교하는 별도 실험이다. 방법 구현은 같지만 context·반복 수·결과 형식이 달라서, 두 실험의 수치를 한 표에 섞지 않는다.
+
 | 항목 | 내용 |
 |---|---|
 | 모델 | `fm_baseline/results/stacking_baseline/baseline_ema.pt` (35만 step EMA, seed 42), train-only normalizer. 재학습·재선택 없음 |
-| 방법 | `fm_constraint/joint_combo.py`: 팀원 관절 공간 ①②③⑤(`joint.py`)를 방법별로 켜고 끄도록 일반화하고, ④ RTC를 추가함. 수치는 `configs/stacking_combo29.json` |
-| ④ RTC | main `rtc.guided_velocity`. 직전 계획의 미실행 8개 행동을 target으로 둔다. **그리퍼 채널 가중치 0**. 지연 0, β 5 |
+| 방법 | `fm_constraint/joint_combo.py`: 팀원 관절 공간 구현(`joint.py`)을 방법별로 켜고 끄도록 일반화함. 수치는 `configs/stacking_combo29.json` |
+| ④ RTC | 팀원 `joint.joint_rtc_velocity`(main RTC soft mask·VJP)를 그대로 씀. 직전 계획의 미실행 관절 증분 8개가 target이다. **그리퍼는 target에서 빠지고 latent 그리퍼 채널 보정도 0**. ③이 행동을 수정하면 참조를 버린다. 지연 0, β 5 |
 | 그리퍼 | 어떤 guidance·QP도 직접 수정하지 않는다 |
 | context | `id_contexts.pkl` test [0,100)에서 고정 seed로 30개 (`configs/stacking_experiment_contexts.json`) |
 | 조건 | `id`, `A_weak` 1 cm, `A_mid` 5 cm, `A_strong` 18 cm (옮길 수 있는 블록만 옮김), 데이터는 `data/ood_stacking` |
@@ -58,8 +60,8 @@ A_strong에서 옮겨진 블록 수는 1개 18 context, 2개 8 context, 3개 4 c
 
 ## 검증 (2026-11-16)
 
-- 같은 기기에서 조합 0과 29의 1,000 step rollout(test_000, seed 0)이 팀원 `eval_stacking.py`와 행동·관절 궤적까지 비트 단위로 같다(합성 PF 캐시 사용).
-- 단위 테스트(`fm_constraint/tests/test_stacking_experiment.py`): 조합 0·4·29와 팀원 `JointPolicy`의 동등성, ④가 그리퍼 target을 무시하는지, ① 없는 ⑤, 집계식.
+- 같은 기기에서 조합 0·29·31의 1,000 step rollout(test_000, seed 0)이 팀원 `eval_stacking.py`(조합 31은 `configs/stacking_combo31.json`)와 행동·관절 궤적까지 비트 단위로 같다. 조합 31은 공개 PF 캐시를 썼고, RTC가 적용된 계획 수(90)도 같다.
+- 단위 테스트(`fm_constraint/tests/test_stacking_experiment.py`): 조합 0·4·29·31과 팀원 `JointPolicy`의 동등성, ④ 단독 동작, ① 없는 ⑤, 집계식.
 - 공개 캐시로 조합 29를 돌린 test_000·test_001 seed 0은 공개 결과와 성공·목표 진입·step 수(756, 1000)가 같다.
 - 공개 수치(3090)와 로컬(3050 Ti)은 같은 seed에서 성공·step 수는 같지만 jerk가 조금 다르다. GPU float32 연산 차이로 보인다. 그래서 **한 context의 모든 조합은 같은 장비에서 돌리도록** context 단위로 분담한다.
 

@@ -247,7 +247,7 @@ python -m pytest fm_constraint/tests tests -q     # visualizer 테스트는 visu
 
 ### Stacking 분담 (ID·OOD A, 2026-11-16)
 
-Stacking도 32조합을 **ID, A_weak, A_mid, A_strong** 네 조건에서 비교한다. 모델은 재엽이 학습한 관절 공간 모델(`fm_baseline/results/stacking_baseline`)이고, 방법은 같은 5개를 7관절 공간으로 옮긴 버전이다(④ RTC 포함, 그리퍼는 수정하지 않음). context는 Pushing·Inserting과 **다른** 30개(`configs/stacking_experiment_contexts.json`)를 쓴다. Stacking test 0–99에서 고정 seed로 뽑았다. 각 context를 noise seed 0·1·2로 3회 실행한다. 정의·지표·검증은 [`docs/stacking/README.md`](docs/stacking/README.md)에 있다.
+Stacking도 32조합을 **ID, A_weak, A_mid, A_strong** 네 조건에서 비교한다. (아래 끝 문단의 [팀원 실행 안내](docs/stacking_team_run.md)는 베이스라인 대 조합 31만 보는 별도 ID 비교다. 본실험 분담은 이 절을 따른다.) 모델은 재엽이 학습한 관절 공간 모델(`fm_baseline/results/stacking_baseline`)이고, 방법은 같은 5개를 7관절 공간으로 옮긴 버전이다(④ RTC 포함, 그리퍼는 수정하지 않음). context는 Pushing·Inserting과 **다른** 30개(`configs/stacking_experiment_contexts.json`)를 쓴다. Stacking test 0–99에서 고정 seed로 뽑았다. 각 context를 noise seed 0·1·2로 3회 실행한다. 정의·지표·검증은 [`docs/stacking/README.md`](docs/stacking/README.md)에 있다.
 
 각자 맡은 context에서 **네 조건 × 32조합을 같은 장비로** 실행한다. 한 명령이 id → A_weak → A_mid → A_strong 순서로 돌고, 조건이 끝날 때마다 보고서를 만든다.
 

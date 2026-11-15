@@ -9,7 +9,7 @@ import torch
 
 from configs.config import REPO
 from fm_constraint.joint import JointPolicy, JointPotential
-from fm_constraint.joint_combo import JointComboPolicy, combo_flags, rtc_target
+from fm_constraint.joint_combo import JointComboPolicy, combo_flags
 from fm_constraint import stacking_experiment as se
 
 
@@ -64,26 +64,32 @@ def test_matches_teammate_joint_policy(settings, potential, number, enabled):
     assert np.array_equal(ours, theirs)
 
 
-def test_rtc_ignores_gripper_target_but_follows_joints(settings):
+def test_combo31_matches_teammate_rtc_policy(settings, potential):
+    """④는 팀원 joint_rtc_velocity를 그대로 쓴다: 조합 31 = 팀원 joint_combo31 arm (같은 suffix)."""
+    base = fake_base()
+    obs, prev, hist, noise = inputs(settings)
+    suffix = np.random.default_rng(3).normal(size=(8, 7)) * 0.002
+    ours = JointComboPolicy(base, settings, potential, combo_flags(31))
+    a = ours.plan(obs, prev, hist, noise, rtc_suffix=suffix)
+    theirs = JointPolicy(base, json.loads((REPO / 'configs/stacking_combo31.json').read_text()), potential, True)
+    b = theirs.plan(obs, prev, hist, noise, rtc_suffix=suffix)
+    assert ours.last_report['rtc_guided'] and theirs.last_report['rtc_guided']
+    assert a is not None and np.array_equal(a, b)
+
+
+def test_rtc_only_follows_joint_suffix(settings):
     base = fake_base()
     obs, prev, hist, noise = inputs(settings)
     policy = JointComboPolicy(base, settings, None, combo_flags(2))
-    suffix = np.zeros((8, 8))
-    a = policy.plan(obs, prev, hist, noise, rtc_suffix=suffix)
+    a = policy.plan(obs, prev, hist, noise, rtc_suffix=np.zeros((8, 7)))
     assert policy.last_report['rtc_guided']
-    grip = suffix.copy()
-    grip[:, 7] = 0.5
-    b = policy.plan(obs, prev, hist, noise, rtc_suffix=grip)
-    joint = suffix.copy()
-    joint[:, :7] = 0.01
-    c = policy.plan(obs, prev, hist, noise, rtc_suffix=joint)
+    c = policy.plan(obs, prev, hist, noise, rtc_suffix=np.full((8, 7), 0.01))
     plain = policy.plan(obs, prev, hist, noise, rtc_suffix=None)
-    assert np.array_equal(a, b)                       # 그리퍼 target은 아무 영향이 없다
-    assert not np.allclose(a[:, :7], c[:, :7])        # 관절 target은 계획을 바꾼다
-    assert not np.array_equal(a, plain)
-    _, w = rtc_target(base, suffix)
-    assert not w[..., 7].count_nonzero() and w[0, :8, 0].min() > 0 and not w[0, 8:].count_nonzero()
-    assert all(p.requires_grad for p in base.model.parameters())
+    assert not policy.last_report['rtc_guided']
+    assert not np.allclose(a[:, :7], c[:, :7]) and not np.array_equal(a, plain)
+    assert policy.plan(obs, prev, hist, noise, rtc_suffix=np.zeros((8, 8))) is None   # 그리퍼 열은 받지 않는다
+    with pytest.raises(ValueError):
+        JointComboPolicy(base, settings, None, combo_flags(2), rtc_beta=-1.0)
 
 
 def test_lipo_without_projection_and_no_rejection(settings):

@@ -13,7 +13,7 @@ Pushing·Inserting 본실험(``fm_constraint.experiment``)과 코드 fingerprint
 rollout 3개를 담는다. 단위마다 즉시 저장하므로 중단 후 같은 명령을 다시 실행하면 완료된 단위를 건너뛴다.
 
 - 모델: ``fm_baseline/results/stacking_baseline/baseline_ema.pt`` (35만 step EMA), train-only normalizer.
-- 방법: ``fm_constraint.joint_combo`` (관절 공간 ①②③④⑤, 그리퍼 미수정). 수치 설정은 ``configs/stacking_combo29.json``.
+- 방법: ``fm_constraint.joint_combo`` (관절 공간 ①②③④⑤, 그리퍼 미수정. ④는 팀원 ``joint.joint_rtc_velocity``). 수치 설정은 ``configs/stacking_combo29.json``.
 - FM noise: 팀원 비교 실험과 같은 CPU 해시 규칙 ``sha256(["stacking","test_NNN",seed])``. OOD도 같은 noise.
 - context: ``id_contexts.pkl``의 test [0,100)에서 고정 seed로 30개. OOD A는 ``data/ood_stacking``의 같은 index 배치.
 - 위반율: 실제 실행한 관절 증분이 실행 직전 목표 관절·직전 실행 증분 기준의 관절 위치 범위·축별 가속도
@@ -246,7 +246,7 @@ def run_episode(rt, number, context, test_index, seed):
         if not queue:
             obs = observation(des, g, boxes)
             noise = torch.randn(1, 16, 31, generator=gen, dtype=rt.base.center.dtype).to(rt.base.device)
-            suffix = active[execute:, :8].copy() if (flags['rtc'] and active is not None) else None
+            suffix = active[execute:, :7].copy() if (flags['rtc'] and active is not None) else None
             if rt.device.startswith('cuda'):
                 torch.cuda.synchronize(rt.device)
             started = perf_counter()
