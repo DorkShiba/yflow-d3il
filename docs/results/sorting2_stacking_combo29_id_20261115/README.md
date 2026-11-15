@@ -60,7 +60,21 @@ python -m fm_constraint.calibrate_sorting \
 
 ## Stacking 재실행
 
-기존 `preprocess/prepare_stacking.py`로 만든 train 1,001개/val 93개 데이터와 공개 train-only normalizer를 사용합니다. `prepare_stacking_joint`는 데이터에서 가속도 한도와 7D PF support/cache를 재생성합니다. 관절 위치 범위는 D3IL env에서 읽습니다. 캐시 파일은 Git에 넣지 않습니다.
+이번 실험에 사용한 [joint_pf_cache.npz](../../../fm_baseline/results/stacking_baseline/joint_pf_cache.npz)를 함께 제공합니다. 아래 명령은 학습 시연을 다시 전처리하거나 캐시를 재생성하지 않고 기존 모델과 공개 캐시로 평가합니다. D3IL 시뮬레이터와 나머지 실행 의존성은 필요합니다.
+
+```bash
+python -m fm_constraint.eval_stacking \
+  --run-dir fm_baseline/results/stacking_baseline \
+  --settings configs/stacking_combo29.json \
+  --cache fm_baseline/results/stacking_baseline/joint_pf_cache.npz \
+  --d3il-root /path/to/d3il --device cuda:0 \
+  --start 0 --count 100 --repeats 4 --steps 1000 \
+  --output fm_constraint/runs/stacking_combo29
+```
+
+파일은 frozen 실험의 캐시와 바이트 단위로 같으며 SHA256은 `f1c45e9b3f16ff538a9333a9687d96cca83d0c4156fd813367e092f62b7e065c`입니다. [캐시 검증 정보](../../../fm_baseline/results/stacking_baseline/joint_pf_cache.provenance.json)에 배열 규격과 normalizer 대조 결과를 기록했습니다.
+
+캐시를 직접 재생성할 때만 기존 `preprocess/prepare_stacking.py`로 만든 train 1,001개/val 93개 데이터와 공개 train-only normalizer가 필요합니다. `prepare_stacking_joint`는 train에서 가속도 한도와 7D PF support/cache를 계산하며 관절 위치 범위는 D3IL env에서 읽습니다.
 
 ```bash
 python -m fm_constraint.prepare_stacking_joint \
@@ -68,13 +82,6 @@ python -m fm_constraint.prepare_stacking_joint \
   --normalizer fm_baseline/results/stacking_baseline/normalizer.npz \
   --d3il-root /path/to/d3il --device cuda:0 \
   --output data/stacking_sincos_v1/pf2mp_cache/joint
-python -m fm_constraint.eval_stacking \
-  --run-dir fm_baseline/results/stacking_baseline \
-  --settings configs/stacking_combo29.json \
-  --cache data/stacking_sincos_v1/pf2mp_cache/joint/joint_pf_cache.npz \
-  --d3il-root /path/to/d3il --device cuda:0 \
-  --start 0 --count 100 --repeats 4 --steps 1000 \
-  --output fm_constraint/runs/stacking_combo29
 ```
 
 재생성한 `joint_settings.json`이 공개 설정과 같은지 확인합니다. 다른 데이터나 시뮬레이터 설정으로 재보정한 결과를 이 고정 조건 결과와 혼합하지 않습니다.

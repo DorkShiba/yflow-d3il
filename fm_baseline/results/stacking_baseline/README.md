@@ -21,3 +21,9 @@ python fm_baseline/eval_stacking.py \
 두 모델 모두 TemporalUnet dim64, dim_mults(1,2,4,8), horizon16, execute8, Euler10, EMA .995입니다. `baseline_ema.pt`는 선택된 EMA tensor를 그대로 보존한 추론용 파일이며 `--weights ema`로 로드합니다. 원본 checkpoint와 공개 파일의 해시, tensor 동일성은 `provenance.json`에 기록했습니다. 추론은 저장소 내부 `fm_baseline.models`를 사용합니다. 공개 포장 과정에서 config의 실행 환경 경로를 이식 가능한 경로로 바꾸고 중복 온라인 가중치·optimizer를 제거했습니다. 원본 체크포인트 및 전체 rollout 아카이브는 로컬 실험 폴더에 보존했습니다.
 
 현재 모델 로더로 두 체크포인트를 읽고 CPU에서 Euler10 계획 생성과 유한값을 확인했습니다. 위 평가 진입점은 저장소 내부 모델 API에 맞춰 이식했으며, 공개 포장 후 전체 시뮬레이션을 다시 실행하지는 않았습니다. 보고한 성공률은 보존된 원래 평가 결과입니다. 단일 학습 seed의 ID 시뮬레이터 결과입니다.
+
+## 관절 PF 캐시
+
+[joint_pf_cache.npz](joint_pf_cache.npz)는 2026-11-15 ID ①②③⑤ 비교에 사용한 원본 frozen 캐시입니다. 약313 KiB이며 train 시연에서 선택한 3,000개 7관절 support, 2,951개 고밀도 anchor와 정규화 정보를 담았습니다. 검증 split은 캐시 구성에 사용하지 않았습니다. 공개 normalizer와 배열·해시 대조를 마쳤으며 [provenance](joint_pf_cache.provenance.json)에 기록했습니다.
+
+[조합 평가 실행 방법](../../../docs/results/sorting2_stacking_combo29_id_20261115/README.md#stacking-재실행)의 `--cache fm_baseline/results/stacking_baseline/joint_pf_cache.npz`로 바로 사용할 수 있습니다.

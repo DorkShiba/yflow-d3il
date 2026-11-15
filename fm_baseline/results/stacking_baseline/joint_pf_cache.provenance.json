@@ -1,0 +1,58 @@
+{
+  "task": "stacking",
+  "filename": "joint_pf_cache.npz",
+  "sha256": "f1c45e9b3f16ff538a9333a9687d96cca83d0c4156fd813367e092f62b7e065c",
+  "bytes": 320383,
+  "source": "exact frozen cache used by the 2026-11-15 Stacking ID combo29 comparison",
+  "source_frozen_cache_sha256": "f1c45e9b3f16ff538a9333a9687d96cca83d0c4156fd813367e092f62b7e065c",
+  "normalizer_sha256": "07126b892bf2b66229ede3d79cb4265864db4524307e0834ce2b574d52ed23e5",
+  "train_episodes": 1001,
+  "validation_episodes_used": 0,
+  "pf_support_seed": 42,
+  "bandwidth_normalized": 0.15,
+  "density_quantile": 0.05,
+  "arrays": {
+    "support": {
+      "shape": [
+        3000,
+        7
+      ],
+      "dtype": "float64"
+    },
+    "safe_anchors": {
+      "shape": [
+        2951,
+        7
+      ],
+      "dtype": "float64"
+    },
+    "joint_center": {
+      "shape": [
+        7
+      ],
+      "dtype": "float64"
+    },
+    "joint_scale": {
+      "shape": [
+        7
+      ],
+      "dtype": "float64"
+    },
+    "bandwidth": {
+      "shape": [],
+      "dtype": "float64"
+    },
+    "log_density_threshold": {
+      "shape": [],
+      "dtype": "float64"
+    }
+  },
+  "checks": {
+    "byte_identical_to_frozen_experiment": true,
+    "all_arrays_numeric_finite": true,
+    "normalization_matches_published_baseline": true,
+    "safe_anchors_are_subset_of_support": true,
+    "cpu_potential_and_guidance_load": true,
+    "action_first_observation_gripper_and_object_guidance_zero": true
+  }
+}
