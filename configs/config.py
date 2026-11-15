@@ -42,8 +42,8 @@ class ExperimentConfig:
         """CLI > YAML > 기본값 순서로 병합한다. 상대 경로는 REPO 기준이다."""
         with Path(path).open() as handle:
             supplied = yaml.safe_load(handle)
-        if not isinstance(supplied, dict) or supplied.get('task') not in ('pushing', 'inserting'):
-            raise ValueError('YAML must specify task: pushing or inserting')
+        if not isinstance(supplied, dict) or supplied.get('task') not in ('pushing', 'inserting', 'sorting_2'):
+            raise ValueError('YAML must specify task: pushing, inserting or sorting_2')
         task = supplied['task']
         inserting = task == 'inserting'
         values = {
@@ -258,8 +258,8 @@ class ExperimentConfig:
     def check_checkpoint(self):
         root = Path(self.values['paths']['run_dir'])
         saved = json.loads((root / 'config.json').read_text())
-        expected_dims = (12 if self.task == 'pushing' else 16, 2)
-        if (saved['task'] != self.task or (saved['obs_dim'], saved['act_dim']) != expected_dims
+        expected_dims = (12 if self.task in ('pushing', 'sorting_2') else 16, 2)
+        if (saved['task'] != ('sorting2' if self.task == 'sorting_2' else self.task) or (saved['obs_dim'], saved['act_dim']) != expected_dims
                 or saved.get('transition_order') != 'actions_then_obs'):
             raise ValueError('Checkpoint task, dimensions or transition order conflict')
         expected = {**saved['model'], 'horizon': saved['horizon'],

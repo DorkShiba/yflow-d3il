@@ -6,7 +6,10 @@ import argparse, copy, hashlib, json, os, pickle, sys, time
 from pathlib import Path
 import numpy as np
 import torch
-from eval_pushing import load_model, Policy
+if __package__:
+    from .eval_pushing import load_model, Policy
+else:
+    from eval_pushing import load_model, Policy
 
 
 def setup(root):

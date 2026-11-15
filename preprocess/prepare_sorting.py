@@ -77,6 +77,7 @@ def prepare(raw, metadata, d3il, output):
                 actions=act,
                 next_obs=obs[1:],
                 timestamps=ts[:-1],
+                next_timestamps=ts[1:],
             )
             key = hashlib.sha256(np.round(obs[0, 4:], 6).tobytes()).hexdigest()
             ctx.append(key)

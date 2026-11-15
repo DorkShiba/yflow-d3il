@@ -52,7 +52,7 @@ def _audit_train(root, files, manifest):
     """모든 train 전이의 규격·단위·시연 내 일관성을 검사하고 위치를 모은다."""
     obs_dim = manifest['obs_dim']
     expected_fields = ['robot.des_c_pos.x', 'robot.des_c_pos.y', 'robot.c_pos.x', 'robot.c_pos.y']
-    blocks = ['red-box', 'green-box'] if obs_dim == 12 else ['box-1', 'box-2', 'box-3']
+    blocks = (['red-box1', 'blue-box1'] if manifest.get('task') == 'sorting_2' else ['red-box', 'green-box'] if obs_dim == 12 else ['box-1', 'box-2', 'box-3'])
     expected_fields += [f'{name}.{field}' for name in blocks for field in ('x', 'y', 'sin_yaw', 'cos_yaw')]
     if (obs_dim not in (12, 16) or manifest['action_dim'] != 2
             or manifest['obs_fields'] != expected_fields
