@@ -32,7 +32,7 @@ python -m fm_constraint.stacking_experiment merge --cond A_weak
 
 - 같은 장비에서 여러 프로세스를 띄워도 단위마다 잠금을 잡는다. 시뮬레이터가 CPU 시간 대부분을 쓰므로 GPU 하나에 2–4개를 띄워도 된다. 결과 파일이 있으면 그 단위를 건너뛴다.
 - 결과에 영향을 주는 파일(`CODE_FILES`)에 커밋하지 않은 변경이 있으면 본실험을 시작하지 않는다.
-- **본실험 전 PF 캐시를 고정해야 한다.** ②에 쓰는 `joint_pf_cache.npz`는 원본 시연 데이터(`prepare_stacking_joint`)로만 만들 수 있고 git 제외 대상이다. 팀 전체가 같은 파일을 쓰도록 캐시를 공유하고, 그 sha256을 `configs/stacking_experiment.json`의 `pf_cache_sha256`에 넣어 커밋한다. 값이 `null`이거나 sha256이 다르면 runner가 거부한다. 경로는 `--pf-cache`로 바꿀 수 있다.
+- PF 캐시: 팀원이 공개한 `fm_baseline/results/stacking_baseline/joint_pf_cache.npz`(2026-11-15 조합 29 비교에 쓴 원본, sha256 `f1c45e9b…`)를 `configs/stacking_experiment.json`에 고정했다. 다른 파일이면 runner가 본실험을 거부한다. `--pf-cache`는 동작 확인용이다.
 
 ## 지표
 
@@ -58,6 +58,7 @@ A_strong에서 옮겨진 블록 수는 1개 18 context, 2개 8 context, 3개 4 c
 
 - 같은 기기에서 조합 0과 29의 1,000 step rollout(test_000, seed 0)이 팀원 `eval_stacking.py`와 행동·관절 궤적까지 비트 단위로 같다(합성 PF 캐시 사용).
 - 단위 테스트(`fm_constraint/tests/test_stacking_experiment.py`): 조합 0·4·29와 팀원 `JointPolicy`의 동등성, ④가 그리퍼 target을 무시하는지, ① 없는 ⑤, 집계식.
+- 공개 캐시로 조합 29를 돌린 test_000·test_001 seed 0은 공개 결과와 성공·목표 진입·step 수(756, 1000)가 같다.
 - 공개 수치(3090)와 로컬(3050 Ti)은 같은 seed에서 성공·step 수는 같지만 jerk가 조금 다르다. GPU float32 연산 차이로 보인다. 그래서 **한 context의 모든 조합은 같은 장비에서 돌리도록** context 단위로 분담한다.
 
 ## 비용
