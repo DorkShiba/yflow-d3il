@@ -68,3 +68,7 @@ A_strong에서 옮겨진 블록 수는 1개 18 context, 2개 8 context, 3개 4 c
 ## 비용
 
 로컬 3050 Ti에서 계획 1회는 조합에 따라 0.2–0.6 s였다(팀원 3090에서 조합 29는 0.18 s). 시뮬레이터 1 step은 12 ms다. 전체는 3,840 단위(11,520 rollout)로, 3090 기준 약 80 GPU 시간으로 추정한다.
+
+## 재엽 담당 ID OOD 결과
+
+context 16–22의 ID·A_weak·A_mid·A_strong 32조합 결과는 [통합 요약](report_id_ood_jaeyeop_summary.md)과 [통합 JSON](report_id_ood_jaeyeop_summary.json)에 정리했습니다. 총2,688 rollout이며, 조건별 원본 보고서와 검증 정보도 연결했습니다. 담당 7개 context의 결과입니다.
