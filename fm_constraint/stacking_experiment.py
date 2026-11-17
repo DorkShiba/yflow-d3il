@@ -1,4 +1,4 @@
-"""Stacking 본실험(ID·OOD A): 32조합 × (30 context × noise 3) × {id, A_weak, A_mid, A_strong}.
+"""Stacking 본실험(ID·OOD A): 32조합 × (30 context × noise 3) × {id, A_weak, A_3, A_mid, A_strong}.
 
     python -m fm_constraint.stacking_experiment select            # 평가 context 30개 고정 (한 번, commit)
     python -m fm_constraint.stacking_experiment run --cond id,A_weak --combos all --contexts 0-6 \\
@@ -45,7 +45,9 @@ SELECTION_SEED = 20261108
 SELECTION_STREAM = 2                      # pushing 0, inserting 1 (fm_constraint.experiment.select)
 N_CONTEXTS = 30
 SEEDS = (0, 1, 2)
-CONDITIONS = ('id', 'A_weak', 'A_mid', 'A_strong')
+# A_3(3 cm)은 2026-11-17 추가. 이 줄이 바뀌어 code fingerprint가 달라지므로, A_3 이전 조건의 결과(fingerprint
+# ae2ad005…)는 이 커밋 이전 코드로만 이어서 실행할 수 있다. 통합은 조건별로 하므로 섞이지 않는다.
+CONDITIONS = ('id', 'A_weak', 'A_3', 'A_mid', 'A_strong')
 CONFIG = REPO / 'configs/stacking_experiment.json'
 CONTEXT_FILE = REPO / 'configs/stacking_experiment_contexts.json'
 RESULT_BASE = REPO / 'experiments' / PROTOCOL           # 로컬 전용(.gitignore)
@@ -640,7 +642,7 @@ def main():
     sub = parser.add_subparsers(dest='command', required=True)
     sub.add_parser('select')
     r = sub.add_parser('run')
-    r.add_argument('--cond', required=True, help="id, A_weak, A_mid, A_strong (쉼표로 여러 개, 적은 순서대로 실행)")
+    r.add_argument('--cond', required=True, help="id, A_weak, A_3, A_mid, A_strong (쉼표로 여러 개, 적은 순서대로 실행)")
     r.add_argument('--combos', default='all', help="'all', '0-31', '5,17' 또는 'S05,S17'")
     r.add_argument('--contexts', required=True, help="context 번호 0..29: '0-6', '7,9'")
     r.add_argument('--device', required=True)

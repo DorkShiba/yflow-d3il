@@ -13,9 +13,15 @@ REPO = Path(__file__).resolve().parents[1]
 
 def test_condition_list_is_fixed():
     names = [name for name, _ in conditions()]
-    assert len(names) == 20 and names[0] == 'id'
+    assert len(names) == 21 and names[0] == 'id'
     assert names[10:14] == ['AB_mid', 'AC_mid', 'BC_mid', 'ABC_mid']
-    assert names[-6:] == ['D_weak', 'D_mid', 'D_strong', 'E_weak', 'E_mid', 'E_strong']
+    assert names[14:20] == ['D_weak', 'D_mid', 'D_strong', 'E_weak', 'E_mid', 'E_strong']
+    assert names[20:] == ['A_10']           # 2026-11-17 추가, 기존 20개 뒤에 붙인다
+
+
+def test_extra_a_level():
+    v = factor_values('inserting', dict(conditions())['A_10'])
+    assert v['A'] == {'shift_m': 0.10, 'level': 'A_10'} and v['B'] is None
 
 
 def test_strengths_follow_implementation_1():

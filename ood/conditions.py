@@ -8,8 +8,8 @@
     D  실행 중 push     push_step 이후 손에 가장 가까운 블록을 d m 순간이동
     E  추론 지연        다음 계획을 d step 전 관측으로 세우고 새 chunk의 index d부터 실행
 
-조건: id, {A,B,C}_{weak,mid,strong}, {AB,AC,BC,ABC}_mid, D_{...}, E_{...} (20개).
-D, E는 단일 요인만 둔다.
+조건: id, {A,B,C}_{weak,mid,strong}, {AB,AC,BC,ABC}_mid, D_{...}, E_{...} (20개)와
+추가 A 강도 ``EXTRA_A``(A_10, 2026-11-17). D, E는 단일 요인만 둔다.
 
 seed는 모두 ``seed_for``(SHA-256 해시)로 만든다. 키를 요인 단위로 잡아,
 같은 context에서는 강도·조합이 달라도 같은 난수를 쓴다(common random numbers).
@@ -39,6 +39,10 @@ LEVELS = {
 # D: 'mid'는 chunk 실행 도중(남은 행동 execute/2개)에 밀어 남은 행동이 바뀐 상태를 모른 채 실행된다.
 #    'seam'은 재계획 직전에 민다.
 PUSH_PHASE = 'mid'
+# 추가 A 강도(2026-11-17): A_strong(18 cm)에서 Inserting이 32조합 모두 성공 0%라 10 cm를 더한다.
+# 기존 20조건의 행·결과는 바꾸지 않고 data/ood/*.jsonl 끝에 행만 덧붙인다(python -m ood.generate --add A_10).
+# 5 cm보다 크므로 A_strong과 같은 배치 규칙(ood.generate.shift_blocks_far, 안착 확인)을 쓴다.
+EXTRA_A = {'A_10': 0.10}
 
 
 def seed_for(*parts):
@@ -54,7 +58,7 @@ def gauss(seed, *key, sigma):
 
 
 def conditions():
-    """[(이름, {요인: 강도 index})] 고정 순서."""
+    """[(이름, {요인: 강도 index})] 고정 순서. 추가 A 강도는 {'A': 조건 이름}으로 표시한다."""
     out = [('id', {})]
     for factor in 'ABC':
         out += [(f'{factor}_{name}', {factor: k}) for k, name in enumerate(NAMES)]
@@ -62,6 +66,7 @@ def conditions():
         out.append((f'{combo}_mid', {factor: 1 for factor in combo}))
     for factor in 'DE':
         out += [(f'{factor}_{name}', {factor: k}) for k, name in enumerate(NAMES)]
+    out += [(name, {'A': name}) for name in EXTRA_A]
     return out
 
 
@@ -70,6 +75,9 @@ def factor_values(task, selected):
     levels = LEVELS[task]
     values = dict.fromkeys(FACTORS)
     for factor, k in selected.items():
+        if factor == 'A' and k in EXTRA_A:
+            values['A'] = {'shift_m': EXTRA_A[k], 'level': k}
+            continue
         level = {'level': NAMES[k]}
         if factor == 'A':
             values['A'] = {'shift_m': levels['A'][k], **level}

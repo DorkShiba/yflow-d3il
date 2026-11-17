@@ -239,6 +239,38 @@ python -m pytest fm_constraint/tests tests -q     # visualizer 테스트는 visu
 
   - 올릴 보고서: `docs/report_ood_A_weak_<이름>.md`, `docs/report_ood_A_strong_<이름>.md`. 통합은 `python -m fm_constraint.experiment merge --ood A_weak`(A_strong도 같다).
   - Pushing A_strong의 context 13(test_028)은 17 cm, context 29(test_059)은 8 cm로 낮춰져 있다(배치 불가·시뮬레이터 안착 실패, `shift[].shift_m`). 분석할 때 따로 표시한다.
+- **추가 A 강도 분담 (2026-11-17, Pushing·Inserting A_10, Stacking A_3):** A_strong(18 cm)에서 Inserting은 32조합 모두 성공 0%였고, Stacking은 A_mid(5 cm)에서도 성공률이 2–9%였다. 그래서 Pushing·Inserting에 **A_10**(시연 범위 밖 10 cm), Stacking에 **A_3**(3 cm)를 더한다. 준혁 GPU를 쓸 수 없어 context 대신 **태스크 단위로** 나눈다. 한 사람이 한 태스크의 30 context × 32조합(960 단위, 2,880 rollout)을 모두 같은 장비에서 실행한다.
+
+  | 담당 | 태스크 · 조건 | 실행 명령 | 올릴 보고서 |
+  |---|---|---|---|
+  | 형빈 | Inserting A_10 | `bash scripts/run_ood_extra.sh --member hyeongbin --workers 6` | `docs/report_ood_A_10_hyeongbin.md` |
+  | 재엽 | Pushing A_10 | `bash scripts/run_ood_extra.sh --member jaeyeop --workers 4` | `docs/report_ood_A_10_jaeyeop.md` |
+  | 성민 | Stacking A_3 | `bash scripts/run_ood_extra.sh --member seongmin --workers 4` | `docs/stacking/report_A_3_seongmin.md` |
+
+  ```bash
+  git pull                                   # 코드와 data/ood(A_10 행 추가), data/ood_stacking(A_3 추가) 받기
+  # 1) 동작 확인: 16 step만, 결과는 로컬(fm_constraint/runs)에만, 보고서 없음
+  bash scripts/run_ood_extra.sh --member <이름> --smoke 16 --contexts 0 --combos 0,31 --workers 2
+  # 2) 본실험: 끝나면 보고서를 만들고 git 명령을 출력한다. 중단되면 같은 명령으로 이어서 실행한다
+  bash scripts/run_ood_extra.sh --member <이름> --workers <N> [--device cuda:1]
+  # 진행 확인(다른 터미널)
+  tail -f fm_constraint/runs/experiment_logs/<이름>_*_w1_*.log
+  # 3) 보고서만 올린다
+  git add <보고서> && git commit -m "report: <이름> <태스크> <조건> contexts 0-29" && git pull --rebase && git push
+  ```
+
+  - **worker:** 같은 GPU에 프로세스를 N개 띄운다. 모두 같은 단위 목록을 돌고, 단위마다 잠금을 잡으며, 결과가 있으면 건너뛴다(`BUSY`·`SKIP` 로그는 정상이다). 시뮬레이터가 CPU를 쓰므로 N은 CPU 코어 수 이하로 둔다. 보고서는 모든 worker가 끝난 뒤 한 번 만든다. `--dry-run`은 검사만 하고 실행할 명령을 출력한다.
+  - **예상 시간**(A_strong 보고서의 단위당 시간 기준, 장비에 따라 다름): Pushing 단위당 약 1분 → 직렬 약 16시간, Inserting 단위당 약 5분 → 직렬 약 80시간, Stacking 단위당 약 1.3분 → 직렬 약 20시간. worker 수만큼 대략 나뉜다. Inserting이 가장 길어서 worker를 가장 많이 둔다.
+  - **스크립트가 시작 전에 확인하는 것:** OOD 파일 해시가 manifest와 같은지(`git pull`을 안 했으면 여기서 멈춘다), 커밋하지 않은 코드 변경이 없는지, GPU에서 실제로 계산이 되는지.
+  - **데이터:** `data/ood/*.jsonl` 끝에 A_10 행만 덧붙였다(`python -m ood.generate --add A_10`). 기존 20조건 행은 바이트 단위로 같다. Stacking은 `stacking.jsonl` 끝에 A_3 행을 덧붙이고 `stacking_A_3_contexts.pkl`을 새로 만들었다(`python -m ood.generate_stacking --add A_3`). 기존 pkl과 `max_shift.json`은 그대로다. 두 manifest의 `additions`에 기록이 있다.
+  - **배치 규칙:** A_10은 5 cm보다 크므로 A_strong과 같은 규칙(팔 도달 고리, 다른 블록 시작 범위와 5 cm, 2 s 안착 확인, 안 되면 그 context만 1 cm씩 낮춤)을 쓴다. 실험 30 context 중 Inserting은 **13개가 9 cm, 1개(context 20)가 6 cm**로, Pushing은 1개(context 29, test_059)가 8 cm로 낮아졌다. 실제 d는 `shift[].shift_m`에 있다. A_3은 A_weak·A_mid와 같은 규칙이며 실험 30 context에서 세 블록이 모두 옮겨졌다(100개 중 1개만 2개 이동).
+  - **제약 적용 불가 context (2026-11-17 결정: 따로 보고):** ①투영·③필터의 블록 중심 8각형 제약(`object_envelope`, Pushing 여유 0.25 m)은 매 계획마다 **현재 블록 위치**를 중심으로 만든다. 그래서 블록이 멀리 옮겨지면 고정 시작 손이 다각형 밖에 남는다. 첫 행동은 가속도 제약 때문에 β(Pushing 1.67 cm, Inserting 1.73 cm)까지만 움직일 수 있다. 따라서 손이 다각형 밖으로 β보다 멀면 ①·③ 조합은 첫 계획부터 실행 불가능해 방법 실패로 끝난다. 방법 성능이 아니라 제약이 그 배치에 적용되지 않는 경우이므로, **주 비교는 적용 가능 context로 하고 적용 불가 context는 따로 보고한다.**
+    - A_strong Pushing: 적용 불가 10개(4, 5, 6, 8, 9, 12, 14, 21, 22, 27)에서 ①·③ 조합의 방법 실패가 100%, 나머지 20개에서는 0%였다. 10개 모두 두 블록이 목표 쪽(y+)으로 옮겨진 쉬운 배치다(P00 성공 93%, 나머지 17%). 결과는 [`docs/report_ood_A_strong_envelope_split.md`](docs/report_ood_A_strong_envelope_split.md)에 있다. A_mid context 12(1.64 cm 밖, β 미만)는 정상 실행돼 기준과 맞는다.
+    - A_10 예측: Pushing 적용 불가 **10개**(3, 4, 5, 6, 8, 12, 14, 22, 24, 27; context 6은 1.68 cm로 경계), 9·21은 밖이지만 β 미만이다. Inserting은 1개(context 20, 2.6 cm)다.
+    - 실험이 끝나면 `python -m ood.envelope_split --cond A_10`으로 같은 표(`docs/report_ood_A_10_envelope_split.{md,json}`)를 만든다. 보고서만 읽으므로 merge처럼 누구나 실행할 수 있다.
+  - **이동 방향:** A_10·A_strong 규칙은 팔 도달 고리 때문에 주로 y±로 옮긴다(Pushing A_10 블록 60개 중 y+ 39개). y+는 목표 쪽이라 쉬워지므로 결과를 방향별로 나눠 본다(보고서 원시 데이터의 OOD case → `shift[].face`).
+  - **code fingerprint:** Pushing·Inserting runner의 fingerprint는 현재 `e55b2836ed46`로, A_weak·A_strong 보고서의 `848e5eb61481`과 다르다. 그 사이 팀원 sorting 커밋(`b22441b`, `4dd0b2d`)이 `configs/config.py`·`fm_baseline/train.py`·`fm_constraint/pf2mp.py`를 바꿨기 때문이다. sorting 분기만 추가돼 Pushing·Inserting 동작에는 영향이 없다. Stacking runner는 조건 목록에 A_3을 넣어 `ae2ad005…`에서 `2206f1b7…`로 바뀌었다. 통합은 조건별로 하므로 A_10·A_3 통합은 문제없다. 다만 **이전 조건(A_weak 등)의 미완료 단위를 지금 코드로 이어서 실행할 수는 없다**(fingerprint가 다르면 runner가 멈춘다).
+  - **통합:** `python -m fm_constraint.experiment merge --ood A_10`(보고서 2개: Pushing 재엽, Inserting 형빈), `python -m fm_constraint.stacking_experiment merge --cond A_3`.
 - **결과 공유 — 보고서만 git에 올린다:**
   - 단위 결과는 **로컬에만** 남는다(`.gitignore`): `experiments/id_v1/`, `experiments/ood_v1/<조건>/`(단위마다 `result.json`, `trajectories.npz`), 전체 계획 로그 `fm_constraint/runs/experiment_<protocol>/full/`(`rollouts.json`, Inserting rollout 1개에 최대 약 8 MB). 다시 만들려면 재실행해야 하므로 지우지 말고 필요하면 각자 백업한다.
   - 실행이 끝나면 스크립트가 보고서를 만든다. ID는 `docs/report_<이름>.md`, OOD는 `docs/report_ood_<조건>_<이름>.md`. 결과를 나중에 더 실행했다면 `python -m fm_constraint.experiment report --name <이름> [--ood <조건>]`로 다시 만든다(덮어쓴다).

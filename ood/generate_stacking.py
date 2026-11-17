@@ -16,6 +16,11 @@ Pushing·Inserting용 ``ood.generate``와 분리했다. ``ood/apply.py``는 본�
 - ``max_shift.json``: A_strong 규칙으로 세 블록을 같은 d로 배치했을 때 각 블록이 옮겨지는 최대 d
   (1 cm 간격, 최대 MAX_SCAN_M, 기하만 검사)와 세 블록이 모두 옮겨지는 최대 d를 기록한다.
 기존 출력 폴더는 덮어쓰지 않는다.
+
+조건 추가(2026-11-17, A_3 = 3 cm): A_mid에서도 성공률이 바닥이라 3 cm를 더한다. 기존 행·pkl은 그대로 두고
+새 조건의 행을 ``stacking.jsonl`` 끝에 덧붙이고 ``stacking_A_3_contexts.pkl``을 새로 만든다.
+
+    MUJOCO_GL=disable python -m ood.generate_stacking --d3il-root ../d3il --add A_3
 """
 import argparse
 import collections
@@ -48,6 +53,7 @@ MAX_SCAN_M = 0.18                          # A_strong 수치까지만 본다(더
 DT = 0.03                                  # env n_substeps 30 x 1 ms
 OPEN_WIDTH = 0.08                          # > 0.075: env.step이 손가락을 연다
 COLORS = ('red', 'green', 'blue')
+EXTRA_LEVELS_M = {'A_3': 0.03}             # 추가 강도(2026-11-17). 5 cm 이하라 weak·mid와 같은 shift_blocks 규칙
 
 
 def to_pkl_context(ctx, like):
@@ -112,13 +118,99 @@ def max_shift(spec, walls, ctx, hand_xy):
     return best, faces, feasible, all_three
 
 
+def make_condition(spec, env, walls, all_ctx, ids, hand0, cond, d, level):
+    """조건 하나의 (jsonl 행, pkl context 목록, 통계)."""
+    rows, pkl = [], []
+    st = collections.Counter()
+    faces = collections.Counter()
+    for ci in ids:
+        base, cid = all_ctx[ci], f'test_{ci:03d}'
+        ctx, applied = shift(spec, walls, base, d, hand0)
+        # 평가에 들어가는 float32 배치 그대로 검사한다. 일부 배치는 1e-8 m 차이로 안착 여부가 바뀐다
+        # (test_086 빨강: 블록을 z=0에 놓는 D3IL set_context의 침투 해소로 추정).
+        ctx = to_pkl_context(ctx, base)
+        ctx, applied, moved = settled(spec, env, base, ctx, applied)
+        for e in applied:
+            e.update(color=COLORS[e['box']], shift_m=d if e['face'] else 0.0, settle_drift_m=moved[e['box']])
+            faces[(COLORS[e['box']], e['face'])] += 1
+        n_moved = sum(e['face'] is not None for e in applied)
+        st['contexts'] += 1
+        st[f'blocks_moved_{n_moved}'] += 1
+        st['reverted_unstable'] += sum(bool(e.get('reverted_unstable')) for e in applied)
+        st['unsettled_after'] += any(m >= BLOCK_SETTLE_TOL for m in moved)
+        pkl.append(ctx)
+        seeds = context_seeds(TASK, cid)
+        rows.append({'id': f'{TASK}/{cond}/{cid}', 'task': TASK, 'cond': cond,
+                     'factors': {'A': {'shift_m': d, 'level': level}, 'B': None, 'C': None, 'D': None, 'E': None},
+                     'context_id': cid, 'context_index': ci, 'context': context_json(ctx),
+                     'shift': applied, 'robot': None, 'robot_start': None, 'noise': None, 'push': None,
+                     'delay_steps': 0, 'policy_seeds': seeds['policy']})
+    stats = {'shift_m': d, 'rule': 'shift_blocks_far, movable blocks only' if d > FAR_FROM else 'shift_blocks',
+             **st, 'faces': {f'{c}:{f}': n for (c, f), n in sorted(faces.items(), key=str)}}
+    print(f'{cond}: {dict(st)}', flush=True)
+    return rows, pkl, stats
+
+
+def add_conditions(out, conds, d3il, commit):
+    """기존 data/ood_stacking에 EXTRA_LEVELS_M의 조건을 덧붙인다. 기존 행·pkl·max_shift는 바꾸지 않는다."""
+    manifest_path = out / 'manifest.json'
+    manifest = json.loads(manifest_path.read_text())
+    unknown = [c for c in conds if c not in EXTRA_LEVELS_M]
+    if unknown:
+        raise SystemExit(f'Unknown condition(s) {unknown}; available: {list(EXTRA_LEVELS_M)}')
+    present = [c for c in conds if c in manifest['conditions']]
+    if present:
+        raise SystemExit(f'{present} already in {out}')
+    jsonl = out / f'{TASK}.jsonl'
+    if file_sha256(jsonl) != manifest['files'][jsonl.name]:
+        raise SystemExit(f'{jsonl} does not match its manifest; refusing to append')
+    if file_sha256(CONTEXTS) != manifest['base_contexts']['sha256']:
+        raise SystemExit(f'{CONTEXTS} differs from the base contexts of {out}')
+    all_ctx = pickle.load(CONTEXTS.open('rb'))
+    low, high = manifest['base_contexts']['indices']
+    ids = list(range(low, high))
+    spec = get_task(TASK)
+    spec.setup(d3il)
+    env = spec.make_env(spec.max_steps)
+    walls = spec.walls(env)
+    spec.reset(env, all_ctx[0])
+    hand0 = spec.read(env).c[:2].copy()
+    made = {c: make_condition(spec, env, walls, all_ctx, ids, hand0, c, EXTRA_LEVELS_M[c], c) for c in conds}
+    for cond, (rows, pkl, stats) in made.items():
+        p = out / f'{TASK}_{cond}_contexts.pkl'
+        with p.open('xb') as handle:
+            pickle.dump(pkl, handle)
+        with jsonl.open('a') as handle:
+            for row in rows:
+                handle.write(json.dumps(row, sort_keys=True) + '\n')
+        manifest['files'][p.name] = file_sha256(p)
+        manifest['conditions'].append(cond)
+        manifest['levels_m'][cond] = EXTRA_LEVELS_M[cond]
+        manifest['stats'][cond] = stats
+    manifest['files'][jsonl.name] = file_sha256(jsonl)
+    manifest.setdefault('additions', []).append({
+        'conditions': list(conds), 'created_utc': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'd3il_commit': commit, 'note': 'rows appended to stacking.jsonl; earlier rows, pkls and max_shift unchanged'})
+    manifest_path.write_text(json.dumps(manifest, indent=1) + '\n')
+    print('updated', out)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument('--d3il-root', default=None)
     parser.add_argument('--out', default=str(REPO / 'data/ood_stacking'))
     parser.add_argument('--limit', type=int, default=0, help='앞쪽 context 몇 개만(동작 확인용)')
+    parser.add_argument('--add', default=None, help='기존 데이터에 덧붙일 조건(쉼표로 여러 개). 예: A_3')
     args = parser.parse_args()
     out = Path(args.out).resolve()
+    if args.add:
+        d3il = resolve_d3il(args.d3il_root)
+        try:
+            commit = subprocess.check_output(['git', '-C', d3il, 'rev-parse', 'HEAD'], text=True).strip()
+        except (OSError, subprocess.CalledProcessError):
+            commit = None
+        add_conditions(out, [c.strip() for c in args.add.split(',') if c.strip()], d3il, commit)
+        return
     if (out / 'manifest.json').exists():
         raise SystemExit(f'{out} already holds a dataset; use a new --out')
     out.mkdir(parents=True, exist_ok=True)
@@ -141,34 +233,8 @@ def main():
     rows, stats, pkls = [], {}, {}
     for k, name in enumerate(NAMES):
         cond, d = f'A_{name}', LEVELS_M[k]
-        pkls[cond] = []
-        st = collections.Counter()
-        faces = collections.Counter()
-        for ci in ids:
-            base, cid = all_ctx[ci], f'test_{ci:03d}'
-            ctx, applied = shift(spec, walls, base, d, hand0)
-            # 평가에 들어가는 float32 배치 그대로 검사한다. 일부 배치는 1e-8 m 차이로 안착 여부가 바뀐다
-            # (test_086 빨강: 블록을 z=0에 놓는 D3IL set_context의 침투 해소로 추정).
-            ctx = to_pkl_context(ctx, base)
-            ctx, applied, moved = settled(spec, env, base, ctx, applied)
-            for e in applied:
-                e.update(color=COLORS[e['box']], shift_m=d if e['face'] else 0.0, settle_drift_m=moved[e['box']])
-                faces[(COLORS[e['box']], e['face'])] += 1
-            n_moved = sum(e['face'] is not None for e in applied)
-            st['contexts'] += 1
-            st[f'blocks_moved_{n_moved}'] += 1
-            st['reverted_unstable'] += sum(bool(e.get('reverted_unstable')) for e in applied)
-            st['unsettled_after'] += any(m >= BLOCK_SETTLE_TOL for m in moved)
-            pkls[cond].append(ctx)
-            seeds = context_seeds(TASK, cid)
-            rows.append({'id': f'{TASK}/{cond}/{cid}', 'task': TASK, 'cond': cond,
-                         'factors': {'A': {'shift_m': d, 'level': name}, 'B': None, 'C': None, 'D': None, 'E': None},
-                         'context_id': cid, 'context_index': ci, 'context': context_json(ctx),
-                         'shift': applied, 'robot': None, 'robot_start': None, 'noise': None, 'push': None,
-                         'delay_steps': 0, 'policy_seeds': seeds['policy']})
-        stats[cond] = {'shift_m': d, 'rule': 'shift_blocks_far, movable blocks only' if d > FAR_FROM else 'shift_blocks',
-                       **st, 'faces': {f'{c}:{f}': n for (c, f), n in sorted(faces.items(), key=str)}}
-        print(f'{cond}: {dict(st)}', flush=True)
+        cond_rows, pkls[cond], stats[cond] = make_condition(spec, env, walls, all_ctx, ids, hand0, cond, d, name)
+        rows += cond_rows
 
     # 최대 이동거리 (A_strong 규칙)
     per_context = []

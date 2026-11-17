@@ -7,6 +7,10 @@
 fm_baseline/contexts/inserting_val.pkl 82개다. B(로봇 시작)는 실제로 손을 옮겨
 블록이 움직이지 않고(1 mm 미만) 손이 목표 5 mm 안에 도착한 경우만 채택한다.
 기존 출력 파일은 덮어쓰지 않는다.
+
+조건 추가(2026-11-17, A_10): 기존 행은 그대로 두고 새 조건의 행만 덧붙인다.
+
+    MUJOCO_GL=disable python -m ood.generate --d3il-root ../d3il --add A_10   # data/ood/*.jsonl 끝에 추가, manifest 갱신
 """
 import argparse
 import json
@@ -28,6 +32,8 @@ from train import resolve_d3il  # noqa: E402
 from .apply import CLEAR, context_to_json, file_sha256, free, shift_blocks  # noqa: E402
 from .conditions import (LEVELS, POLICY_REPEATS, PUSH_PHASE, ROOT_SEED, conditions,  # noqa: E402
                          context_seeds, factor_values)
+
+TASK_CONFIGS = {'pushing': REPO / 'configs/pushing.yaml', 'inserting': REPO / 'configs/inserting.yaml'}
 
 VERSION = 'v3'
 HAND_TOL = 0.005        # m: 도착한 손과 목표의 최대 거리
@@ -154,7 +160,21 @@ def robot_start(spec, env, ctx, hand0, d, seed, walls):
     return record
 
 
-def generate_task(task, d3il, out_root):
+def hand_outside_envelope(task, ctx, spec, hand_xy):
+    """평가 제약의 블록 중심 정다각형(configs/<task>.yaml object_envelope, fm_constraint.constraints와 같은 기하)
+    밖에 고정 시작 손이 있는가. 그러면 ①투영·③필터가 0 step에서 실행 불가능해진다(A_strong Pushing 13/60)."""
+    import yaml
+    obj = yaml.safe_load(TASK_CONFIGS[task].read_text())['constraints']['object_envelope']
+    blocks = np.array([spec.ctx_box_xy(ctx, i) for i in range(spec.n_boxes)], dtype=float)
+    angles = obj['normal_offset_rad'] + 2 * np.pi * np.arange(obj['n_sides']) / obj['n_sides']
+    normals = np.column_stack((np.cos(angles), np.sin(angles)))
+    center = blocks.mean(axis=0)
+    radius = float(np.max((blocks - center) @ normals.T) + obj['margin_m'])
+    return bool(np.any((np.asarray(hand_xy) - center) @ normals.T > radius + 1e-9))
+
+
+def generate_task(task, d3il, out_root, only=None):
+    """only가 주어지면 그 조건의 행만 만들어 (rows, stats, 기타)를 돌려준다(파일은 main이 쓴다)."""
     spec = get_task(task)
     spec.setup(d3il)
     env = spec.make_env(spec.max_steps)
@@ -165,8 +185,11 @@ def generate_task(task, d3il, out_root):
     rows, stats = [], {}
     shift_cache, start_cache = {}, {}
     for cond, selected in conditions():
+        if only is not None and cond not in only:
+            continue
         values = factor_values(task, selected)
-        failures = {'A_blocks_not_shifted': 0, 'A_lowered': 0, 'B_without_robot_shift': 0}
+        failures = {'A_blocks_not_shifted': 0, 'A_lowered': 0, 'B_without_robot_shift': 0,
+                    'A_hand_outside_envelope': 0}
         for context_id, base in contexts:
             seeds = context_seeds(task, context_id)
             ctx, shift = base, None
@@ -179,6 +202,8 @@ def generate_task(task, d3il, out_root):
                 ctx, shift = shift_cache[key]
                 failures['A_blocks_not_shifted'] += sum(e['face'] is None for e in shift)
                 failures['A_lowered'] += any(e.get('shift_m', values['A']['shift_m']) < values['A']['shift_m'] for e in shift)
+                if only is not None:      # 추가 조건만 기록한다(기존 manifest 통계를 바꾸지 않기 위해)
+                    failures['A_hand_outside_envelope'] += hand_outside_envelope(task, ctx, spec, hand0)
             robot = None
             if values['B']:
                 key = (context_id, values['B']['dist_m'], bool(values['A']), values['A'] and values['A']['shift_m'])
@@ -198,6 +223,8 @@ def generate_task(task, d3il, out_root):
                 'policy_seeds': seeds['policy']})
         stats[cond] = {'factors': values, **{k: v for k, v in failures.items() if v}}
         print(f'  {task} {cond:9s} ' + ' '.join(f'{k}={v}' for k, v in failures.items() if v), flush=True)
+    if only is not None:
+        return rows, stats
     path = out_root / f'{task}.jsonl'
     with path.open('x') as handle:
         for row in rows:
@@ -208,13 +235,62 @@ def generate_task(task, d3il, out_root):
             'conditions': stats}
 
 
+def add_conditions(out_root, tasks, new, d3il, commit):
+    """기존 데이터에 새 조건(conditions()에 정의된 것)의 행만 덧붙이고 manifest를 갱신한다.
+    기존 행·해시를 먼저 확인하고, 두 태스크를 모두 만든 뒤에 한꺼번에 쓴다."""
+    manifest_path = out_root / 'manifest.json'
+    manifest = json.loads(manifest_path.read_text())
+    names = [name for name, _ in conditions()]
+    unknown = [c for c in new if c not in names]
+    if unknown:
+        raise SystemExit(f'Unknown condition(s) {unknown}; define them in ood/conditions.py first')
+    for task in tasks:
+        entry = manifest['tasks'][task]
+        if file_sha256(out_root / entry['file']) != entry['sha256']:
+            raise SystemExit(f'{task}: {entry["file"]} does not match manifest; refusing to append')
+        present = [c for c in new if c in entry['conditions']]
+        if present:
+            raise SystemExit(f'{task}: {present} already in {out_root}')
+    produced = {}
+    cwd = os.getcwd()
+    for task in tasks:
+        print(f'== {task} (add {",".join(new)})', flush=True)
+        produced[task] = generate_task(task, d3il, out_root, only=set(new))
+        os.chdir(cwd)
+    added = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+    for task, (rows, stats) in produced.items():
+        entry = manifest['tasks'][task]
+        path = out_root / entry['file']
+        with path.open('a') as handle:
+            for row in rows:
+                handle.write(json.dumps(row, sort_keys=True) + '\n')
+        entry['sha256'] = file_sha256(path)
+        entry['n_rows'] += len(rows)
+        entry['conditions'].update(stats)
+    manifest['conditions'] = [name for name in names if name in manifest['conditions'] or name in new]
+    manifest.setdefault('additions', []).append({'conditions': list(new), 'tasks': list(tasks), 'created_utc': added,
+                                                 'd3il_commit': commit,
+                                                 'note': 'rows appended; earlier rows and their order unchanged'})
+    manifest_path.write_text(json.dumps(manifest, indent=1) + '\n')
+    print('updated', out_root, {task: manifest['tasks'][task]['sha256'][:12] for task in tasks})
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument('--task', nargs='+', default=list(LEVELS), choices=sorted(LEVELS))
     parser.add_argument('--d3il-root', default=None)
     parser.add_argument('--out', default=str(REPO / 'data/ood'))
+    parser.add_argument('--add', default=None, help='기존 데이터에 덧붙일 조건(쉼표로 여러 개). 예: A_10')
     args = parser.parse_args()
     out_root = Path(args.out).resolve()
+    if args.add:
+        d3il = resolve_d3il(args.d3il_root)
+        try:
+            commit = subprocess.check_output(['git', '-C', d3il, 'rev-parse', 'HEAD'], text=True).strip()
+        except (OSError, subprocess.CalledProcessError):
+            commit = None
+        add_conditions(out_root, args.task, [c.strip() for c in args.add.split(',') if c.strip()], d3il, commit)
+        return
     out_root.mkdir(parents=True, exist_ok=True)
     if (out_root / 'manifest.json').exists():
         raise SystemExit(f'{out_root} already holds a dataset; use a new --out')

@@ -14,6 +14,8 @@ A 수치는 2026-11-12에 2.5/5/10 cm에서 1/5/18 cm로 바꿨다(데이터 v3)
 
 조건 20개: `id`, `{A,B,C}_{weak,mid,strong}`, `{AB,AC,BC,ABC}_mid`, `{D,E}_{weak,mid,strong}`. 손끝 yaw는 제외했다.
 
+**추가 조건 A_10 (2026-11-17):** A 10 cm. A_strong에서 Inserting이 모두 실패해서 더했다. `ood/conditions.py`의 `EXTRA_A`에 정의하고, `python -m ood.generate --d3il-root ../d3il --add A_10`으로 기존 jsonl 끝에 행만 덧붙였다. 기존 행은 바뀌지 않았고 manifest의 `additions`에 기록했다. 배치 규칙은 A_strong과 같다(`shift_blocks_far`). Inserting 82개 중 34개, Pushing 60개 중 3개 context가 1 cm 이상 낮아졌다. 추가 조건의 manifest 통계에는 `A_hand_outside_envelope`도 있다. 고정 시작 손이 평가 제약의 블록 중심 다각형 밖에 놓인 context 수로, Pushing 19/60, Inserting 6/82다. 이 중 다각형 밖으로 첫 행동 한계 β(Pushing 1.67 cm, Inserting 1.73 cm)보다 먼 context에서는 투영·필터가 첫 계획부터 실행 불가능해진다. 실험 30 context 기준 A_10 Pushing 10개, Inserting 1개다. `python -m ood.envelope_split --cond <조건>`은 보고서를 읽어 결과를 적용 가능/불가 context로 나눠 집계한다(`docs/report_ood_<조건>_envelope_split.{md,json}`). Stacking A_3(3 cm)은 `python -m ood.generate_stacking --add A_3`으로 만든다.
+
 ## seed 규칙
 
 - `seed_for(*parts)` = SHA-256(`'|'.join(parts)`)의 앞 8바이트. 루트 seed는 `20261106`이다.

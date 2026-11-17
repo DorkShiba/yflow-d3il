@@ -11,7 +11,7 @@ Stacking에서 ①②③④⑤ 32조합을 ID와 A_weak/A_mid/A_strong에서 비
 | ④ RTC | 팀원 `joint.joint_rtc_velocity`(main RTC soft mask·VJP)를 그대로 씀. 직전 계획의 미실행 관절 증분 8개가 target이다. **그리퍼는 target에서 빠지고 latent 그리퍼 채널 보정도 0**. ③이 행동을 수정하면 참조를 버린다. 지연 0, β 5 |
 | 그리퍼 | 어떤 guidance·QP도 직접 수정하지 않는다 |
 | context | `id_contexts.pkl` test [0,100)에서 고정 seed로 30개 (`configs/stacking_experiment_contexts.json`) |
-| 조건 | `id`, `A_weak` 1 cm, `A_mid` 5 cm, `A_strong` 18 cm (옮길 수 있는 블록만 옮김), 데이터는 `data/ood_stacking` |
+| 조건 | `id`, `A_weak` 1 cm, `A_3` 3 cm(2026-11-17 추가), `A_mid` 5 cm, `A_strong` 18 cm (옮길 수 있는 블록만 옮김), 데이터는 `data/ood_stacking` |
 | rollout | 단위 = (조건, 조합, context). noise seed 0·1·2로 rollout 3개, 최대 1,000 step, plan 16 / execute 8 / Euler 10, dt 0.03 s |
 | FM noise | 팀원 비교 실험과 같은 `sha256(["stacking","test_NNN",seed])` 규칙. OOD도 ID와 같은 noise |
 
@@ -72,3 +72,7 @@ A_strong에서 옮겨진 블록 수는 1개 18 context, 2개 8 context, 3개 4 c
 ## 재엽 담당 ID OOD 결과
 
 context 16–22의 ID·A_weak·A_mid·A_strong 32조합 결과는 [통합 요약](report_id_ood_jaeyeop_summary.md)과 [통합 JSON](report_id_ood_jaeyeop_summary.json)에 정리했습니다. 총2,688 rollout이며, 조건별 원본 보고서와 검증 정보도 연결했습니다. 담당 7개 context의 결과입니다.
+
+## A_3 (2026-11-17 추가)
+
+A_mid에서 성공률이 2–9%여서 3 cm 조건을 더했다. `python -m ood.generate_stacking --d3il-root ../d3il --add A_3`으로 `stacking.jsonl` 끝에 행을 덧붙이고 `stacking_A_3_contexts.pkl`을 만들었다. 기존 pkl과 `max_shift.json`은 그대로다. 규칙은 A_weak·A_mid와 같다(`shift_blocks`, 2 s 안착 확인). 100개 중 99개 context에서 세 블록이 모두 옮겨졌고, 실험 30 context에서는 모두 세 블록이 옮겨졌다. 실제 이동량은 중앙값 4.6 cm다(d는 시연 범위 밖 거리라서 이동량보다 작다). 실행은 성민이 30 context 전체를 맡는다. `bash scripts/run_ood_extra.sh --member seongmin --workers 4`, 자세한 내용은 루트 README 11절에 있다. 조건 목록에 A_3을 넣어 runner의 code fingerprint가 바뀌었다(`ae2ad005…` → `2206f1b7…`). 이전 네 조건의 미완료 단위는 이전 코드로만 이어서 실행할 수 있다.
