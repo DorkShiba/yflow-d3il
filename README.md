@@ -36,6 +36,7 @@ yflow-d3il/
 ├── ood/                        # OOD 조건 정의·생성·검증·지표
 ├── scripts/run_experiment.sh   # 본실험(ID·OOD): 맡은 context × 원하는 조합 순차 실행
 ├── scripts/run_stacking_experiment.sh  # Stacking 본실험(ID·OOD A), 11절 "Stacking 분담"
+├── scripts/run_wall_experiment.sh      # 벽 OOD 본실험(Pushing·Inserting), 11절 "벽 OOD 분담"
 ├── experiments/                # 본실험 단위 결과 (로컬 전용, git 제외. 공유는 docs/report_*.md)
 ├── visualizer/                 # 로컬 3D rollout viewer
 ├── preprocess/                 # data/를 만든 전처리·검증 스크립트
@@ -302,6 +303,38 @@ Stacking도 32조합을 **ID, A_weak, A_mid, A_strong** 네 조건에서 비교�
 - **예상 시간:** context 1개 × 4조건 × 32조합 = 384 rollout이다. 3090 기준 rollout당 약 25초라 context 1개에 약 2.7시간, 8개면 약 21시간이다. 첫 실행 로그의 단위별 시간으로 다시 계산한다.
 - **결과 공유:** 단위 결과(`experiments/stacking_v1/`)는 로컬에만 남는다. 스크립트가 만드는 보고서 `docs/stacking/report_<조건>_<이름>.md` 4개만 commit해서 push한다. 마지막에 명령이 출력된다. 보고서를 다시 만들려면 `python -m fm_constraint.stacking_experiment report --cond <조건> --name <이름>`.
 - **통합(누구나):** `python -m fm_constraint.stacking_experiment merge --cond <조건>` → `docs/stacking/report_<조건>_results.{md,json}`. 조합별 추정값 [95% CI], Complementarity Δ, **목표 진입 1개·2개 비율**, 관절 기준 위반율에 더해, A 조건에서는 옮겨진 블록 수(1·2·3개)별 성공률도 낸다. A_strong에서는 옮길 수 있는 블록만 18 cm 옮겼다. 30개 중 1개만 옮겨진 context가 18개, 2개가 8개, 3개가 4개다.
+
+### 벽 OOD 분담 (Pushing·Inserting, 2026-11-18)
+
+학습 때 없던 **정적 벽**을 통로 중앙(x = 0.525)에 둔다. 모델은 벽을 관측하지 못한다. 벽 회피 부등식은 충돌 제약 방법 중 QP가 있는 **①투영과 ③필터**에만 넣는다. ⑤LiPo는 기존 규칙대로 ①이 켜졌을 때만 받고, ②PF2MP에는 넣지 않는다. ID와 같은 30 context × noise 3 × 32조합으로 실행하며, 장면에 벽이 있다는 것만 다르다. 태스크 단위로 나눈다.
+
+| 담당 | 태스크 | 벽 | 실행 명령 | 올릴 보고서 |
+|---|---|---|---|---|
+| 형빈 | Pushing | 세로 2×10 cm, 중심 (0.525, 0.15) | `bash scripts/run_wall_experiment.sh --name hyeongbin --task pushing --workers 6` | `docs/report_wall_hyeongbin.md`, `docs/wall_summary_pushing_hyeongbin.md` |
+| 성민 | Inserting | 기둥 2×2 cm, 게이트 중앙 (0.525, 0.17) | `bash scripts/run_wall_experiment.sh --name seongmin --task inserting --workers 4` | `docs/report_wall_seongmin.md`, `docs/wall_summary_inserting_seongmin.md` |
+
+```bash
+git pull
+# 1) 동작 확인: 40 step만, 결과는 로컬(fm_constraint/runs/experiment_wall_v1/smoke)에만, 보고서 없음
+bash scripts/run_wall_experiment.sh --name <이름> --task <태스크> --smoke 40 --contexts 0 --combos 0,16 --workers 2
+# 2) 본실험: 끝나면 보고서와 벽 지표 요약을 만들고 git 명령을 출력한다. 중단되면 같은 명령으로 이어서 실행한다
+bash scripts/run_wall_experiment.sh --name <이름> --task <태스크> --workers <N> [--device cuda:1]
+# 진행 확인(다른 터미널)
+tail -f fm_constraint/runs/experiment_logs/<이름>_<태스크>_wall_*_w1_*.log
+# 3) 보고서 2개만 올린다
+git add docs/report_wall_<이름>.md docs/wall_summary_<태스크>_<이름>.md && git commit -m "report: <이름> <태스크> wall" && git pull --rebase && git push
+```
+
+- **벽 제약 (`fm_constraint/wall.py`):** 손에만 건다. 벽 상자를 rod 반지름 1 cm + 여유 1.2 cm만큼 키운다. 블록은 키우지 않는다. 계획의 각 시점 h마다 반평면 하나를 둔다. 반평면은 그 시점 nominal 손 위치에서 가장 가까운 벽 면(부호 거리 최대)으로 고르고, 매 Euler 단계마다 다시 고른다. 점이 키운 벽 안에 있으면 직전 시점의 면을 유지한다(벽을 뚫고 지나가는 계획 방지). ③은 실행 직전 nominal로 면을 고른다. 벽의 위치·크기·여유는 결과마다 `experiment_metadata.wall`에 기록된다.
+- **추가 지표 (episode마다, `summary`가 표로 만든다):** 손–벽 접촉, 블록–벽 접촉(시뮬레이터 접촉), 명령 벽 침범, 벽 앞 정지(40 step 동안 1 cm 안에서만 움직이고 벽에서 3 cm 이내), 최소 손–벽 거리. 다시 만들려면 `python -m fm_constraint.wall_experiment summary --task <태스크> --out docs/wall_summary_<태스크>_<이름>.md`.
+- **smoke 결과 (형빈, 벽을 지나는 context만):** ①·③ 조합은 명령 벽 침범이 0%였다(벽 제약 없는 P00 78%, I00 100%). 다만 추종 오차 때문에 실제 손이 1–6 step 동안 0–5 mm 닿는 경우가 남는다. 여유를 6 mm로 줄이면 이런 접촉이 두 배가 되어 1.2 cm로 정했다.
+- **예상 시간 (smoke 기준, 장비에 따라 다름):** Pushing 단위당 약 3.5분이다. 960 단위면 직렬 약 55시간, worker 6개로 약 10시간이다. Inserting은 벽 앞에서 오래 머무는 rollout이 많아 단위당 약 10–16분이다. 직렬 160–250시간, worker 수만큼 나뉜다. 그러니 worker는 CPU 코어 수 안에서 최대로 둔다.
+- **같은 실험 보장:** 다음이면 시작하지 않는다.
+  - 커밋하지 않은 코드 변경이 있다.
+  - GPU를 쓸 수 없다.
+- **fingerprint:** 기존 `CODE_FILES`에 `wall.py`·`wall_experiment.py`를 더한 값이다. 기존 평가 코드는 수정하지 않고, `wall_experiment`가 실행 시점에 클래스를 바꿔 끼운다.
+- **결과 위치:** 단위 결과는 `experiments/wall_v1/`, 전체 로그는 `fm_constraint/runs/experiment_wall_v1/`에 남고, 둘 다 로컬에만 있다.
+- **통합:** `python -m fm_constraint.wall_experiment merge` → `docs/report_wall_results.{md,json}`. 보고서만 읽으므로 누구나 실행할 수 있다.
 
 ### 결과 통합 (누구나 할 수 있다)
 
