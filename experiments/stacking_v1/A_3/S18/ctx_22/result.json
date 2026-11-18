@@ -1,0 +1,180 @@
+{
+ "protocol": "stacking_v1",
+ "cond": "A_3",
+ "task": "stacking",
+ "combo": "S18",
+ "number": 18,
+ "methods": {
+  "projection": true,
+  "pf2mp": false,
+  "filter": false,
+  "rtc": true,
+  "lipo": false
+ },
+ "context_index": 22,
+ "context_id": "test_077",
+ "context_sha256": "35bee2b81aa88dc520c2db4c672397c45ce78bdf3164220d95f15fd507296122",
+ "noise_seeds": [
+  0,
+  1,
+  2
+ ],
+ "member": "seongmin",
+ "ood": {
+  "cond": "A_3",
+  "file": "data/ood_stacking/stacking_A_3_contexts.pkl",
+  "sha256": "6d531a15fd06918e2f33369d34cdfaf68727fd79d7bc6189c4c80e9a77296b4c",
+  "manifest_version": "stacking-v1",
+  "level_m": 0.03
+ },
+ "shift": [
+  {
+   "box": 0,
+   "color": "red",
+   "face": "x+",
+   "from": [
+    0.40902844071388245,
+    -0.16282416880130768
+   ],
+   "settle_drift_m": 5.485195642059642e-09,
+   "shift_m": 0.03,
+   "to": [
+    0.48,
+    -0.16282416880130768
+   ]
+  },
+  {
+   "box": 1,
+   "color": "green",
+   "face": "y+",
+   "from": [
+    0.41746392846107483,
+    -0.03867056965827942
+   ],
+   "settle_drift_m": 4.83989519932839e-09,
+   "shift_m": 0.03,
+   "to": [
+    0.41746392846107483,
+    0.03
+   ]
+  },
+  {
+   "box": 2,
+   "color": "blue",
+   "face": "x-",
+   "from": [
+    0.5658915638923645,
+    -0.05367173254489899
+   ],
+   "settle_drift_m": 4.895495615015748e-09,
+   "shift_m": 0.03,
+   "to": [
+    0.52,
+    -0.05367173254489899
+   ]
+  }
+ ],
+ "blocks_moved": 3,
+ "device": {
+  "requested": "cuda:0",
+  "torch": "2.3.1+cu121",
+  "python": "3.11.18",
+  "cpu": "x86_64",
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "cuda": "12.1"
+ },
+ "code_fingerprint": "2206f1b7d7b332964cfcce1d4e256aa1eda1d775ac504eac44564aa9e0f728b9",
+ "git_commit": "8d0c7aba8e10728c85f3810ab21d5a5afa80dc87",
+ "checkpoint_step": 350000,
+ "pf_cache_sha256": "f1c45e9b3f16ff538a9333a9687d96cca83d0c4156fd813367e092f62b7e065c",
+ "max_steps": 1000,
+ "smoke": false,
+ "finished_utc": "2026-11-17T14:51:04.520384+00:00",
+ "wall_s": 155.49366603791714,
+ "episodes": [
+  {
+   "sampling_seed": 0,
+   "noise_seed": 5345303412013524315,
+   "success": false,
+   "success_1": true,
+   "success_2": true,
+   "mode": -1,
+   "mode_string": "gr",
+   "steps": 1000,
+   "failure": null,
+   "termination": "step_budget",
+   "constraint_violation_steps": 0,
+   "constraint_evaluated_steps": 1000,
+   "constraint_violation_steps_by_type": {
+    "joint_position": 0,
+    "acceleration": 0
+   },
+   "action_change_rad": 0.002164894232128887,
+   "command_jerk_rad_s3": 89.86879805668991,
+   "hand_jerk_m_s3": 18.64881721394261,
+   "actual_joint_jerk_rad_s3": 45.45721885784839,
+   "boundary_jump_rad_s": 0.21609103423379158,
+   "plan_calls": 125,
+   "plan_ms_mean": 294.4080034252256,
+   "rtc_guided_plans": 124,
+   "filter_interventions": 0,
+   "filter_correction_max_rad": 0.0
+  },
+  {
+   "sampling_seed": 1,
+   "noise_seed": 334425986343005368,
+   "success": false,
+   "success_1": true,
+   "success_2": false,
+   "mode": -1,
+   "mode_string": "r",
+   "steps": 1000,
+   "failure": null,
+   "termination": "step_budget",
+   "constraint_violation_steps": 0,
+   "constraint_evaluated_steps": 1000,
+   "constraint_violation_steps_by_type": {
+    "joint_position": 0,
+    "acceleration": 0
+   },
+   "action_change_rad": 0.0017737617022427381,
+   "command_jerk_rad_s3": 84.82866117281007,
+   "hand_jerk_m_s3": 24.35229554538318,
+   "actual_joint_jerk_rad_s3": 54.73679927521383,
+   "boundary_jump_rad_s": 0.1792249286687637,
+   "plan_calls": 125,
+   "plan_ms_mean": 291.2311364673078,
+   "rtc_guided_plans": 124,
+   "filter_interventions": 0,
+   "filter_correction_max_rad": 0.0
+  },
+  {
+   "sampling_seed": 2,
+   "noise_seed": 3074204706211225152,
+   "success": false,
+   "success_1": true,
+   "success_2": false,
+   "mode": -1,
+   "mode_string": "g",
+   "steps": 1000,
+   "failure": null,
+   "termination": "step_budget",
+   "constraint_violation_steps": 0,
+   "constraint_evaluated_steps": 1000,
+   "constraint_violation_steps_by_type": {
+    "joint_position": 0,
+    "acceleration": 0
+   },
+   "action_change_rad": 0.0025496508339769076,
+   "command_jerk_rad_s3": 107.95766402926185,
+   "hand_jerk_m_s3": 16.25128877216419,
+   "actual_joint_jerk_rad_s3": 49.2025731816547,
+   "boundary_jump_rad_s": 0.2533347141032694,
+   "plan_calls": 125,
+   "plan_ms_mean": 305.6934541091323,
+   "rtc_guided_plans": 124,
+   "filter_interventions": 0,
+   "filter_correction_max_rad": 0.0
+  }
+ ]
+}
