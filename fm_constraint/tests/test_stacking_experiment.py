@@ -137,3 +137,21 @@ def test_aggregate_rates():
     assert v[3] == pytest.approx(100 * 4 / 800)        # step 분모를 합친다
     assert np.isnan(v[5])                                # 정의되지 않은 jerk는 0으로 채우지 않는다
     assert v[9] == pytest.approx(100 * (1 / 3) / 2)
+
+
+def test_relative_frame_subtracts_tcp_from_only_block_positions():
+    from fm_baseline.stacking_frame import StackingFrame
+
+    frame = StackingFrame.__new__(StackingFrame)
+    obs = np.arange(23, dtype=np.float32)
+    tcp = np.array([0.5, -0.25, 0.125])
+
+    def position(joints):
+        np.testing.assert_array_equal(joints, obs[:7])
+        return tcp
+
+    frame.position = position
+    expected = obs.copy()
+    expected[[8, 9, 10, 13, 14, 15, 18, 19, 20]] -= np.tile(tcp, 3)
+    np.testing.assert_array_equal(frame.relative(obs), expected)
+    np.testing.assert_array_equal(obs, np.arange(23, dtype=np.float32))

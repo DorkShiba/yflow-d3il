@@ -49,6 +49,7 @@ SEEDS = (0, 1, 2)
 # ae2ad005…)는 이 커밋 이전 코드로만 이어서 실행할 수 있다. 통합은 조건별로 하므로 섞이지 않는다.
 CONDITIONS = ('id', 'A_weak', 'A_3', 'A_mid', 'A_strong')
 CONFIG = REPO / 'configs/stacking_experiment.json'
+MODELS = ('legacy', 'absolute', 'relative')
 CONTEXT_FILE = REPO / 'configs/stacking_experiment_contexts.json'
 RESULT_BASE = REPO / 'experiments' / PROTOCOL           # 로컬 전용(.gitignore)
 LOCAL_BASE = REPO / 'fm_constraint/runs' / f'experiment_{PROTOCOL}'
@@ -70,10 +71,48 @@ METRICS = ('success_rate_pct', 'goal_entry_1_pct', 'goal_entry_2_pct', 'constrai
 
 
 # ---- 공통 --------------------------------------------------------------------------
-def load_config():
+def model_config_path(model):
+    if model not in MODELS:
+        raise ValueError(f'Unknown Stacking model {model!r}')
+    return f'fm_baseline/results/stacking_{model}_20261118'
+
+
+def load_config(model='legacy'):
     cfg = json.loads(CONFIG.read_text())
     cfg['settings'] = json.loads((REPO / cfg['settings_file']).read_text())
+    cfg['model'] = model
+    if model != 'legacy':
+        cfg.update(run_dir=model_config_path(model), checkpoint='baseline_ema.pt')
     return cfg
+
+
+def protocol_name(model):
+    return PROTOCOL if model == 'legacy' else f'{PROTOCOL}_{model}_20261118'
+
+
+def results_root(model):
+    return RESULT_BASE.parent / protocol_name(model)
+
+
+def local_root(model):
+    return LOCAL_BASE.parent / f'experiment_{protocol_name(model)}'
+
+
+def reports_root(model):
+    return REPORT_DIR if model == 'legacy' else REPORT_DIR / f'{model}_20261118'
+
+
+def verify_model(cfg):
+    if cfg['model'] == 'legacy':
+        return {}
+    run_dir = REPO / cfg['run_dir']
+    provenance = json.loads((run_dir / 'provenance.json').read_text())
+    if provenance['observation_frame'] != cfg['model'] or provenance['weights'] != 'ema':
+        raise ValueError(f'{run_dir} does not describe the requested Stacking model')
+    for filename in (cfg['checkpoint'], 'normalizer.npz', 'config.json'):
+        if sha256_file(run_dir / filename) != provenance['artifact_sha256'][filename]:
+            raise ValueError(f'Stacking model artifact hash mismatch: {run_dir / filename}')
+    return provenance
 
 
 def check_cond(cond):
@@ -94,20 +133,26 @@ def sha256_file(path):
     return digest.hexdigest()
 
 
-def code_fingerprint():
+def code_files(model):
+    if model == 'legacy':
+        return CODE_FILES
+    return (*CODE_FILES, 'fm_baseline/stacking_frame.py', f'{model_config_path(model)}/provenance.json')
+
+
+def code_fingerprint(model='legacy'):
     digest = hashlib.sha256()
-    for relative in CODE_FILES:
+    for relative in code_files(model):
         digest.update(relative.encode() + b'\0' + (REPO / relative).read_bytes() + b'\0')
     return digest.hexdigest()
 
 
-def dirty_code_files():
-    out = subprocess.check_output(['git', 'status', '--porcelain', '--', *CODE_FILES], cwd=REPO, text=True)
+def dirty_code_files(model='legacy'):
+    out = subprocess.check_output(['git', 'status', '--porcelain', '--', *code_files(model)], cwd=REPO, text=True)
     return [line[3:] for line in out.splitlines() if line.strip()]
 
 
-def report_path(cond, name):
-    return REPORT_DIR / f'report_{check_cond(cond)}_{name}.md'
+def report_path(cond, name, model='legacy'):
+    return reports_root(model) / f'report_{check_cond(cond)}_{name}.md'
 
 
 def base_contexts(cfg):
@@ -189,22 +234,35 @@ class Runtime:
         self.torch = torch
         self.cfg, self.settings, self.device = cfg, cfg['settings'], device
         run_dir = REPO / cfg['run_dir']
+        self.provenance = verify_model(cfg)
         with checkpoint_reads():
             c, model, norm, cond, solver, step = load_model(str(run_dir), cfg['checkpoint'], 'ema', device)
         assert (c['obs_dim'], c['act_dim'], c['horizon']) == (23, 8, 16)
         self.checkpoint_step = step
+        if self.provenance and step != self.provenance['selected_step']:
+            raise ValueError(f'Checkpoint step {step} does not match the frozen Stacking model')
         self.base = BasePolicy(model, norm, c, cond, solver, cfg['ode_steps'], device)
         cache = REPO / cfg['pf_cache']
         self.cache_sha256 = sha256_file(cache) if cache.exists() else None
         self.potential = JointPotential(cache, device) if cache.exists() else None
         d3il = Path(os.path.expanduser(cfg['d3il_root']))
         d3il = d3il if d3il.is_absolute() else (REPO / d3il).resolve()
+        if self.provenance:
+            revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=d3il, text=True).strip()
+            if revision != self.provenance['d3il_commit']:
+                raise ValueError(f'D3IL checkout {revision} differs from the frozen model provenance')
         cwd = os.getcwd()
-        setup_d3il(str(d3il))
-        Env, _, self.quat = setup(d3il)          # setup은 cwd를 D3IL로 바꾼다
-        self.env = Env(render=False, n_substeps=30, max_steps_per_episode=max_steps)
-        self.env.start()
-        os.chdir(cwd)
+        try:
+            setup_d3il(str(d3il))
+            Env, _, self.quat = setup(d3il)      # setup changes cwd to D3IL
+            self.env = Env(render=False, n_substeps=30, max_steps_per_episode=max_steps)
+            self.env.start()
+            self.observation_frame = None
+            if cfg['model'] == 'relative':
+                from fm_baseline.stacking_frame import StackingFrame
+                self.observation_frame = StackingFrame(self.env)
+        finally:
+            os.chdir(cwd)
         self.max_steps = max_steps
 
     def policy(self, number):
@@ -252,6 +310,8 @@ def run_episode(rt, number, context, test_index, seed):
             if rt.device.startswith('cuda'):
                 torch.cuda.synchronize(rt.device)
             started = perf_counter()
+            if rt.observation_frame is not None:
+                obs = rt.observation_frame.relative(obs)
             plan = policy.plan(obs, previous.copy(), np.asarray(history[-3:]), noise, rtc_suffix=suffix)
             if rt.device.startswith('cuda'):
                 torch.cuda.synchronize(rt.device)
@@ -348,8 +408,8 @@ def unit_dir(root, cond, number, index):
 
 
 @contextmanager
-def unit_lock(cond, number, index, smoke):
-    path = LOCAL_BASE / 'locks' / ('smoke' if smoke else 'full') / f'{cond}_{combo_id(number)}_ctx_{index:02d}.lock'
+def unit_lock(cond, number, index, smoke, model='legacy'):
+    path = local_root(model) / 'locks' / ('smoke' if smoke else 'full') / f'{cond}_{combo_id(number)}_ctx_{index:02d}.lock'
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open('w') as handle:
         try:
@@ -365,15 +425,18 @@ def unit_lock(cond, number, index, smoke):
             fcntl.flock(handle, fcntl.LOCK_UN)
 
 
-def run(conds, combos, indices, device, name, max_steps=None, allow_dirty=False, pf_cache=None):
+def run(conds, combos, indices, device, name, max_steps=None, allow_dirty=False, pf_cache=None,
+        model='legacy', d3il_root=None):
     check_name(name)
     for cond in conds:
         check_cond(cond)
     smoke = max_steps is not None
-    dirty = dirty_code_files()
+    dirty = dirty_code_files(model)
     if dirty and not (smoke or allow_dirty):
         raise SystemExit(f'Uncommitted changes in result-affecting files: {dirty}. Commit first (or --allow-dirty)')
-    cfg = load_config()
+    cfg = load_config(model)
+    if d3il_root:
+        cfg['d3il_root'] = str(Path(d3il_root).expanduser().resolve())
     if pf_cache:
         cfg['pf_cache'] = str(Path(pf_cache).resolve())   # 본실험에서도 아래 sha256 고정 검사를 통과해야 한다
     if not smoke and cfg['pf_cache_sha256'] is None:
@@ -383,10 +446,10 @@ def run(conds, combos, indices, device, name, max_steps=None, allow_dirty=False,
     if not smoke and rt.cache_sha256 != cfg['pf_cache_sha256']:
         raise SystemExit(f'PF cache sha256 {rt.cache_sha256} != pinned {cfg["pf_cache_sha256"]}')
     rows = load_selection(cfg)
-    fingerprint = code_fingerprint()
+    fingerprint = code_fingerprint(model)
     info = device_info(device)
     commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=REPO, text=True).strip()
-    root = (LOCAL_BASE / 'smoke') if smoke else RESULT_BASE
+    root = local_root(model) / 'smoke' if smoke else results_root(model)
     base = base_contexts(cfg)
     for row in rows:
         if context_sha(base[row['test_index']]) != row['context_sha256']:
@@ -395,7 +458,7 @@ def run(conds, combos, indices, device, name, max_steps=None, allow_dirty=False,
         contexts, ood = condition_contexts(cfg, cond)
         for number in combos:
             for index in indices:
-                with unit_lock(cond, number, index, smoke) as acquired:
+                with unit_lock(cond, number, index, smoke, model) as acquired:
                     if not acquired:
                         print(f'BUSY {cond} {combo_id(number)} ctx_{index:02d}', flush=True)
                         continue
@@ -423,7 +486,8 @@ def run_unit(rt, cfg, cond, number, row, contexts, ood, name, fingerprint, info,
         print(f'  seed {seed} success={int(episode["success"])} goal={int(episode["success_1"])}'
               f'{int(episode["success_2"])} steps={episode["steps"]} failure={episode["failure"]}', flush=True)
     shift = (ood or {}).get('shift', {}).get(ti)
-    record = {'protocol': PROTOCOL, 'cond': cond, 'task': 'stacking', 'combo': combo_id(number), 'number': number,
+    record = {'protocol': protocol_name(cfg['model']), 'cond': cond, 'task': 'stacking',
+              'combo': combo_id(number), 'number': number,
               'methods': combo_flags(number), 'context_index': index, 'context_id': row['context_id'],
               'context_sha256': row['context_sha256'], 'noise_seeds': list(SEEDS), 'member': name,
               'ood': None if ood is None else {k: ood[k] for k in ('cond', 'file', 'sha256', 'manifest_version', 'level_m')},
@@ -433,6 +497,10 @@ def run_unit(rt, cfg, cond, number, row, contexts, ood, name, fingerprint, info,
               'max_steps': rt.max_steps, 'smoke': smoke,
               'finished_utc': datetime.now(timezone.utc).isoformat(), 'wall_s': perf_counter() - started,
               'episodes': episodes}
+    if rt.provenance:
+        record.update(observation_frame=rt.provenance['observation_frame'],
+                      checkpoint_sha256=rt.provenance['artifact_sha256'][cfg['checkpoint']],
+                      normalizer_sha256=rt.provenance['artifact_sha256']['normalizer.npz'])
     out.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(out / 'trajectories.npz', **arrays)
     result_path.write_text(json.dumps(record, indent=1, allow_nan=False) + '\n')   # 마지막에 쓴다 = 완료 표시
@@ -479,17 +547,21 @@ TABLE_HEAD = ('| 조합 | ①②③④⑤ | 성공 % | 목표 진입 1개 % | �
 TABLE_SEP = '|---|---|' + '---:|' * 11
 
 
-def report(cond, name, out=None):
+def report(cond, name, out=None, model='legacy'):
     """한 팀원이 실행한 단위만 모은 보고서. 점추정 표 + merge용 context별 원시 데이터."""
     check_name(name)
     check_cond(cond)
-    units = [json.loads(p.read_text()) for p in sorted((RESULT_BASE / cond).glob('S*/ctx_*/result.json'))]
+    root = results_root(model) / cond
+    protocol = protocol_name(model)
+    units = [json.loads(p.read_text()) for p in sorted(root.glob('S*/ctx_*/result.json'))]
     units = [u for u in units if u['member'] == name]
     if not units:
-        raise SystemExit(f'No {cond} results by {name} under {RESULT_BASE / cond}')
+        raise SystemExit(f'No {cond} results by {name} under {root}')
+    if any(u['protocol'] != protocol for u in units):
+        raise SystemExit(f'{root} contains results for a different Stacking model')
     fingerprints = {u['code_fingerprint'] for u in units}
     lines = [f'# Stacking 실험 보고 ({cond}): {name}', '',
-             f'- protocol `{PROTOCOL}`, 조건 `{cond}`, noise seed {list(SEEDS)}, 생성 {datetime.now(timezone.utc).isoformat()}',
+             f'- protocol `{protocol}`, 조건 `{cond}`, noise seed {list(SEEDS)}, 생성 {datetime.now(timezone.utc).isoformat()}',
              f'- code fingerprint: {", ".join(sorted(f[:12] for f in fingerprints))}'
              + (' ⚠ 여러 개: 코드가 다른 결과가 섞였다' if len(fingerprints) > 1 else ''),
              f'- git commit: {", ".join(sorted({u["git_commit"][:8] for u in units}))}',
@@ -505,7 +577,7 @@ def report(cond, name, out=None):
         lines.append(f'| {combo_id(number)} | {flags_text(number)} | ' + ' | '.join(
             [fmt(v[0]), fmt(v[1]), fmt(v[2]), fmt(v[3]), fmt(v[4], 1e3), fmt(v[5]), fmt(v[6]), fmt(v[7]), fmt(v[8]),
              fmt(v[9]), fmt(v[10])]) + f' | {",".join(str(u["context_index"]) for u in group)} |')
-    data = {'format': REPORT_FORMAT, 'protocol': f'{PROTOCOL}_{cond}', 'cond': cond, 'member': name,
+    data = {'format': REPORT_FORMAT, 'protocol': f'{protocol}_{cond}', 'cond': cond, 'member': name,
             'noise_seeds': list(SEEDS), 'row_columns': list(ROW), 'units': []}
     for u in sorted(units, key=lambda u: (u['number'], u['context_index'])):
         data['units'].append({
@@ -516,11 +588,14 @@ def report(cond, name, out=None):
             'gpu': u['device'].get('gpu', 'cpu'), 'wall_s': u['wall_s'],
             'seeds': sorted(e['sampling_seed'] for e in u['episodes']),
             'row': _finite_or_none(context_row(u['episodes']))})
+        if model != 'legacy':
+            data['units'][-1].update(checkpoint_sha256=u['checkpoint_sha256'],
+                                     normalizer_sha256=u['normalizer_sha256'])
     text = json.dumps(data, separators=(',', ':'), allow_nan=False)
     lines += ['', '<details><summary>merge용 원시 데이터 (context별 지표, 자동 생성)</summary>', '', REPORT_MARKER, '',
               '```json', text.replace('},{', '},\n{'), '```', '', '</details>', '']
-    REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    path = Path(out) if out else report_path(cond, name)
+    path = Path(out) if out else report_path(cond, name, model)
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text('\n'.join(lines))
     print(f'Saved {path}')
 
@@ -537,13 +612,15 @@ def parse_report(path):
     return data
 
 
-def merge(cond, out=None, n_boot=2000, seed=2026, report_dir=None):
+def merge(cond, out=None, n_boot=2000, seed=2026, report_dir=None, model='legacy'):
     """docs/stacking/report_<cond>_*.md만 읽어 조합별 추정값 [95% CI], Complementarity Δ, A 블록 수별 성공률."""
     check_cond(cond)
+    protocol = protocol_name(model)
+    directory = Path(report_dir) if report_dir else reports_root(model)
     units, sources, owner = [], [], {}
-    for path in sorted(Path(report_dir or REPORT_DIR).glob(f'report_{cond}_*.md')):
+    for path in sorted(directory.glob(f'report_{cond}_*.md')):
         data = parse_report(path)
-        if data is None or data['protocol'] != f'{PROTOCOL}_{cond}':
+        if data is None or data['protocol'] != f'{protocol}_{cond}':
             continue
         if data['noise_seeds'] != list(SEEDS) or data['row_columns'] != list(ROW):
             raise SystemExit(f'{path.name}: different seeds or row layout')
@@ -555,12 +632,15 @@ def merge(cond, out=None, n_boot=2000, seed=2026, report_dir=None):
             owner[key] = path.name
             units.append({**u, 'row': [np.nan if v is None else v for v in u['row']]})
     if not units:
-        raise SystemExit(f'No {cond} reports in {report_dir or REPORT_DIR}')
-    for key in ('code_fingerprint', 'pf_cache_sha256', 'ood_sha256'):
+        raise SystemExit(f'No {cond} reports in {directory}')
+    keys = ('code_fingerprint', 'pf_cache_sha256', 'ood_sha256')
+    if model != 'legacy':
+        keys += ('checkpoint_sha256', 'normalizer_sha256')
+    for key in keys:
         if len({u[key] for u in units}) > 1:
             raise SystemExit(f'Reports mix several {key} values; rerun mismatched units first')
     lines = [f'# Stacking 통합 결과 ({cond}, merge)', '',
-             f'protocol `{PROTOCOL}`, context {N_CONTEXTS}개 × noise seed {list(SEEDS)}, context bootstrap {n_boot}회'
+             f'protocol `{protocol}`, context {N_CONTEXTS}개 × noise seed {list(SEEDS)}, context bootstrap {n_boot}회'
              f'(seed {seed}), code fingerprint {units[0]["code_fingerprint"][:12]}, PF cache {str(units[0]["pf_cache_sha256"])[:12]}'
              + (f', OOD 파일 {units[0]["ood_sha256"][:12]}' if cond != 'id' else ''), '',
              '입력 보고서: ' + ', '.join(f'`{f}`({m}, 단위 {n}개)' for f, m, n in sources), '']
@@ -620,11 +700,14 @@ def merge(cond, out=None, n_boot=2000, seed=2026, report_dir=None):
                 lines.append(f'| {combo_id(number)} | ' + ' | '.join(
                     fmt(f[[moved[i] == g for i in expected], 0].mean() * 100) for g in groups) + ' |')
             lines.append('')
-    path = Path(out) if out else REPORT_DIR / f'report_{cond}_results.md'
+    path = Path(out) if out else report_path(cond, 'results', model)
     path.write_text('\n'.join(lines))
-    meta = {'protocol': PROTOCOL, 'cond': cond, 'n_boot': n_boot, 'bootstrap_seed': seed,
+    meta = {'protocol': protocol, 'cond': cond, 'n_boot': n_boot, 'bootstrap_seed': seed,
             'code_fingerprint': units[0]['code_fingerprint'], 'pf_cache_sha256': units[0]['pf_cache_sha256'],
             'ood_sha256': units[0]['ood_sha256'], 'reports': [f for f, _, _ in sources]}
+    if model != 'legacy':
+        meta.update(checkpoint_sha256=units[0]['checkpoint_sha256'],
+                    normalizer_sha256=units[0]['normalizer_sha256'])
     path.with_suffix('.json').write_text(json.dumps({'meta': meta, 'combos': summary}, indent=1))
     print(f'Saved {path} and {path.with_suffix(".json").name}')
 
@@ -657,17 +740,20 @@ def main():
     m = sub.add_parser('merge')
     m.add_argument('--cond', required=True)
     m.add_argument('--out')
+    r.add_argument('--d3il-root', help='D3IL checkout path (default: ../d3il)')
+    for command in (r, p, m):
+        command.add_argument('--model', choices=MODELS, default='legacy')
     args = parser.parse_args()
     if args.command == 'select':
         select()
     elif args.command == 'run':
         combos = parse_indices(','.join(x.strip().lstrip('S') for x in args.combos.split(',')), 32)
         run(parse_list(args.cond, CONDITIONS), combos, parse_indices(args.contexts, N_CONTEXTS), args.device,
-            args.name, args.max_steps, args.allow_dirty, args.pf_cache)
+            args.name, args.max_steps, args.allow_dirty, args.pf_cache, args.model, args.d3il_root)
     elif args.command == 'report':
-        report(args.cond, args.name, args.out)
+        report(args.cond, args.name, args.out, model=args.model)
     else:
-        merge(args.cond, args.out)
+        merge(args.cond, args.out, model=args.model)
 
 
 if __name__ == '__main__':

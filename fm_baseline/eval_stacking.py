@@ -71,6 +71,7 @@ def main():
     p.add_argument("--ode-steps", type=int, default=10)
     p.add_argument("--execute-steps", type=int, default=8)
     p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--observation-frame", choices=["absolute", "relative"], default="absolute")
     p.add_argument("--device", default="cuda:0")
     a = p.parse_args()
     for n in ["run_dir", "d3il_root", "contexts_file", "output"]:
@@ -89,6 +90,10 @@ def main():
     assert len(contexts) == a.n_contexts
     env = Env(render=False, n_substeps=30, max_steps_per_episode=a.max_steps)
     env.start()
+    frame = None
+    if a.observation_frame == "relative":
+        from fm_baseline.stacking_frame import StackingFrame
+        frame = StackingFrame(env)
     policy = Policy(model, norm, cfg, condition, Solver, a.ode_steps, a.device)
     records = []
     arrays = {}
@@ -127,7 +132,10 @@ def main():
                     if a.device.startswith("cuda"):
                         torch.cuda.synchronize()
                     t = time.perf_counter()
-                    plan = policy.plan(observation(des, g, boxes), gen)
+                    obs = observation(des, g, boxes)
+                    if frame is not None:
+                        obs = frame.relative(obs)
+                    plan = policy.plan(obs, gen)
                     if a.device.startswith("cuda"):
                         torch.cuda.synchronize()
                     times.append((time.perf_counter() - t) * 1000)

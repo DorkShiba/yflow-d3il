@@ -1,0 +1,19 @@
+{
+  "observation_frame": "absolute",
+  "weights": "ema",
+  "selected_step": 450000,
+  "stopped_step": 600000,
+  "training_seed": 42,
+  "train_episodes": 1001,
+  "validation_episodes": 93,
+  "source_baseline_commit": "69cd932670397c017eac011de7c923aa7947530d",
+  "d3il_commit": "1d9c71850d4fc1477cee17b557c8b97d70b13071",
+  "source_checkpoint_sha256": "281fded8c436c2bda237260e90c3e58e2c5dca4d78aeff42aff806dcbe76cd2b",
+  "source_dataset_manifest_sha256": "1f9c3314e51723fcb35e55ca68d0250af43f9a5356b580f82bb8fec4b82316af",
+  "artifact_sha256": {
+    "baseline_ema.pt": "a18e8986a639dd49dbbfe95c7eae240b1ad152651061e9355720a7513a0abf2d",
+    "normalizer.npz": "e6c02c85b0040d0dfb2007f2aefebf445bc0dc8ceff97885ca5c2d4b9e1108d3",
+    "config.json": "25e4f5431bea512fa79e8bccd3dc373b0f1d8cb6379f5d4102be4819298b82ee",
+    "early_stop_history.json": "68bc405066e89e5238c280ef3d3586d7207fe49034b62a1f2b609f79d8701165"
+  }
+}
