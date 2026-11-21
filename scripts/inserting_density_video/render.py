@@ -131,7 +131,7 @@ def render_run(source, d3il, run_dir, output, method, seed, evaluate=False):
     z = data.geom_xpos[table_id, 2] + model.geom_size[table_id, 2]
     render()
     eyes = scene.camera
-    camera_position = np.mean([c.camera_position.astype(float) for c in eyes], axis=0)
+    camera_position = np.mean([c.pos.astype(float) for c in eyes], axis=0)
     forward = eyes[0].forward.astype(float)
     up = eyes[0].up.astype(float)
     right = np.cross(forward, up)
